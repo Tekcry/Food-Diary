@@ -9,13 +9,14 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.24.24">
+<meta name="app-version" content="2026.09.24.47">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
 html{height:100%;overflow:hidden}
+html.standalone{height:100vh}
 body{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 body{background:var(--bg);color:var(--tx);font-family:var(--ui); font-size:16.5px;line-height:1.55; padding-bottom:0; -webkit-text-size-adjust:100%;}
 h1,h3{margin:0;font-family:var(--serif);font-weight:400;letter-spacing:-0.005em}
@@ -94,7 +95,7 @@ html.glitching #main{animation-delay:.02s}
 .uistatic{position:fixed;inset:0;z-index:204;pointer-events:none;mix-blend-mode:screen; background: repeating-linear-gradient(0deg,rgba(95,224,138,.13) 0 1px,transparent 1px 3px), repeating-linear-gradient(90deg,rgba(255,255,255,.07) 0 2px,transparent 2px 6px); animation:fuzznoise var(--gdur,.46s) steps(8,end) both}
 @media (prefers-reduced-motion: reduce){
   html.glitching header,html.glitching #main{animation:none}
-  .sheet.fit.full.hit>*,#main.hit>*{filter:none}
+  .sheet.fit.full.hit>:not(.pgbody),.sheet.fit.full.hit>.pgbody>*,#main.hit>*{filter:none}
   .uistatic{display:none}
 }
 @media(prefers-reduced-motion:reduce){
@@ -170,7 +171,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .sheet.out::before,.tune.out::before{animation:fuzznoiseout .34s steps(8,end) both}
 .sheet.cut,.sheet.cut:not(.out),.sheet.cut.out,.sheet.cut.swapin:not(.out){animation:none}
 .sheet.cut::before{display:none}
-.sheet.fit.full.hit>*,#main.hit>*{filter:url(#uiwarp)}
+.sheet.fit.full.hit>:not(.pgbody),.sheet.fit.full.hit>.pgbody>*,#main.hit>*{filter:url(#uiwarp)}
 .sheet.held{animation:none !important;z-index:69;pointer-events:none}
 .sheet.held::before,.sheet.held::after{display:none}
 .veil.noanim:not(.out){animation:none}
@@ -228,6 +229,7 @@ html.booted #main{animation:pbwarm .55s .06s ease-out both}
 }
 :root{--red:var(--red);--tint:rgba(0,255,102,.08);--on:var(--bg)}
 #main{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
+html,body,.pgbody,.qlab,.lbl{overscroll-behavior:none}
 .hnav{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;margin:28px -10px 0}
 .harr,.madd,.ri .rx,.qrow button,.pct button{display:flex;align-items:center;justify-content:center;font-family:var(--serif); line-height:1;color:var(--bronze);touch-action:manipulation;transition:color .15s ease,text-shadow .15s ease}
 .harr:active,.madd:active,.ri .rx:active,.qrow button:active,.pct button:active{color:var(--champ);text-shadow:0 0 12px var(--bronze)}
@@ -248,8 +250,9 @@ html.booted #main{animation:pbwarm .55s .06s ease-out both}
 .rtt.in,.rtt.in::before{animation-delay:.35s}
 .rtt.hit>*{display:inline-block;filter:url(#uiwarp)}
 .hdate{justify-self:center;max-width:100%;padding:0 6px;text-align:center;cursor:pointer}
-.hdate h1{margin-top:0}
-.hdate .sub{margin-top:4px}
+.hdate h1{margin-top:0;font-size:22px}
+.hdate .sub{margin-top:2px;font-size:11.5px}
+.hdate.hit>*{filter:url(#uiwarp)}
 .hdate:active h1{color:var(--bronze)}
 .intake{padding:14px 14px 10px;cursor:pointer;transition:border-color .2s ease}
 .intake:active{border-color:var(--bronze)}
@@ -260,6 +263,7 @@ html.booted #main{animation:pbwarm .55s .06s ease-out both}
 .kc{font-family:var(--serif);font-size:46px;line-height:.9;color:var(--champ);letter-spacing:-.03em; font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(0,255,102,.45);position:relative}
 .kc.over{color:var(--alert);text-shadow:0 0 12px rgba(255,176,0,.45)}
 .kc.zap{animation:zap .38s steps(1,end)}
+.mpick button.hit,.srow.hit{filter:url(#uiwarpS)}
 .kof{font-family:var(--serif);font-size:11px;letter-spacing:.14em;color:var(--dimmer);padding-bottom:3px}
 .krem{margin-left:auto;text-align:right}
 .krem .rv{display:block;font-family:var(--serif);font-size:19px;line-height:1.1;color:var(--tx);font-variant-numeric:tabular-nums}
@@ -270,10 +274,13 @@ html.booted #main{animation:pbwarm .55s .06s ease-out both}
 .mseg b.on{background:var(--bronze);box-shadow:0 0 8px -2px var(--bronze)}
 .mseg b.ov{background:var(--alert);box-shadow:0 0 8px -2px var(--alert)}
 .macros{margin-top:12px;border-top:1px solid var(--cardhair);padding-top:3px}
-.mac{display:grid;grid-template-columns:3.6em 1fr 6.8em;align-items:center;gap:10px;padding:7px 0}
+.mac{display:grid;grid-template-columns:62px 1fr auto;align-items:center;gap:10px;padding:7px 0}
 .mac .ml{font-family:var(--serif);font-size:10px;letter-spacing:.18em;color:var(--dim)}
-.mac .mv{font-family:var(--serif);font-size:12px;color:var(--champ);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.mac .mv i{font-style:normal;color:var(--dimmer)}
+.mac .mv{display:grid;grid-template-columns:3ch 1.8ch 3ch 1.6ch;font-family:var(--serif);font-size:12px;color:var(--champ); font-variant-numeric:tabular-nums;white-space:nowrap}
+.mac .mv b{font-weight:400;text-align:right}
+.mac .mv i{font-style:normal;color:var(--dimmer);text-align:right}
+.mac .mv i:first-of-type{text-align:center}
+.mac .mv i:last-child{text-align:left;padding-left:3px}
 .mac .mseg{margin:0;height:5px}
 .mac.met .ml,.mac.met .mv{color:var(--bronze);text-shadow:0 0 7px var(--bronze)}
 .meal{padding:12px}
@@ -324,10 +331,39 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .fk{flex:none;font-family:var(--serif);font-size:15px;color:var(--champ);font-variant-numeric:tabular-nums}
 .fi.fresh{animation:fresh 3.2s ease-out}
 @keyframes fresh{0%,62%{border-color:var(--bronze);box-shadow:inset 0 0 16px -5px var(--bronze)}}
+.wcard{padding:12px 14px;cursor:pointer}
+.wcard h3{display:flex;align-items:center}
+.wline{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;margin-top:6px}
+.wv{display:block;font-family:var(--serif);font-size:24px;line-height:1;color:var(--champ);font-variant-numeric:tabular-nums}
+.wv i{font-style:normal;font-size:10px;letter-spacing:.14em;color:var(--dimmer)}
+.ws{display:block;margin-top:4px;font-family:var(--serif);font-size:9.5px;letter-spacing:.16em;color:var(--dimmer)}
+.wa{text-align:right;font-family:var(--serif)}
+.wa span{display:block;font-size:9px;letter-spacing:.16em;color:var(--dimmer)}
+.wa b{display:block;font-weight:400;font-size:14px;color:var(--champ);margin:2px 0;font-variant-numeric:tabular-nums}
+.wg{display:block;width:100%;height:auto;overflow:visible}
+.wg .ln{fill:none;stroke:var(--bronze);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.wg.mini .ln{stroke-width:1.5}
+.wg .dot{fill:var(--bronze)}
+.wg .dot.on{fill:var(--champ);stroke:var(--bronze);stroke-width:2}
+.wg .avg{stroke:var(--dim);stroke-width:1;stroke-dasharray:4 4}
+.wg .gr{stroke:var(--hair);stroke-width:1}
+.wg .guide{stroke:var(--cardline);stroke-width:1}
+.wg text{font-family:var(--serif);font-size:9px;fill:var(--dimmer)}
+.wg text.now{fill:var(--dim)}
+.wg text.on{fill:var(--bronze)}
+.wg text.avgt{fill:var(--dim);letter-spacing:.1em}
+.wnav{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;text-align:center;font-family:var(--serif);font-size:11px;letter-spacing:.14em;color:var(--dim)}
+.wnav .harr{width:48px;height:44px;font-size:26px}
+.wnav .harr:disabled{color:var(--cardhair)}
+.wstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0 14px;text-align:center}
+.wstats span{display:block;font-family:var(--serif);font-size:9px;letter-spacing:.14em;color:var(--dimmer)}
+.wstats b{display:block;margin-top:4px;font-weight:400;font-family:var(--serif);font-size:15px;color:var(--champ);font-variant-numeric:tabular-nums}
+.wgbox{touch-action:none;cursor:pointer}
+.wsel{margin:10px 0 4px;text-align:center;font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--bronze)}
+#wtBody.hit>*{filter:url(#uiwarp)}
 .mpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .mpick button{flex:1 1 64px;height:36px;padding:0 4px;border:1px solid var(--cardhair);border-radius:4px; font-family:var(--serif);font-size:9.5px;letter-spacing:.12em;color:var(--dimmer); white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mpick:has(>:nth-child(5)) button{font-size:8.5px;letter-spacing:.04em}
-.mpick button.zap{animation:zap .38s steps(1,end)}
 #adBody.hit>*,#bdBody.hit>*,.pct.hit,.tot.hit{filter:url(#uiwarp)}
 .mpick button.on{border-color:var(--bronze);color:var(--champ);background:var(--tint); box-shadow:inset 0 0 12px -6px var(--bronze)}
 .fld{display:block;width:100%;height:36px;padding:0 12px;background:var(--card);border:1px solid var(--cardline);border-radius:5px; color:var(--champ);font-family:var(--mono);font-size:16px;-webkit-appearance:none;appearance:none;color-scheme:dark}
@@ -336,18 +372,38 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .flab{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:9.5px;letter-spacing:.18em; color:var(--dimmer);margin:12px 0 5px;text-transform:uppercase}
 .flab.fsec{color:var(--bronze);margin-top:20px}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
-.fgrid.g3{grid-template-columns:1fr 1fr 1fr}
+.fgrid.sw{grid-template-columns:2fr 1fr}
+.fflabel{margin-top:14px}
+.ntab{border-top:1px solid var(--cardline);margin-top:2px}
+.nrow{display:grid;grid-template-columns:1fr 96px 70px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--hair)}
+.nl{font-size:14px;color:var(--tx)}
+.nsub .nl{padding-left:12px;font-size:13px;color:var(--dim)}
+.nrow .fld{height:32px;padding:0 8px;text-align:right}
+.nu{font-family:var(--serif);font-size:10px;letter-spacing:.14em;color:var(--dimmer)}
+.nrow .eu{margin:0;gap:3px}
+.nrow .eu button{padding:3px 5px}
+.fld.auto{border-color:var(--bronze);background:var(--tint)}
+.lbl{height:auto;min-height:170px;padding:10px 12px;font-size:16px;line-height:1.5;resize:none;margin-top:12px}
+.ask{display:flex;flex-direction:column;gap:8px}
+.ask>span{text-align:center;font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--bronze)}
+.ask .duo{margin:0}
 .eu{margin-left:auto;display:flex;gap:4px}
-.eu button{font-size:9px;letter-spacing:.14em;color:var(--dimmer);border:1px solid var(--cardhair);border-radius:3px;padding:3px 7px}
+.eu button{white-space:nowrap;font-size:9px;letter-spacing:.14em;color:var(--dimmer);border:1px solid var(--cardhair);border-radius:3px;padding:3px 7px}
 .eu button.on{color:var(--bronze);border-color:var(--bronze)}
 .srch{display:grid;grid-template-columns:1fr auto;gap:8px}
 .srch .btn{margin:0;padding:0 16px;width:auto;display:flex;align-items:center;justify-content:center;line-height:1}
 .srch .fld+.btn{height:36px}
+.srch .plus{width:44px;padding:0;font-size:22px;letter-spacing:0}
 .pfoot{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--hair)}
 .pfoot .btn{margin:0}
 .btn:disabled{opacity:.3;cursor:default}
 .radd{margin-top:12px}
-.pgbody>.btn,.pgcard>.btn,.fgrid+.btn{margin-top:16px}
+.sheet .pgbody>.btn,.sheet .pgcard>.btn,.sheet .fgrid+.btn,.sheet .srch+.btn{margin-top:16px}
+.srows+.tiny{margin-top:9px}
+html.standalone .sheet.full{height:100vh}
+html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
+.sheet.fit.full{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+.sheet.fit.full.scroll .pgbody{padding-bottom:28px}
 .stat{margin-top:10px;font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--dim); text-align:center;min-height:1.5em;text-transform:uppercase}
 .stat.err{color:var(--alert)}
 .src{margin-top:12px;font-family:var(--serif);font-size:9px;letter-spacing:.16em;color:var(--dimmer);text-align:center}
@@ -388,6 +444,16 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .qper{font-family:var(--serif);font-size:10.5px;letter-spacing:.08em;line-height:1.5;color:var(--dimmer);text-align:center}
 .qty .mpick{margin:0}
 .qty .qfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.qty .qfoot .duo{margin:0}
+.qlab{flex:1;min-height:0;overflow:auto;scrollbar-width:none;border-top:1px solid var(--cardline)}
+.lrow{display:grid;grid-template-columns:1fr 92px 92px;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--hair)}
+.lrow span{font-size:14px;color:var(--tx)}
+.lrow b{font-weight:400;font-family:var(--serif);font-size:12.5px;color:var(--champ);text-align:right;font-variant-numeric:tabular-nums}
+.lrow.lsub span{padding-left:12px;font-size:13px;color:var(--dim)}
+.lrow.lsub b{color:var(--dim)}
+.lhead b{font-size:9.5px;letter-spacing:.14em;color:var(--dimmer)}
+.lday{border-bottom:none;border-top:1px solid var(--cardline)}
+.lday span{font-family:var(--serif);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 .qfoot .btn{margin:0}
 .qrow{display:grid;grid-template-columns:54px 1fr 54px;gap:8px}
 .qrow button{font-size:32px}
@@ -426,7 +492,7 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
   .tune::before{display:none}
 }
 html[data-theme=light]{--bg:#f2f2f7;--surf:#fff;--card:#fff;--card2:#f2f2f7;--line:#c6c6c8;--hair:rgba(60,60,67,.16); --cardline:rgba(60,60,67,.16);--cardhair:rgba(60,60,67,.1);--tx:#000;--dim:rgba(60,60,67,.62);--dimmer:rgba(60,60,67,.38); --bronze:#007aff;--pb:#007aff;--champ:#000;--alert:#ff9500;--pb-amber:#ff9500;--red:#ff3b30;--tint:rgba(0,122,255,.1);--fill:rgba(118,118,128,.12)}
-html[data-theme=dark]{--bg:#000;--surf:#1c1c1e;--card:#1c1c1e;--card2:#2c2c2e;--line:#38383a;--hair:rgba(84,84,88,.55); --cardline:rgba(84,84,88,.55);--cardhair:rgba(84,84,88,.35);--tx:#fff;--dim:rgba(235,235,245,.62);--dimmer:rgba(235,235,245,.34); --bronze:#0a84ff;--pb:#0a84ff;--champ:#fff;--alert:#ff9f0a;--pb-amber:#ff9f0a;--red:#ff453a;--tint:rgba(10,132,255,.18);--fill:rgba(118,118,128,.24)}
+html[data-theme=dark]{--bg:#000;--surf:#1c1c1e;--card:#1c1c1e;--card2:#2c2c2e;--line:#3a3a3c;--hair:#2c2c2e; --cardline:#3a3a3e;--cardhair:#2e2e32;--tx:#dcdce2;--dim:#a4a4ae;--dimmer:#94949e; --bronze:#4c9ef5;--pb:#4c9ef5;--champ:#e8e8ed;--alert:#f0a43a;--pb-amber:#f0a43a;--red:#ff6b62;--tint:rgba(76,158,245,.16);--fill:rgba(118,118,128,.22)}
 html.ios{--serif:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;--ui:var(--serif);--mono:var(--serif);--on:#fff}
 html.ios body::before,html.ios body::after,html.ios .crt-glow,html.ios .crt-lines,html.ios .roll,html.ios .uistatic,
 html.ios .sheet::before,html.ios .tune::before,html.ios .scanbox::after,html.ios .spgo.on::after{display:none}
@@ -481,6 +547,8 @@ function applyTheme(t){
 }
 try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'crt'); }catch(e){ applyTheme('crt'); }
 document.documentElement.classList.add('booting');
+/* The home-screen app sizes its viewport short of the glass; 100vh is the whole screen there. */
+if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.documentElement.classList.add('standalone');
 </script>
 <div class="splash" id="splash">
   <div class="sphead">
@@ -519,6 +587,10 @@ document.documentElement.classList.add('booting');
     <feTurbulence id="uiwarpNoise" type="fractalNoise" baseFrequency="0.002 0.09" numOctaves="2" seed="7" result="n"/>
     <feDisplacementMap id="uiwarpDisp" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
   </filter>
+  <filter id="uiwarpS" x="-30%" y="-12%" width="160%" height="124%" color-interpolation-filters="sRGB">
+    <feTurbulence id="uiwarpSNoise" type="fractalNoise" baseFrequency="0.002 0.09" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap id="uiwarpSDisp" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
 </svg>
 <div class="crt-glow" aria-hidden="true"></div>
 <div class="crt-lines" aria-hidden="true"></div>
@@ -526,7 +598,7 @@ document.documentElement.classList.add('booting');
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.24.24';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.24.47';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -547,7 +619,7 @@ const cleanName=n=>String(n||'').replace(/[^\w .'-]/g,'').replace(/\s+/g,' ').tr
 
 function blankProfile(){
   return {goal:Object.assign({},DEF_GOAL), meals:DEF_MEALS.map(m=>Object.assign({},m)),
-          foods:[], combos:[], days:{}, hit:{}, del:{}, at:0, ge:0, me:0, pid:''};
+          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, at:0, ge:0, me:0, pid:''};
 }
 function cleanX(x){
   const o={};
@@ -565,7 +637,7 @@ function cleanFood(x){
 function cleanEntry(x){
   const f=cleanFood(x); if(!f) return null;
   return {id:f.id, fid:x.fid?String(x.fid).slice(0,24):'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x,
-    q:orD(num(x.q,0.001,5000),1), w:x.w==='s'?'s':'g', m:String(typeof x.m==='number'?'blds'[x.m]||'s':x.m||'s').slice(0,24),
+    q:orD(num(x.q,0.001,5000),1), w:['s','h','g'].includes(x.w)?x.w:'g', m:String(typeof x.m==='number'?'blds'[x.m]||'s':x.m||'s').slice(0,24),
     t:orD(num(x.t,0,1e13),0), e:orD(num(x.e,0,1e13),0)};
 }
 /* A saved meal: a name and the foods in it, each a full snapshot with its amount. */
@@ -601,6 +673,8 @@ function cleanProfile(p){
     if(v.length) o.days[d]=v;
   });
   Object.keys(p.hit||{}).sort().forEach(d=>{ const h=p.hit[d]; if(DATE_RE.test(d)&&h) o.hit[d]={k:!!h.k,p:!!h.p}; });
+  Object.keys(p.wt||{}).sort().forEach(d=>{ const w=p.wt[d], v=w&&num(w.v,0,500), t=w&&num(w.e,1,1e13);
+    if(DATE_RE.test(d) && v!==null && t) o.wt[d]={v:r1(v),e:t}; });                    // v 0: removed, kept so phones agree
   Object.keys(p.del||{}).sort().forEach(id=>{ const t=num(p.del[id],1,1e13); if(t) o.del[id]=t; });
   ['at','ge','me'].forEach(k=>{ o[k]=orD(num(p[k],0,1e13),0); });
   o.pid=String(p.pid||'').slice(0,24);
@@ -688,6 +762,15 @@ function sinceStart(){
   const days=Math.round((dObj(today())-dObj(k[0]))/864e5)+1;
   return days<7?'DAY '+days:'WEEK '+(Math.floor((days-1)/7)+1)+' \u00b7 DAY '+days;
 }
+/* ---------- weight: one reading a day ---------- */
+const wOf=d=>{ const w=P().wt[d]; return w && w.v>0 ? w.v : null; };
+function wAvg(end,n){ let s=0,c=0; for(let i=0;i<n;i++){ const v=wOf(shift(end,-i)); if(v){ s+=v; c++; } } return c?{a:s/c,c}:null; }
+function wLast(d){ for(let i=0;i<120;i++){ const x=shift(d,-i); if(wOf(x)) return x; } return ''; }
+/* The weight nearest a day: the latest on or before it, else the first after it. */
+function wNear(d){
+  const before=wLast(d); if(before) return wOf(before);
+  const after=Object.keys(P().wt).sort().find(x=>x>d && wOf(x)); return after?wOf(after):null;
+}
 /* "100 g", "250 ml", "1 bar (45 g)": a weight in the serving means log by weight. */
 function gramsOf(sv){
   const m=String(sv).match(/(\d+(?:[.,]\d+)?)\s*(g|ml)\b/i);
@@ -696,7 +779,7 @@ function gramsOf(sv){
 }
 function qtyTxt(e){
   const g=gramsOf(e.sv);
-  return g && e.w==='g' ? r1(e.q*g.n)+' '+g.u : (e.q===1?'':r1(e.q)+' \u00d7 ')+e.sv;
+  return g && e.w!=='s' ? r1(e.q*g.n)+' '+g.u : (e.q===1?'':r1(e.q)+' \u00d7 ')+e.sv;
 }
 
 /* ---------- merging ----------
@@ -725,6 +808,7 @@ function mergeProfile(a,b){
   Object.keys(Object.assign({},a.hit,b.hit)).forEach(d=>{
     const x=a.hit[d]||{}, y=b.hit[d]||{}; o.hit[d]={k:!!(x.k||y.k), p:!!(x.p||y.p)};
   });
+  Object.keys(Object.assign({},a.wt,b.wt)).forEach(d=>{ const x=a.wt[d], y=b.wt[d]; o.wt[d]=!x?y:!y?x:y.e>x.e?y:x; });
   o.at=Math.max(a.at,b.at);
   return cleanProfile(o);
 }
@@ -959,15 +1043,20 @@ function sfx(name){
 ['gesturestart','gesturechange','gestureend'].forEach(t=>
   document.addEventListener(t,e=>{ if(e.cancelable) e.preventDefault(); },{passive:false}));
 document.addEventListener('touchstart',e=>{ if(e.touches.length>1 && e.cancelable) e.preventDefault(); },{passive:false});
+/* A drag only scrolls something that has more to show: the page when it's longer than the
+   screen (and no sheet is up), or a list or form inside a sheet that overflows. */
 document.addEventListener('touchmove',e=>{
-  if(e.touches.length>1 || (document.body.classList.contains('locked') && !e.target.closest('.sheet'))){
-    if(e.cancelable) e.preventDefault();
+  if(e.touches.length<2) for(let n=e.target; n && n!==document.documentElement; n=n.parentElement){
+    if(n===document.body){ if(!n.classList.contains('locked') && n.scrollHeight>n.clientHeight+1) return; break; }
+    const oy=getComputedStyle(n).overflowY;
+    if((oy==='auto'||oy==='scroll') && n.scrollHeight>n.clientHeight+1) return;
   }
+  if(e.cancelable) e.preventDefault();
 },{passive:false});
 let LASTTAP=0;
 document.addEventListener('touchend',e=>{
   const now=Date.now();
-  if(now-LASTTAP<320 && e.cancelable && !e.target.closest('input,.qrow,.pct')) e.preventDefault();
+  if(now-LASTTAP<320 && e.cancelable && !e.target.closest('input,textarea,.qrow,.pct')) e.preventDefault();
   LASTTAP=now;
 },{passive:false});
 
@@ -984,34 +1073,41 @@ function watchSheets(){
   new MutationObserver(()=>lock(!!wrap.querySelector('.sheet:not(.out)'))).observe(wrap,{childList:true});
 }
 let HITIV=0, HITEND=0;
+/* Two copies of the warp on one timeline: full strength for panels, a quarter for buttons. */
+const WARPS=[['uiwarp',1],['uiwarpS',0.25]];
 function panelHitStop(){
   clearInterval(HITIV); clearTimeout(HITEND);
-  const disp=document.getElementById('uiwarpDisp'); if(disp) disp.setAttribute('scale',0);
+  WARPS.forEach(([id])=>{ const d=document.getElementById(id+'Disp'); if(d) d.setAttribute('scale',0); });
   document.querySelectorAll('.uistatic').forEach(x=>x.remove());
   document.querySelectorAll('.hit').forEach(x=>{ x.classList.remove('hit'); x.style.removeProperty('--gdur'); });
 }
-/* Contents torn through the displacement filter for a moment; any number of elements at once. */
-function panelHit(...els){
+/* Contents torn through the displacement filter for a moment. A second warp joins one
+   already running instead of cutting it short; wash adds the screen's static with it. */
+function warpEls(els,wash){
   els=els.filter(Boolean);
   if(!els.length || !fx() || document.hidden) return;
-  panelHitStop();
+  clearInterval(HITIV); clearTimeout(HITEND);
   const dur=Math.round(RND(190,260));
   els.forEach(el=>{ el.style.setProperty('--gdur',dur+'ms'); el.classList.add('hit'); });
-  const st=document.createElement('div');
-  st.className='uistatic'; st.style.setProperty('--gdur',dur+'ms');
-  document.body.appendChild(st);
+  if(wash && !document.querySelector('.uistatic')){
+    const st=document.createElement('div');
+    st.className='uistatic'; st.style.setProperty('--gdur',dur+'ms');
+    document.body.appendChild(st);
+  }
   const F=[[62,'0.006 0.20'],[16,'0.002 0.07'],[48,'0.008 0.26'],[9,'0.001 0.04'],
            [38,'0.005 0.17'],[6,'0.002 0.09'],[24,'0.007 0.22'],[3,'0.001 0.05'],
            [14,'0.004 0.13'],[0,'0.002 0.09']];
-  const disp=document.getElementById('uiwarpDisp'), noise=document.getElementById('uiwarpNoise');
   let i=0;
-  const step=()=>{ const f=F[i++]; if(!f) return;
-    disp.setAttribute('scale',f[0]); noise.setAttribute('baseFrequency',f[1]); noise.setAttribute('seed',Math.floor(RND(1,90))); };
+  const step=()=>{ const f=F[i++]; if(!f) return; const seed=Math.floor(RND(1,90));
+    WARPS.forEach(([id,k])=>{ document.getElementById(id+'Disp').setAttribute('scale',f[0]*k);
+      const n=document.getElementById(id+'Noise'); n.setAttribute('baseFrequency',f[1]); n.setAttribute('seed',seed); }); };
   step();
   HITIV=setInterval(step,Math.max(16,Math.round(dur/F.length)));
-  HITEND=setTimeout(()=>{ clearInterval(HITIV); disp.setAttribute('scale',0);
-    els.forEach(el=>{ el.classList.remove('hit'); el.style.removeProperty('--gdur'); }); st.remove(); },dur+30);
+  HITEND=setTimeout(panelHitStop,dur+30);
 }
+function panelHit(...els){ warpEls(els,true); }
+/* Just these elements, with no static wash over the rest of the screen. */
+function warp(...els){ warpEls(els,false); }
 function topSheet(){
   const l=document.querySelectorAll('#sheetWrap .sheet:not(.out)');
   return l.length?l[l.length-1]:null;
@@ -1060,6 +1156,7 @@ function popSheet(){
   const layers=wrap.querySelectorAll('.layer');
   if(!layers.length) return closeSheet();
   const box=layers[layers.length-1], sh=box.querySelector('.sheet');
+  if(SCAN.host && box.contains(SCAN.host)) stopScan();
   const under=[...wrap.querySelectorAll('.sheet')].filter(x=>x!==sh).pop();
   sfx('close');
   if(sh.classList.contains('full') && under && under.classList.contains('full')){ box.remove(); panelHit(under); return; }
@@ -1163,6 +1260,8 @@ function fuzzLoop(){
 
 const $=id=>document.getElementById(id);
 const BIN='<svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>';
+/* The keyboard's return key reads Search, and pressing it puts the keyboard away. */
+function searchKey(el,now){ el.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); el.blur(); if(now) now(el.value); } }; }
 const lastVeil=()=>[...document.querySelectorAll('#sheetWrap .veil')].pop();
 const mealById=id=>P().meals.find(m=>m.id===id);
 const mealOf=e=>mealById(e.m)?e.m:P().meals[0].id;     // entries from a removed section land in the first
@@ -1178,13 +1277,13 @@ function picker(id,items,on){
   return '<div class="mpick" id="'+id+'">'+items.map(([v,l])=>
     '<button data-v="'+esc(v)+'" class="'+(v===on?'on':'')+'">'+esc(l)+'</button>').join('')+'</div>';
 }
-/* The pressed button flickers; whatever it changes below takes the interference. */
+/* The pressed button warps; whatever it changes below takes the interference with it. */
 function onPick(id,fn){
   const box=$(id);
   box.querySelectorAll('button').forEach(b=>b.onclick=()=>{
     if(b.classList.contains('on')) return;
     box.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-    if(fx()){ b.classList.remove('zap'); void b.offsetWidth; b.classList.add('zap'); }
+    warp(b);
     fn(b.dataset.v);
   });
 }
@@ -1201,7 +1300,7 @@ function arm(btn,fn){
 function panel(title,body,back,foot){
   return '<div class="veil" id="veil"></div><div class="sheet fit full scroll"><h3>'+title+
     '<button class="shx'+(back?' back':'')+'" id="pnX" aria-label="'+(back?'Back':'Close')+'">'+(back?'\u2039':'\u00d7')+'</button></h3>'+
-    '<div class="pgbody">'+body+'</div>'+(foot===undefined?'':'<div class="pfoot"'+(foot?'':' hidden')+'>'+foot+'</div>')+'</div>';
+    '<div class="pgbody">'+body+'</div>'+(foot?'<div class="pfoot">'+foot+'</div>':'')+'</div>';
 }
 function bindPanel(back){ $('veil').onclick=closeSheet; $('pnX').onclick=back||closeSheet; }
 function promptSheet(title,val,onSave){
@@ -1237,15 +1336,16 @@ function render(){
   tune($('rtt'),DAY!==today());
   paintBolt();
   document.body.classList.toggle('selecting',!!SEL);
-  const mac=(l,v,g,met,over)=>'<div class="mac'+(met?' met':'')+'"><span class="ml">'+l+'</span>'+segs(v,g,14,over)+
-    '<span class="mv">'+Math.round(v)+'<i> / '+g+' G</i></span></div>';
+  const mac=(l,v,g,met,over)=>'<div class="mac'+(met?' met':'')+'"><span class="ml">'+l+'</span>'+segs(v,g,16,over)+
+    '<span class="mv"><b>'+Math.round(v)+'</b><i>/</i><i>'+g+'</i><i>G</i></span></div>';
   let h='<div class="card intake" id="intake" role="button" tabindex="0">'+
       '<h3>Intake'+(s.kHit&&s.pHit?'<span class="tick">TARGET MET</span>':'')+'<span class="chev">\u203a</span></h3>'+
       '<div class="kline"><span class="kc'+(s.over?' over':'')+'" id="kc">'+fmt(t.k)+'</span><span class="kof">/ '+fmt(T.k)+' KCAL</span>'+
       '<span class="krem'+(rem<0?' over':'')+'"><span class="rv">'+(rem<0?'+':'')+fmt(Math.abs(rem))+'</span>'+
       '<span class="rl">'+(rem<0?'OVER':'REMAINING')+'</span></span></div>'+
       segs(t.k,T.k,24,s.over)+
-      '<div class="macros">'+mac('PROT',t.p,T.p,s.pHit,false)+mac('CARB',t.c,T.c,false,t.c>T.c*1.1)+mac('FAT',t.f,T.f,false,t.f>T.f*1.1)+'</div></div>';
+      '<div class="macros">'+mac('PROTEIN',t.p,T.p,s.pHit,false)+mac('CARBS',t.c,T.c,false,t.c>T.c*1.1)+mac('FAT',t.f,T.f,false,t.f>T.f*1.1)+'</div></div>'+
+      weightCard();
   const all=entries(), src={};
   P().meals.forEach(m=>{
     const es=all.filter(e=>mealOf(e)===m.id), shut=!!DB.fold[m.id];
@@ -1271,6 +1371,7 @@ function render(){
   const v=$('main');
   v.innerHTML=h;
   $('intake').onclick=openBreakdown;
+  $('wcard').onclick=openWeight;
   v.querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.fold, shut=!DB.fold[id];
     if(shut) DB.fold[id]=true; else delete DB.fold[id];
@@ -1303,8 +1404,8 @@ function render(){
   const f=v.querySelector('.fi.fresh');
   if(f){ FRESH.clear(); f.scrollIntoView({block:'nearest',behavior:calm()?'auto':'smooth'}); }
 }
-/* Re-render with the named sections held at their old height while only they take the
-   interference, then glide them to the new height; the sections below follow in step. */
+/* Re-render with the named sections held at their old height while only they warp, then
+   glide them to the new height; the sections below follow in step. */
 function renderMorph(...mids){
   const card=id=>$('main').querySelector('.meal[data-m="'+id+'"]');
   const before=mids.map(id=>{ const c=card(id); return c?c.offsetHeight:0; });
@@ -1319,7 +1420,7 @@ function renderMorph(...mids){
       c.removeEventListener('transitionend',done); c.classList.remove('morph'); c.style.height=''; };
     c.addEventListener('transitionend',done);
   });
-  panelHit(...cards);
+  warp(...cards);
 }
 /* Collapse or open a section by animating its contents between their height and none. */
 function fold(card,shut){
@@ -1373,9 +1474,9 @@ function bindHold(el,fn){
 /* ---------- selecting several entries to copy to another day or delete ---------- */
 let SEL=null;
 const mealCards=()=>[...$('main').querySelectorAll('.meal')];
-function startSelect(ids){ SEL=new Set(ids); sfx('open'); render(); panelHit(...mealCards()); tune($('selbar'),true); }
+function startSelect(ids){ SEL=new Set(ids); sfx('open'); render(); warp(...mealCards()); tune($('selbar'),true); }
 function dropSelect(){ SEL=null; $('selDel').disarm(); tune($('selbar'),false); }
-function endSelect(){ dropSelect(); render(); panelHit(...mealCards()); }
+function endSelect(){ dropSelect(); render(); warp(...mealCards()); }
 function pickEntries(ids){
   const all=ids.every(id=>SEL.has(id));
   ids.forEach(id=>all?SEL.delete(id):SEL.add(id));
@@ -1437,9 +1538,123 @@ function tune(el,on){
     el.tt=setTimeout(()=>{ el.hidden=true; el.classList.remove('out'); },340);
   }
 }
-function goDay(d){
+/* Arrows and Return to Today warp the day; a pick from the calendar brings the full static. */
+function goDay(d,wash){
   DAY=d; FOLLOW=d===today();
-  dropSelect(); closeSheet(); render(); panelHit($('main'),$('rtt'));
+  dropSelect(); closeSheet(); render();
+  (wash?panelHit:warp)($('main'),$('rtt'),$('dCal'));
+}
+
+/* ---------- weight ----------
+   The dashboard card: latest reading, the fortnight's shape, and its average against the
+   fortnight before. The Weight screen graphs a fortnight; tapping the graph picks a day to
+   log or correct, and the arrows page back through earlier fortnights. */
+function wChange(end){
+  const a=wAvg(end,14), b=wAvg(shift(end,-14),14);
+  return a && b ? a.a-b.a : null;
+}
+const signed=v=>v===null?'\u2014':(v>0?'\u25b2 ':v<0?'\u25bc ':'')+Math.abs(r1(v)).toFixed(1)+' KG';
+const fortnight=end=>[...Array(14)].map((_,i)=>{ const d=shift(end,i-13); return {k:d, lab:dObj(d).getDate(), v:wOf(d)}; });
+/* A month's average from the days logged in it. */
+function mAvg(ym){ let s=0,c=0; Object.keys(P().wt).forEach(d=>{ if(d.slice(0,7)===ym && wOf(d)){ s+=wOf(d); c++; } }); return c?{a:s/c,c}:null; }
+const ymShift=(ym,n)=>{ const d=new Date(+ym.slice(0,4),+ym.slice(5,7)-1+n,1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); };
+const months=end=>[...Array(6)].map((_,i)=>{ const k=ymShift(end,i-5), m=mAvg(k); return {k, lab:MON[+k.slice(5,7)-1].slice(0,3).toUpperCase(), v:m?r1(m.a):null}; });
+function weightCard(){
+  const t=today(), d=wLast(t), avg=wAvg(t,14);
+  return '<div class="card wcard" id="wcard" role="button" tabindex="0"><h3>Weight<span class="chev">\u203a</span></h3>'+
+    '<div class="wline"><div><span class="wv">'+(d?wOf(d).toFixed(1)+'<i> KG</i>':'\u2014')+'</span>'+
+      '<span class="ws">'+(!d?'TAP TO LOG':d===t?'TODAY':d===shift(t,-1)?'YESTERDAY':shortDay(d))+'</span></div>'+
+    plot(fortnight(t),'',150,40,true)+
+    '<div class="wa"><span>14-DAY AVG</span><b>'+(avg?avg.a.toFixed(1)+' KG':'\u2014')+'</b><span>'+signed(wChange(t))+'</span></div></div></div>';
+}
+/* A line through the points that have a value, the average dashed across, and (full size)
+   a scale, labels and a guide that marks the selected point. */
+const PL={L:34,R:14,T:12,B:22};
+function plot(pts,sel,W,H,mini){
+  const vals=pts.map(p=>p.v), have=vals.filter(Boolean), n=pts.length;
+  if(mini && have.length<2) return '<svg class="wg mini" viewBox="0 0 '+W+' '+H+'"></svg>';
+  const lo=have.length?Math.min(...have):70, hi=have.length?Math.max(...have):80, pad=Math.max(0.4,(hi-lo)*0.25), mn=lo-pad, mx=hi+pad;
+  const L=mini?3:PL.L, R=mini?3:PL.R, Tp=mini?4:PL.T, B=mini?4:PL.B;
+  const x=i=>L+i*(W-L-R)/(n-1), y=v=>Tp+(mx-v)*(H-Tp-B)/(mx-mn), avg=have.length?have.reduce((s,v)=>s+v,0)/have.length:null;
+  const pts2=vals.map((v,i)=>v?[x(i),y(v)]:null).filter(Boolean), si=pts.findIndex(p=>p.k===sel);
+  let s='<svg class="wg'+(mini?' mini':'')+'" viewBox="0 0 '+W+' '+H+'">';
+  if(!mini){
+    [mx-pad,(mn+mx)/2,mn+pad].forEach(v=>{ s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v.toFixed(1)+'</text>'; });
+    pts.forEach((p,i)=>{ s+='<text data-k="'+p.k+'" class="'+(p.k===sel?'on':p.k===today()?'now':'')+'" x="'+x(i)+'" y="'+(H-6)+'" text-anchor="middle">'+p.lab+'</text>'; });
+    s+='<line class="guide" x1="'+x(Math.max(0,si))+'" x2="'+x(Math.max(0,si))+'" y1="'+Tp+'" y2="'+(H-B)+'"'+(si<0?' visibility="hidden"':'')+'/>';
+  }
+  if(avg!==null && have.length>1) s+='<line class="avg" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(avg)+'" y2="'+y(avg)+'"/>'+
+    (mini?'':'<text class="avgt" x="'+(W-R)+'" y="'+(y(avg)-5)+'" text-anchor="end">AVG '+avg.toFixed(1)+'</text>');
+  if(pts2.length>1) s+='<polyline class="ln" points="'+pts2.map(p=>p.map(n=>n.toFixed(1)).join(',')).join(' ')+'"/>';
+  vals.forEach((v,i)=>{ if(v) s+='<circle data-k="'+pts[i].k+'" class="'+(pts[i].k===sel?'dot on':'dot')+'" cx="'+x(i)+'" cy="'+y(v)+'" r="'+(mini?2:pts[i].k===sel?5.5:3.5)+'"/>'; });
+  return s+'</svg>';
+}
+/* Move the selection on a drawn graph without redrawing it, so a finger can keep sliding. */
+function markPlot(svg,k){
+  const lab=svg.querySelector('text[data-k="'+k+'"]'), g=svg.querySelector('.guide');
+  svg.querySelectorAll('text[data-k]').forEach(t=>t.classList.toggle('on',t===lab));
+  svg.querySelectorAll('.dot').forEach(c=>{ const on=c.dataset.k===k; c.classList.toggle('on',on); c.setAttribute('r',on?5.5:3.5); });
+  if(lab){ g.setAttribute('x1',lab.getAttribute('x')); g.setAttribute('x2',lab.getAttribute('x')); g.removeAttribute('visibility'); }
+}
+const WT={mode:'d', end:'', sel:'', mend:'', msel:'', drag:false};
+function openWeight(){
+  sfx('open');
+  const t=today();
+  WT.mode='d'; WT.sel=DAY<=t?DAY:t; WT.end=t; WT.mend=WT.msel=t.slice(0,7);
+  while(WT.sel<shift(WT.end,-13)) WT.end=shift(WT.end,-14);
+  setSheet(panel('Weight',picker('wMode',[['d','14 DAYS'],['m','MONTHS']],'d')+'<div id="wtBody"></div>'));
+  bindPanel();
+  onPick('wMode',v=>{ WT.mode=v; drawWeight(); warp($('wtBody')); });
+  drawWeight();
+}
+/* Everything for the current range; selecting a point later only touches the graph marks,
+   the stats and the controls below it. */
+function drawWeight(){
+  const m=WT.mode==='m', t=today(), pts=m?months(WT.mend):fortnight(WT.end), last=m?WT.mend>=t.slice(0,7):WT.end>=t;
+  const first=pts[0].k, lastK=pts[pts.length-1].k, name=k=>m?MON[+k.slice(5,7)-1].slice(0,3).toUpperCase()+' '+k.slice(2,4):shortDay(k);
+  $('wtBody').innerHTML='<div class="wnav"><button class="harr" id="wPrev" aria-label="Earlier">\u2039</button>'+
+      '<span>'+name(first)+' \u2013 '+name(lastK)+'</span><button class="harr" id="wNext" aria-label="Later"'+(last?' disabled':'')+'>\u203a</button></div>'+
+    '<div class="wstats" id="wtStats"></div><div class="wgbox" id="wtGraph">'+plot(pts,m?WT.msel:WT.sel,346,190,false)+'</div><div id="wtCtl"></div>';
+  const page=n=>{
+    if(m){ WT.mend=n>0?(ymShift(WT.mend,6)>t.slice(0,7)?t.slice(0,7):ymShift(WT.mend,6)):ymShift(WT.mend,-6); WT.msel=WT.mend; }
+    else { WT.end=n>0?(shift(WT.end,14)>t?t:shift(WT.end,14)):shift(WT.end,-14); WT.sel=WT.end; }
+    drawWeight(); warp($('wtBody'));
+  };
+  $('wPrev').onclick=()=>page(-1); $('wNext').onclick=()=>page(1);
+  const box=$('wtGraph'), svg=box.querySelector('svg');
+  const pick=ev=>{ const r=svg.getBoundingClientRect(), n=pts.length;
+    const i=Math.max(0,Math.min(n-1,Math.round(((ev.clientX-r.left)*346/r.width-PL.L)/((346-PL.L-PL.R)/(n-1))))), k=pts[i].k;
+    if(m ? k===WT.msel : (k===WT.sel || k>t)) return;
+    m?WT.msel=k:WT.sel=k; markPlot(svg,k); paintW(); };
+  box.onpointerdown=ev=>{ WT.drag=true; box.setPointerCapture(ev.pointerId); pick(ev); };
+  box.onpointermove=ev=>{ if(WT.drag) pick(ev); };
+  box.onpointerup=box.onpointercancel=()=>{ WT.drag=false; };
+  paintW();
+}
+function paintW(){
+  const stat=(l,v)=>'<div><span>'+l+'</span><b>'+v+'</b></div>';
+  if(WT.mode==='m'){
+    const a=mAvg(WT.msel), b=mAvg(ymShift(WT.msel,-1)), days=new Date(+WT.msel.slice(0,4),+WT.msel.slice(5,7),0).getDate();
+    $('wtStats').innerHTML=stat('MONTH AVG',a?a.a.toFixed(1)+' KG':'\u2014')+stat('VS MONTH BEFORE',signed(a&&b?a.a-b.a:null))+stat('LOGGED',(a?a.c:0)+' / '+days);
+    $('wtCtl').innerHTML='<div class="wsel">'+MON[+WT.msel.slice(5,7)-1].toUpperCase()+' '+WT.msel.slice(0,4)+'</div>'+
+      '<div class="pgnote">Each point is that month\u2019s average from the days logged. Log or edit a day under 14 DAYS.</div>';
+    return;
+  }
+  const end=WT.end, sel=WT.sel, avg=wAvg(end,14), v=wOf(sel), start=v||wNear(sel);   // a starting weight to nudge
+  $('wtStats').innerHTML=stat('14-DAY AVG',avg?avg.a.toFixed(1)+' KG':'\u2014')+stat('VS PREVIOUS 14',signed(wChange(end)))+stat('LOGGED',(avg?avg.c:0)+' / 14');
+  $('wtCtl').innerHTML='<div class="wsel">'+longDate(sel).toUpperCase()+(v?'':' \u00b7 NOT LOGGED')+'</div>'+
+    '<div class="qrow"><button id="wDn" aria-label="Less">\u2212</button>'+
+      '<input class="bignum" id="wV" type="number" inputmode="decimal" step="0.1" placeholder="kg" value="'+(start?start.toFixed(1):'')+'">'+
+      '<button id="wUp" aria-label="More">+</button></div><div class="qunit">KG</div>'+
+    '<div class="duo"><button class="btn" id="wGo">'+(v?'[ UPDATE ]':'[ SAVE ]')+'</button>'+
+      (v?'<button class="btn ghost" id="wDel">[ REMOVE ]</button>':'<span></span>')+'</div>';
+  const V=$('wV'), step=d=>{ const n=r1((+V.value||start||0)+d*0.1); if(n>0) V.value=n.toFixed(1); };
+  $('wDn').onclick=()=>step(-1); $('wUp').onclick=()=>step(1);
+  V.onfocus=()=>V.select();
+  const set=val=>{ P().wt[sel]={v:val,e:Date.now()}; touch(); render(); drawWeight(); };
+  $('wGo').onclick=()=>{ const n=num(V.value,20,400); if(n===null){ sfx('nope'); return toast('ENTER A WEIGHT IN KG'); }
+    V.blur(); set(r1(n)); sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); };
+  if(v) arm($('wDel'),()=>{ set(0); toast('WEIGHT REMOVED'); });
 }
 
 /* ---------- nutrition breakdown ---------- */
@@ -1448,7 +1663,7 @@ function openBreakdown(){
   sfx('open');
   setSheet(panel('Nutrition',picker('bdMode',[['1','DAY'],['7','7 DAYS'],['30','30 DAYS']],BD)+'<div id="bdBody"></div>'));
   bindPanel();
-  onPick('bdMode',v=>{ BD=v; paintBreakdown(); panelHit($('bdBody')); });
+  onPick('bdMode',v=>{ BD=v; paintBreakdown(); warp($('bdBody')); });
   paintBreakdown();
 }
 function paintBreakdown(){
@@ -1480,7 +1695,7 @@ const CAL={y:0,m:0,pick:null,who:''};
    it also offers the other profiles, and shows the chosen profile's logged days. */
 function openCalendar(pick,note,who){
   sfx('open');
-  CAL.pick=pick||goDay; CAL.who=DB.cur;
+  CAL.pick=pick||(d=>goDay(d,true)); CAL.who=DB.cur;
   const d=dObj(DAY); CAL.y=d.getFullYear(); CAL.m=d.getMonth();
   const names=Object.keys(DB.profiles).sort((a,b)=>a.localeCompare(b));
   setSheet('<div class="veil" id="veil"></div><div class="sheet">'+(note?'<div class="stat cnote">'+esc(note)+'</div>':'')+
@@ -1541,66 +1756,60 @@ function celebrate(d){
 /* =====================================================================
    Adding food
    ===================================================================== */
-const ADD={meal:'', tab:'', q:'', sq:'', results:[], newbc:''};
+const ADD={meal:'', tab:'', q:'', sq:'', results:[]};
 function openAdd(meal){
   ADD.meal=meal;
-  ADD.tab='recent';
+  ADD.tab='search';
   ADD.q=ADD.sq=''; ADD.results=[];
   sfx('open');
   setSheet(panel('Add food',
     picker('adMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),ADD.meal)+
-    picker('adTabs',[['recent','RECENT'],['saved','SAVED'],['scan','SCAN'],['search','SEARCH'],['new','NEW']],ADD.tab)+
-    '<div id="adBody"></div>',false,''));
+    picker('adTabs',[['search','SEARCH'],['saved','SAVED'],['scan','SCAN']],ADD.tab)+
+    '<div id="adBody"></div>'));
   bindPanel();
   onPick('adMeal',v=>ADD.meal=v);
-  onPick('adTabs',v=>{ stopScan(); ADD.tab=v; paintTab(); panelHit($('adBody')); });
+  onPick('adTabs',v=>{ stopScan(); ADD.tab=v; paintTab(); warp($('adBody')); });
   paintTab();
 }
 function paintTab(){
-  const b=$('adBody'), foot=topSheet().querySelector('.pfoot');
-  foot.hidden=ADD.tab!=='new';
-  foot.innerHTML='';
-  if(ADD.tab==='recent'){
-    const list=recentFoods();
-    b.innerHTML='<div class="rlist" id="rcList">'+(list.length?list.map((e,i)=>foodRow(e,i)).join(''):'<div class="stat">NOTHING LOGGED YET</div>')+'</div>';
-    b.querySelectorAll('.rm').forEach(r=>r.onclick=()=>{
-      const e=list[r.dataset.i], saved=P().foods.find(f=>f.id===e.fid);
-      openQty(saved||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''},{q:e.q, w:e.w});
-    });
+  const b=$('adBody');
+  if(ADD.tab==='search'){
+    b.innerHTML='<div class="srch"><input class="fld" id="osQ" type="search" enterkeyhint="search" placeholder="Search foods" autocomplete="off" value="'+esc(ADD.sq)+'">'+
+      '<button class="btn plus" id="nfAdd" aria-label="New food">+</button></div>'+
+      '<div class="rlist" id="rcList"></div><div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
+      '<div class="src">DATA: OPEN FOOD FACTS \u00b7 AUSTRALIAN PRODUCTS FIRST</div>';
+    $('osQ').oninput=e=>{ paintRecent(e.target.value); queueSearch(e.target.value); };
+    searchKey($('osQ'),v=>{ const q=v.trim().toLowerCase(); if(q.length>=3 && !SRCACHE.has(q)){ clearTimeout(SRT); runSearch(q); } });
+    $('nfAdd').onclick=()=>openNewFood({n:$('osQ').value.trim()});
+    paintRecent(ADD.sq);
+    paintResults();
   } else if(ADD.tab==='saved'){
-    b.innerHTML='<input class="fld" id="sfQ" type="search" placeholder="Filter foods and meals" autocomplete="off" value="'+esc(ADD.q)+'">'+
+    b.innerHTML='<input class="fld" id="sfQ" type="search" enterkeyhint="search" placeholder="Filter foods and meals" autocomplete="off" value="'+esc(ADD.q)+'">'+
       '<div class="rlist" id="sfList"></div>';
     const paint=()=>savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo);
     $('sfQ').oninput=e=>{ ADD.q=e.target.value; paint(); };
+    searchKey($('sfQ'));
     paint();
   } else if(ADD.tab==='scan'){
-    b.innerHTML='<div class="scanbox" id="scBox"><video id="scVid" playsinline muted autoplay></video>'+
-      '<div class="sfr"></div><div class="sln"></div>'+
-      '<div class="sidle">[ CAMERA OFF ]</div></div>'+
-      '<div class="stat" id="scSt"></div><div id="scRes"></div>'+
-      '<button class="btn" id="scGo">[ START CAMERA ]</button>'+
-      '<div class="src">DATA: OPEN FOOD FACTS</div>';
-    $('scGo').onclick=()=>SCAN.on?stopScan():startScan();
-    $('scVid').onplaying=()=>{ if(SCAN.on) $('scBox').classList.add('live'); };   // label clears only on real frames
-  } else if(ADD.tab==='search'){
-    b.innerHTML='<input class="fld" id="osQ" type="search" placeholder="Search foods" autocomplete="off" value="'+esc(ADD.sq)+'">'+
-      '<div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
-      '<div class="src">DATA: OPEN FOOD FACTS \u00b7 AUSTRALIAN PRODUCTS FIRST</div>';
-    $('osQ').oninput=e=>queueSearch(e.target.value);
-    paintResults();
-  } else {
-    b.innerHTML=foodForm({bc:ADD.newbc,x:{}});
-    foot.innerHTML='<button class="btn" id="nfGo" disabled>[ SAVE AND LOG ]</button>';
-    bindFoodForm(b,$('nfGo'));
-    $('nfGo').onclick=()=>{
-      const f=readFoodForm(b); if(!f) return;
-      ADD.newbc='';
-      b.querySelectorAll('input').forEach(i=>i.value='');
-      $('nfGo').disabled=true;
-      const saved=upsertFood(f); touch(); sfx('confirm');
-      openQty(saved,{});
-    };
+    scanView(b,lookupCode);
   }
+}
+/* A food by hand, opened from the + on the search bar (with whatever was typed as its name)
+   or from a barcode that found nothing. The form clears once the food is logged. */
+function openNewFood(f){
+  setSheet(panel('New food',foodForm(Object.assign({x:{}},f)),true,'<button class="btn" id="nfGo" disabled>[ SAVE AND LOG ]</button>'),true);
+  const box=topSheet();
+  lastVeil().onclick=box.querySelector('.shx').onclick=popSheet;
+  bindFoodForm(box,$('nfGo'));
+  $('nfGo').onclick=()=>{
+    const food=readFoodForm(box); if(!food) return;
+    box.querySelectorAll('input').forEach(i=>i.value='');
+    box.querySelectorAll('.eu').forEach(t=>{ const b=t.querySelector('button'); t.dataset.v=b.dataset.v;
+      t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
+    $('nfGo').disabled=true;
+    const saved=upsertFood(food); touch(); sfx('confirm');
+    openQty(saved,{});
+  };
 }
 function foodRow(f,i){
   return '<div class="ri"><button class="rm" data-i="'+i+'"><span class="rn">'+esc(f.n)+'</span>'+
@@ -1682,30 +1891,128 @@ function dropSaved(kind,id){
 }
 
 /* ---------- a food by hand ---------- */
+/* Nutrition panel rows in Australian label order: key, label, unit, sub-row. */
+const NP=[['k','Energy','kcal',0],['p','Protein','g',0],['f','Fat, total','g',0],['sf','\u2013 saturated','g',1],['tf','\u2013 trans','g',1],
+  ['pf','\u2013 polyunsaturated','g',1],['mf','\u2013 monounsaturated','g',1],['c','Carbohydrate','g',0],['su','\u2013 sugars','g',1],
+  ['fi','Dietary fibre','g',0],['na','Sodium','mg',0],['ch','Cholesterol','mg',0]];
+const npVal=(f,k)=>'kpcf'.includes(k)?f[k]:f.x[k];
 function foodForm(f){
   const v=x=>x===undefined||x===null?'':x;
-  const fld=(id,l,val)=>'<div><label class="flab" for="'+id+'">'+l+'</label>'+
-    '<input class="fld" id="'+id+'" type="number" inputmode="decimal" step="any" placeholder="0" value="'+v(val)+'"></div>';
-  return '<input type="hidden" id="ffBc" value="'+esc(f.bc||'')+'">'+
-    '<label class="flab" for="ffN">Name</label><input class="fld" id="ffN" maxlength="80" autocomplete="off" value="'+esc(f.n||'')+'" placeholder="e.g. Chicken breast, grilled">'+
-    '<label class="flab" for="ffS">Serving</label><input class="fld" id="ffS" maxlength="30" autocomplete="off" value="'+esc(f.sv||'')+'" placeholder="e.g. 100 g, 1 cup, 1 slice">'+
-    '<label class="flab" for="ffK">Energy per serving<span class="eu" id="ffU" data-v="k"><button type="button" data-v="k" class="on">KCAL</button><button type="button" data-v="j">KJ</button></span></label>'+
-    '<input class="fld" id="ffK" type="number" inputmode="decimal" step="any" placeholder="0" value="'+v(f.k)+'">'+
-    '<div class="fgrid g3">'+fld('ffp','Protein g',f.p)+fld('ffc','Carbs g',f.c)+fld('fff','Fat g',f.f)+'</div>'+
-    '<div class="flab fsec">Detail \u00b7 optional</div>'+
-    '<div class="fgrid">'+XN.map(([k,,s,u])=>fld('fx'+k,s+' '+u,f.x[k])).join('')+'</div>';
+  const tog=(id,items)=>'<span class="eu" id="'+id+'" data-v="'+items[0][0]+'">'+items.map(([k,l],i)=>'<button type="button" data-v="'+k+'"'+(i?'':' class="on"')+'>'+l+'</button>').join('')+'</span>';
+  const row=([k,l,unit,sub])=>{ const id='kpcf'.includes(k)?'ff'+k:'fx'+k;
+    return '<label class="nrow'+(sub?' nsub':'')+'" for="'+id+'"><span class="nl">'+l+'</span>'+
+      '<input class="fld" id="'+id+'" type="number" inputmode="decimal" step="any" placeholder="0" value="'+v(npVal(f,k))+'"><span class="nu">'+unit+'</span></label>'; };
+  return '<label class="flab" for="ffN">Name</label><input class="fld" id="ffN" maxlength="80" autocomplete="off" value="'+esc(f.n||'')+'" placeholder="e.g. Chicken breast, grilled">'+
+    '<div class="fgrid sw"><div><label class="flab" for="ffS">Serving</label><input class="fld" id="ffS" maxlength="30" autocomplete="off" value="'+esc(f.sv||'')+'" placeholder="e.g. 1 slice, 1 cup"></div>'+
+      '<div><label class="flab" for="ffW">Weight g</label><input class="fld" id="ffW" type="number" inputmode="decimal" step="any" placeholder="0"></div></div>'+
+    '<label class="flab" for="ffBc">Barcode</label><div class="srch"><input class="fld" id="ffBc" readonly placeholder="None" value="'+esc(f.bc||'')+'">'+
+      '<button class="btn" type="button" id="ffScan">[ SCAN ]</button></div>'+
+    '<button class="btn ghost fflabel" type="button" id="ffLabel">[ SCAN NUTRITION LABEL ]</button>'+
+    '<div class="flab fsec">Nutrition per'+tog('ffB',[['s','SERVING'],['h','100 G'],['1','1 G']])+'</div>'+
+    '<div class="ntab"><div class="nrow"><label class="nl" for="ffK">Energy</label>'+
+      '<input class="fld" id="ffK" type="number" inputmode="decimal" step="any" placeholder="0" value="'+v(f.k)+'">'+tog('ffU',[['k','KCAL'],['j','KJ']])+'</div>'+
+      NP.slice(1).map(row).join('')+'</div>';
 }
 /* The save button stays disabled until the food has a name and an energy value. */
+/* The save button stays disabled until the food has a name and an energy value. */
 function bindFoodForm(box,btn){
-  const U=box.querySelector('#ffU');
-  U.querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    U.dataset.v=b.dataset.v;
-    U.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-  });
+  box.querySelectorAll('.eu').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    if(t.dataset.v===b.dataset.v) return;
+    t.dataset.v=b.dataset.v;
+    t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+    warp(b);
+  }));
   const ready=()=>{ btn.disabled=!box.querySelector('#ffN').value.trim() || box.querySelector('#ffK').value===''; };
   box.oninput=ready;
+  box.querySelector('#ffScan').onclick=()=>scanInto(box,ready);
+  box.querySelector('#ffLabel').onclick=()=>scanLabel(box,ready);
   ready();
 }
+/* Scan a barcode onto the food being entered. If Open Food Facts knows it, anything not
+   yet filled in is filled from the label data there. */
+function scanInto(box,ready){
+  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Scan barcode<button class="shx back" id="bsBack" aria-label="Back">\u2039</button></h3>'+
+    '<div id="bsHost"></div></div>',true);
+  lastVeil().onclick=popSheet; $('bsBack').onclick=popSheet;
+  scanView($('bsHost'),async code=>{
+    scStat('LOOKING UP '+code+'\u2026');
+    let f=null; try{ f=await offLookup(code); }catch(e){}
+    popSheet();
+    box.querySelector('#ffBc').value=code;
+    if(!f){ sfx('confirm'); toast('BARCODE ADDED \u00b7 NOT IN OPEN FOOD FACTS'); return; }
+    if(!fillForm(box,Object.assign({basis:'s',unit:'k'},f),ready)){ sfx('confirm'); toast('BARCODE ADDED'); }
+  });
+  startScan();
+}
+/* Put label values into the form: name and serving only where still empty, and the numbers
+   only as a set, when no energy has been typed yet. Anything filled is marked, and the footer
+   asks whether it's right: CONFIRM keeps it, CLEAR puts the form back as it was. */
+function fillForm(box,f,ready){
+  const q=id=>box.querySelector('#'+id), snap=[...box.querySelectorAll('input.fld')].map(i=>[i,i.value]),
+    togs=[...box.querySelectorAll('.eu')].map(t=>[t,t.dataset.v]), filled=[];
+  const fill=(id,val)=>{ if(q(id).value==='' && val!==null && val!==undefined && val!==''){ q(id).value=val; filled.push(q(id)); } };
+  const setTog=(t,v)=>{ t.dataset.v=v; t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===v)); };
+  fill('ffN',f.n); fill('ffS',f.sv); fill('ffW',f.w);
+  const fresh=q('ffK').value==='';
+  if(fresh){
+    setTog(q('ffB'),f.basis); setTog(q('ffU'),f.unit);
+    fill('ffK',f.k); fill('ffp',f.p); fill('ffc',f.c); fill('fff',f.f); XN.forEach(([k])=>fill('fx'+k,f.x[k]));
+  }
+  if(!filled.length) return false;
+  filled.forEach(i=>i.classList.add('auto'));
+  const foot=box.querySelector('.pfoot');
+  [...foot.children].forEach(c=>c.hidden=true);
+  foot.insertAdjacentHTML('afterbegin','<div class="ask"><span>FILLED IN \u00b7 IS THIS CORRECT?</span>'+
+    '<div class="duo"><button class="btn ghost" id="askX">[ CLEAR ]</button><button class="btn" id="askOk">[ CONFIRM ]</button></div></div>');
+  const done=()=>{ filled.forEach(i=>i.classList.remove('auto')); foot.querySelector('.ask').remove(); [...foot.children].forEach(c=>c.hidden=false); ready(); };
+  $('askOk').onclick=()=>{ sfx('confirm'); done(); };
+  $('askX').onclick=()=>{ snap.forEach(([i,v])=>i.value=v); togs.forEach(([t,v])=>setTog(t,v)); done(); toast('CLEARED'); };
+  ready(); sfx('confirm');
+  return true;
+}
+/* The label is read by the phone itself: iPhone's Scan Text types what the camera sees into the
+   box (paste works too), and the rows are matched here. On an Australian panel the first number
+   on a row is per serving, the second per 100 g. */
+function scanLabel(box,ready){
+  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Scan label<button class="shx back" id="slBack" aria-label="Back">\u2039</button></h3>'+
+    '<div class="pgnote">Tap the box, choose <b>Scan Text</b> (the camera button above the keyboard, or tap and hold \u203a Scan Text) and point it at the nutrition panel. Or paste text copied from a photo.</div>'+
+    '<textarea class="fld lbl" id="slT" rows="7" placeholder="Nutrition information"></textarea>'+
+    '<button class="btn" id="slGo" disabled>[ FILL FORM ]</button></div>',true);
+  lastVeil().onclick=popSheet; $('slBack').onclick=popSheet;
+  const T=$('slT'); T.oninput=()=>$('slGo').disabled=!T.value.trim();
+  setTimeout(()=>T.focus(),200);
+  $('slGo').onclick=()=>{
+    const f=parseLabel(T.value);
+    if(!f){ sfx('nope'); return toast('NO NUTRITION ROWS FOUND \u2014 TRY AGAIN'); }
+    popSheet();
+    if(!fillForm(box,f,ready)) toast('NOTHING NEW TO FILL');
+  };
+}
+const NIP=[['k',/energy/],['p',/protein/],['sf',/satur/],['tf',/trans/],['pf',/poly/],['mf',/mono/],['f',/fat/],
+  ['su',/sugar/],['c',/carb/],['fi',/fib(re|er)/],['na',/sodium/],['ch',/cholest/]];
+function parseLabel(txt){
+  const rows={};
+  txt.split(/\n+/).forEach(l=>{
+    const low=l.toLowerCase().replace(/(\d),(\d)/g,'$1.$2'), hit=NIP.find(([,re])=>re.test(low));
+    if(!hit || rows[hit[0]]) return;
+    const k=hit[0], all=[...low.matchAll(/(\d+(?:\.\d+)?)\s*(kj|kcal|cal|mg|g)?/g)];
+    if(k==='k'){
+      const kj=all.filter(m=>m[2]==='kj'), kc=all.filter(m=>m[2]==='kcal'||m[2]==='cal');
+      const use=kj.length?kj:kc.length?kc:all;
+      if(use.length) rows.k={u:kc.length&&!kj.length?'k':'j', n:use.map(m=>+m[1])};
+      return;
+    }
+    const mg=k==='na'||k==='ch', n=all.map(m=>mg&&m[2]==='g'?+m[1]*1000:+m[1]);
+    if(n.length) rows[k]={n};
+  });
+  if(!rows.k || Object.keys(rows).length<2) return null;
+  const sm=txt.match(/serving size[:\s]*([^\n]+)/i), sv=sm?sm[1].trim().slice(0,30):'';
+  const col=sv?0:(rows.k.n.length>1?1:0), pick=r=>r?r.n[Math.min(col,r.n.length-1)]:null;
+  const x={}; XN.forEach(([key])=>{ const v=pick(rows[key]); if(v) x[key]=r1(v); });
+  return {sv, basis:sv?'s':'h', unit:rows.k.u, k:pick(rows.k), p:pick(rows.p), c:pick(rows.c), f:pick(rows.f), x};
+}
+/* Values can be typed per serving, per 100 g or per 1 g; the food is kept per serving,
+   with the serving's weight so it can be logged by weight too. */
 function readFoodForm(box){
   const g=id=>box.querySelector('#'+id).value.trim();
   const bad=(id,m)=>{ sfx('nope'); toast(m); box.querySelector('#'+id).focus(); return null; };
@@ -1714,83 +2021,106 @@ function readFoodForm(box){
   let k=g('ffK')===''?null:num(g('ffK'),0,40000);
   if(k===null) return bad('ffK','ENTER THE ENERGY');
   if(box.querySelector('#ffU').dataset.v==='j') k/=4.184;
-  if(k>9000) return bad('ffK','THAT ENERGY LOOKS TOO HIGH');
-  const f={n, sv:g('ffS')||'1 serving', k:r1(k), x:{}, bc:g('ffBc')};
-  for(const m of ['p','c','f']){ const v=num(g('ff'+m)||0,0,1500); if(v===null) return bad('ff'+m,'CHECK THE MACROS'); f[m]=r1(v); }
-  for(const [x] of XN){ const v=num(g('fx'+x)||0,0,100000); if(v===null) return bad('fx'+x,'CHECK THE DETAIL VALUES'); if(v) f.x[x]=r1(v); }
+  const txt=g('ffS'), w=g('ffW')===''?0:num(g('ffW'),0.1,5000);
+  if(w===null) return bad('ffW','CHECK THE WEIGHT');
+  const gw=w||(gramsOf(txt)||{}).n||0, basis=box.querySelector('#ffB').dataset.v;
+  if(basis!=='s' && txt && !gw) return bad('ffW','ENTER THE SERVING WEIGHT');
+  const sv=!txt?(gw?gw+' g':basis==='s'?'1 serving':'100 g'):w && !gramsOf(txt)?(txt+' ('+w+' g)').slice(0,30):txt;
+  const per=basis==='s'?1:(gw||100)/(basis==='h'?100:1);
+  if(k*per>9000) return bad('ffK','THAT ENERGY LOOKS TOO HIGH');
+  const f={n, sv, k:r1(k*per), x:{}, bc:g('ffBc')};
+  for(const m of ['p','c','f']){ const v=num(g('ff'+m)||0,0,1500); if(v===null) return bad('ff'+m,'CHECK THE MACROS'); f[m]=r1(v*per); }
+  for(const [x] of XN){ const v=num(g('fx'+x)||0,0,100000); if(v===null) return bad('fx'+x,'CHECK THE DETAIL VALUES'); if(v) f.x[x]=r1(v*per); }
   return f;
 }
-function openFoodEdit(food,after){
-  after=after||closeSheet;
-  setSheet(panel('Edit food',foodForm(food),true,
-    '<button class="btn" id="feGo">[ SAVE FOOD ]</button><button class="btn ghost" id="feDel">[ DELETE FOOD ]</button>'),true);
+/* Edit a food's name and label. A saved food is updated in place; one not saved yet (an
+   Open Food Facts result, say) is saved with the corrections. after gets the saved food. */
+function openFoodEdit(food,after,canDelete){
+  const saved=P().foods.includes(food);
+  setSheet(panel(saved?'Edit food':'Nutrition',foodForm(food),true,
+    '<button class="btn" id="feGo">[ SAVE FOOD ]</button>'+(saved && canDelete?'<button class="btn ghost" id="feDel">[ DELETE FOOD ]</button>':'')),true);
   const box=topSheet();
   lastVeil().onclick=box.querySelector('.shx').onclick=popSheet;
   bindFoodForm(box,$('feGo'));
   $('feGo').onclick=()=>{
     const f=readFoodForm(box); if(!f) return;
-    Object.assign(food,{n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x, bc:f.bc||food.bc, e:Date.now()});
-    touch(); sfx('confirm'); toast('FOOD UPDATED'); after();
+    const nf=saved?Object.assign(food,{n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x, bc:f.bc||food.bc, e:Date.now()})
+      :upsertFood(Object.assign(f,{bc:f.bc||food.bc}));
+    if(!saved) Object.assign(nf,{n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x});   // corrections win over any older copy
+    touch(); sfx('confirm'); toast('FOOD SAVED'); after(nf);
   };
-  arm($('feDel'),()=>{ dropSaved('food',food.id); toast('FOOD DELETED'); after(); });
+  if($('feDel')) arm($('feDel'),()=>{ dropSaved('food',food.id); toast('FOOD DELETED'); after(); });
 }
 
 /* ---------- how much: by weight when the serving has one, otherwise servings ---------- */
 /* Full screen, so the log button is always in view. Grams or servings when the
    serving has a weight; servings only when it does not. */
+/* Tapping a food opens its label: choose the section and the amount (servings, 100 g or
+   grams when the serving has a weight), and the panel shows that amount beside per 100 g.
+   EDIT NUTRITION corrects the food and redraws in place. */
 function openQty(food,o){
-  const e=o.entry, g=gramsOf(food.sv);
+  const e=o.entry, stack=!!topSheet(), base=totals(), T=targets();
+  if(e){ base.k-=e.k*e.q; base.p-=e.p*e.q; }
+  setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
+  const box=topSheet(), back=stack?popSheet:closeSheet;
+  lastVeil().onclick=back;
+  let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv);
   const st={q:e?e.q:(o.q||1), m:e?mealOf(e):ADD.meal, w:g?(e?e.w:(o.w||'g')):'s'};
-  const saved=P().foods.find(x=>x.id===(e?e.fid:food.id));
-  const stack=!!topSheet();
-  setSheet('<div class="veil"></div><div class="sheet fit full qty"><h3>'+esc(food.n)+
-    '<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
-    '<div class="qper">'+esc(('Per '+food.sv+' \u00b7 '+fmt(food.k)+' kcal \u00b7 P'+r1(food.p)+' C'+r1(food.c)+' F'+r1(food.f)).toUpperCase())+'</div>'+
-    picker('qMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
-    (g?picker('qUnit',[['g',g.u==='ml'?'MILLILITRES':'GRAMS'],['s','SERVINGS']],st.w):'<div class="qunit">SERVINGS</div>')+
-    '<div class="qrow"><button id="qDn" aria-label="Less">\u2212</button>'+
-      '<input class="bignum" id="qV" type="number" inputmode="decimal" step="any">'+
-      '<button id="qUp" aria-label="More">+</button></div>'+
-    '<div class="xled" id="qX"></div>'+
-    '<div class="qfoot"><button class="btn" id="qGo">'+(e?'[ UPDATE ]':'[ LOG IT ]')+'</button>'+
-    (e?'<button class="btn ghost" id="qDel">[ REMOVE ]</button>':'')+
-    (saved?'<button class="btn ghost" id="qEdit">[ EDIT SAVED FOOD ]</button>':'')+'</div></div>',stack);
-  const box=topSheet(), back=stack?popSheet:closeSheet, V=$('qV');
-  lastVeil().onclick=box.querySelector('.shx').onclick=back;
-  onPick('qMeal',v=>st.m=v);
-  const show=()=>{ V.value=r1(st.w==='g'?st.q*g.n:st.q); preview(); };
-  if(g) onPick('qUnit',v=>{ st.w=v; show(); });
-  const base=totals(); if(e){ base.k-=e.k*e.q; base.p-=e.p*e.q; }
-  const T=targets();
-  const preview=()=>{ const q=st.q;
-    $('qX').innerHTML='<div><span>Calories</span><b>'+fmt(food.k*q)+' kcal</b></div>'+
-      '<div><span>Protein</span><b>'+r1(food.p*q)+' g</b></div><div><span>Carbs</span><b>'+r1(food.c*q)+' g</b></div>'+
-      '<div><span>Fat</span><b>'+r1(food.f*q)+' g</b></div>'+
-      '<div class="xsum"><span>Day after</span><b>'+fmt(base.k+food.k*q)+' / '+fmt(T.k)+' \u00b7 P '+Math.round(base.p+food.p*q)+'</b></div>'; };
-  V.oninput=()=>{ const v=Math.max(0,+V.value||0); st.q=st.w==='g'?v/g.n:v; preview(); };
-  V.onfocus=()=>V.select();
-  const nudge=d=>{ const v=(+V.value||0)+d*(st.w==='g'?5:1); if(v>0){ V.value=r1(v); V.oninput(); } };
-  $('qDn').onclick=()=>nudge(-1);
-  $('qUp').onclick=()=>nudge(1);
-  show();
-  $('qGo').onclick=()=>{
-    if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
-    const now=Date.now(), was=e?mealOf(e):st.m;
-    const fd=o.save?upsertFood(food):food;
-    if(saved){ saved.u=saved.e=now; }
-    if(e) Object.assign(e,{q:st.q, w:st.w, m:st.m, e:now});
-    else {
-      const en={id:uid(), fid:fd.id, n:fd.n, sv:fd.sv, k:fd.k, p:fd.p, c:fd.c, f:fd.f, x:Object.assign({},fd.x),
-                q:st.q, w:st.w, m:st.m, t:now, e:now};
-      (P().days[DAY]=P().days[DAY]||[]).push(en);
-      FRESH=new Set([en.id]);
-    }
-    const hit=checkHits();
-    touch(); closeSheet(); setTimeout(()=>renderMorph(...new Set([was,st.m])),220);
-    if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(fd.k*st.q)+' KCAL'); }
+  const draw=()=>{
+    g=gramsOf(food.sv); if(!g) st.w='s';
+    box.innerHTML='<h3>'+esc(food.n)+'<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
+      '<div class="qper">SERVING \u00b7 '+esc(food.sv.toUpperCase())+'</div>'+
+      picker('qMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
+      (g?picker('qUnit',[['s','SERVINGS'],['h','100 '+g.u.toUpperCase()],['g',g.u==='ml'?'MILLILITRES':'GRAMS']],st.w):'<div class="qunit">SERVINGS</div>')+
+      '<div class="qrow"><button id="qDn" aria-label="Less">\u2212</button>'+
+        '<input class="bignum" id="qV" type="number" inputmode="decimal" step="any"><button id="qUp" aria-label="More">+</button></div>'+
+      '<div class="qlab" id="qX"></div>'+
+      '<div class="qfoot"><button class="btn" id="qGo">'+(e?'[ UPDATE ]':'[ LOG IT ]')+'</button>'+
+        (e?'<div class="duo"><button class="btn ghost" id="qEdit">[ EDIT NUTRITION ]</button><button class="btn ghost" id="qDel">[ REMOVE ]</button></div>'
+          :'<button class="btn ghost" id="qEdit">[ EDIT NUTRITION ]</button>')+'</div>';
+    box.querySelector('.shx').onclick=back;
+    const V=$('qV'), per={s:1, h:g?g.n/100:1, g:g?g.n:1};          // amount typed = servings x per[unit]
+    const paint=()=>{
+      const q=st.q, ref=g?100/g.n:1, amt=g?r1(q*g.n)+' '+g.u:(q===1?'1 serving':r1(q)+' servings');
+      const cell=(v,u)=>v>0?(u==='g'?r1(v):fmt(v))+' '+u:'\u2014';
+      $('qX').innerHTML='<div class="lrow lhead"><span></span><b>'+esc(amt.toUpperCase())+'</b><b>'+(g?'PER 100 '+g.u.toUpperCase():'PER SERVING')+'</b></div>'+
+        NP.map(([k,l,u,sub])=>{ const v=npVal(food,k)||0; if(sub && !v) return '';
+          return '<div class="lrow'+(sub?' lsub':'')+'"><span>'+l+'</span><b>'+cell(v*q,u)+'</b><b>'+cell(v*ref,u)+'</b></div>'+
+            (k==='k'?'<div class="lrow lsub"><span>\u2013 kilojoules</span><b>'+cell(v*q*4.184,'kJ')+'</b><b>'+cell(v*ref*4.184,'kJ')+'</b></div>':''); }).join('')+
+        '<div class="lrow lday"><span>Day after</span><b>'+fmt(base.k+food.k*q)+' / '+fmt(T.k)+'</b><b>P '+Math.round(base.p+food.p*q)+'</b></div>';
+    };
+    const show=()=>{ V.value=r1(st.q*per[st.w]); paint(); };
+    onPick('qMeal',v=>st.m=v);
+    if(g) onPick('qUnit',v=>{ st.w=v; show(); });
+    V.oninput=()=>{ st.q=Math.max(0,+V.value||0)/per[st.w]; paint(); };
+    V.onfocus=()=>V.select();
+    const nudge=d=>{ const v=(+V.value||0)+d*{s:1,h:0.5,g:5}[st.w]; if(v>0){ V.value=r1(v); V.oninput(); } };
+    $('qDn').onclick=()=>nudge(-1); $('qUp').onclick=()=>nudge(1);
+    show();
+    $('qGo').onclick=()=>{
+      if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
+      const now=Date.now(), was=e?mealOf(e):st.m, fd=o.save?upsertFood(food):food;
+      if(saved){ saved.u=saved.e=now; }
+      if(e) Object.assign(e,{q:st.q, w:st.w, m:st.m, e:now});
+      else {
+        const en={id:uid(), fid:fd.id, n:fd.n, sv:fd.sv, k:fd.k, p:fd.p, c:fd.c, f:fd.f, x:Object.assign({},fd.x), q:st.q, w:st.w, m:st.m, t:now, e:now};
+        (P().days[DAY]=P().days[DAY]||[]).push(en);
+        FRESH=new Set([en.id]);
+      }
+      const hit=checkHits();
+      touch(); closeSheet(); setTimeout(()=>renderMorph(...new Set([was,st.m])),220);
+      if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(fd.k*st.q)+' KCAL'); }
+    };
+    if(e) arm($('qDel'),()=>{ dropEntries([e.id]); closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); toast('REMOVED'); });
+    $('qEdit').onclick=()=>openFoodEdit(saved||food,nf=>{
+      const q0=g?st.q*g.n:0;                       // keep the same weight if the serving changes
+      saved=food=nf; o.save=false;
+      if(e){ Object.assign(e,{fid:nf.id, n:nf.n, sv:nf.sv, k:nf.k, p:nf.p, c:nf.c, f:nf.f, x:Object.assign({},nf.x), e:Date.now()}); touch(); render(); }
+      const g2=gramsOf(nf.sv); if(q0 && g2) st.q=q0/g2.n;
+      popSheet(); draw(); warp(box);
+    });
   };
-  if(e) arm($('qDel'),()=>{ dropEntries([e.id]); closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); toast('REMOVED'); });
-  if(saved) $('qEdit').onclick=()=>openFoodEdit(saved);
+  draw();
 }
 
 /* A saved meal: pick the section and how many servings, then everything in it is logged. */
@@ -1838,7 +2168,18 @@ function saveMeal(){
   });
 }
 /* ---------- barcodes: the browser's detector where there is one, ZXing on iPhone ---------- */
-const SCAN={on:false, stream:null, raf:0, zx:null};
+const SCAN={on:false, stream:null, raf:0, zx:null, host:null, cb:null};
+const sq=s=>SCAN.host && SCAN.host.querySelector(s);
+/* The camera view, drawn into host; every barcode read goes to cb. One camera at a time. */
+function scanView(host,cb){
+  stopScan();
+  host.innerHTML='<div class="scanbox"><video playsinline muted autoplay></video><div class="sfr"></div><div class="sln"></div>'+
+    '<div class="sidle">[ CAMERA OFF ]</div></div><div class="stat"></div><div class="scres"></div>'+
+    '<button class="btn scgo">[ START CAMERA ]</button><div class="src">DATA: OPEN FOOD FACTS</div>';
+  SCAN.host=host; SCAN.cb=cb;
+  sq('.scgo').onclick=()=>SCAN.on?stopScan():startScan();
+  sq('video').onplaying=()=>{ if(SCAN.on) sq('.scanbox').classList.add('live'); };   // label clears only on real frames
+}
 let ZXP=null;
 function loadZX(){
   return ZXP=ZXP||new Promise((res,rej)=>{
@@ -1848,22 +2189,22 @@ function loadZX(){
     document.head.appendChild(s);
   });
 }
-function scStat(t,err){ const el=$('scSt'); if(el){ el.textContent=t; el.classList.toggle('err',!!err); } }
+function scStat(t,err){ const el=sq('.stat'); if(el){ el.textContent=t; el.classList.toggle('err',!!err); } }
 function scPaint(on){
-  if(!$('scBox')) return;
-  $('scGo').textContent=on?'[ STOP CAMERA ]':'[ START CAMERA ]';
-  if(!on) $('scBox').classList.remove('live');
+  if(!sq('.scgo')) return;
+  sq('.scgo').textContent=on?'[ STOP CAMERA ]':'[ START CAMERA ]';
+  if(!on) sq('.scanbox').classList.remove('live');
 }
 const CAM={video:{facingMode:{ideal:'environment'}},audio:false};
 async function startScan(){
   if(!navigator.mediaDevices){ sfx('nope'); return scStat('NO CAMERA HERE \u2014 TRY SEARCH',true); }
-  $('scRes').innerHTML='';
+  sq('.scres').innerHTML='';
   let det=null;
   try{ det=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']}); }catch(e){}
   if(det){
     try{ SCAN.stream=await navigator.mediaDevices.getUserMedia(CAM); }
     catch(e){ sfx('nope'); return scStat('CAMERA BLOCKED \u2014 ALLOW IT IN SETTINGS',true); }
-    const v=$('scVid'); v.srcObject=SCAN.stream; v.play().catch(()=>{});
+    const v=sq('video'); v.srcObject=SCAN.stream; v.play().catch(()=>{});
     SCAN.on=true; scPaint(true); scStat('HOLD THE BARCODE IN THE FRAME');
     const loop=async()=>{
       if(!SCAN.on) return;
@@ -1874,12 +2215,12 @@ async function startScan(){
   }
   scStat('LOADING SCANNER\u2026');
   try{ await loadZX(); }catch(e){ sfx('nope'); return scStat('SCANNER DID NOT LOAD \u2014 TRY SEARCH',true); }
-  if(!$('scVid')) return;
+  if(!SCAN.host.isConnected) return;
   try{
     const Z=ZXing, hints=new Map([[Z.DecodeHintType.POSSIBLE_FORMATS,[Z.BarcodeFormat.EAN_13,Z.BarcodeFormat.EAN_8,Z.BarcodeFormat.UPC_A,Z.BarcodeFormat.UPC_E]]]);
     SCAN.zx=new Z.BrowserMultiFormatReader(hints,250);
     SCAN.on=true; scPaint(true); scStat('HOLD THE BARCODE IN THE FRAME');
-    await SCAN.zx.decodeFromConstraints(CAM,$('scVid'),r=>{ if(r && SCAN.on) gotCode(r.getText()); });
+    await SCAN.zx.decodeFromConstraints(CAM,sq('video'),r=>{ if(r && SCAN.on) gotCode(r.getText()); });
   }catch(e){ stopScan(); sfx('nope'); scStat('CAMERA BLOCKED \u2014 ALLOW IT IN SETTINGS',true); }
 }
 function stopScan(){
@@ -1893,7 +2234,7 @@ function gotCode(code){
   if(!SCAN.on) return;
   stopScan();
   try{ navigator.vibrate(50); }catch(e){}
-  lookupCode(code.replace(/\D/g,''));
+  SCAN.cb(code.replace(/\D/g,''));
 }
 function offMap(p){
   const n=p.nutriments||{};
@@ -1913,18 +2254,22 @@ function offMap(p){
     sv, k:r1(k), p:r1(m('proteins')), c:r1(m('carbohydrates')), f:r1(m('fat')), x, bc:String(p.code||'').replace(/\D/g,'')};
 }
 const OFF_FIELDS='code,product_name,generic_name,brands,serving_size,nutrition_data_per,nutriments';
+/* A barcode's product from Open Food Facts, mapped to a food, or null if it isn't there. */
+async function offLookup(code){
+  const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields='+OFF_FIELDS);
+  const j=r.ok?await r.json():null;
+  return j && j.status===1?offMap(j.product):null;
+}
 async function lookupCode(code){
   const saved=P().foods.find(f=>f.bc===code);
   if(saved){ sfx('confirm'); return openQty(saved,{}); }
   scStat('LOOKING UP '+code+'\u2026');
   try{
-    const r=await fetch('https://world.openfoodfacts.org/api/v2/product/'+code+'.json?fields='+OFF_FIELDS);
-    const j=r.ok?await r.json():null;
-    const f=j && j.status===1?offMap(j.product):null;
+    const f=await offLookup(code);
     if(f){ sfx('confirm'); scStat(''); return openQty(f,{save:true}); }
     sfx('nope'); scStat('NO MATCH FOR '+code,true);
-    $('scRes').innerHTML='<button class="btn ghost" id="scMan">[ ADD IT BY HAND ]</button>';
-    $('scMan').onclick=()=>{ ADD.newbc=code; ADD.tab='new'; $('adTabs').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v==='new')); paintTab(); };
+    sq('.scres').innerHTML='<button class="btn ghost">[ ADD IT BY HAND ]</button>';
+    sq('.scres button').onclick=()=>openNewFood({bc:code});
   }catch(e){ sfx('nope'); scStat('LOOKUP FAILED \u2014 CHECK THE CONNECTION',true); }
 }
 
@@ -1960,16 +2305,27 @@ async function runSearch(q){
 function showResults(out){
   const s=$('osSt'); if(!s) return;
   ADD.results=out||[];
-  s.textContent=!out?'SEARCH FAILED \u2014 CHECK THE CONNECTION':out.length?'':'NOTHING FOUND \u2014 TRY FEWER WORDS, OR ADD IT UNDER NEW';
+  s.textContent=!out?'SEARCH FAILED \u2014 CHECK THE CONNECTION':out.length?'':'NOTHING FOUND \u2014 TRY FEWER WORDS, OR TAP + TO ADD IT';
   s.classList.toggle('err',!out || !out.length);
   paintResults();
 }
 function paintResults(){
-  const L=$('osList');
-  L.innerHTML=ADD.results.slice(0,40).map((f,i)=>foodRow(f,i)).join('');
+  const L=$('osList'), list=ADD.results.slice(0,40);
+  L.innerHTML=(list.length?'<div class="lh">OPEN FOOD FACTS</div>':'')+list.map((f,i)=>foodRow(f,i)).join('');
   L.querySelectorAll('.rm').forEach(b=>b.onclick=()=>{
     const f=ADD.results[b.dataset.i], saved=f.bc && P().foods.find(x=>x.bc===f.bc);
     openQty(saved||f,saved?{}:{save:true});
+  });
+}
+/* Recent foods above the search results, narrowed by whatever has been typed. */
+function paintRecent(q){
+  const s=q.trim().toLowerCase(), all=recentFoods(), list=all.filter(e=>!s || e.n.toLowerCase().includes(s));
+  const L=$('rcList');
+  L.innerHTML=list.length?'<div class="lh">RECENT</div>'+list.map((e,i)=>foodRow(e,i)).join('')
+    :!all.length && !s?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
+  L.querySelectorAll('.rm').forEach(r=>r.onclick=()=>{
+    const e=list[r.dataset.i], saved=P().foods.find(f=>f.id===e.fid);
+    openQty(saved||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''},{q:e.q, w:e.w});
   });
 }
 
@@ -1996,7 +2352,12 @@ function openSettings(){
   $('stFd').onclick=openFoods;
   $('stSy').onclick=openSync;
   $('stDp').onclick=openDisplay;
-  $('stSn').onclick=()=>{ DB.sfx=!DB.sfx; save(); openSettings(); };
+  $('stSn').onclick=()=>{
+    DB.sfx=!DB.sfx; save();
+    $('stSn').querySelector('.srsub').textContent=DB.sfx?'ON':'OFF';
+    warp($('stSn'));
+    if(DB.sfx) sfx('confirm');
+  };
 }
 /* Calories are the target; each macro is a share of them, never more than 100% in all. */
 const THEMES={crt:'Terminal',light:'iOS light',dark:'iOS dark',auto:'iOS auto'};
@@ -2043,7 +2404,7 @@ function openTargets(){
     if(v==='g') Object.assign(g,{pg:T.p, cg:T.c, fg:T.f});
     else { Object.assign(g,{pp:S.pp, cp:S.cp, fp:S.fp});
       while(g.pp+g.cp+g.fp>100){ const k=['pp','cp','fp'].reduce((a,b)=>g[b]>g[a]?b:a); g[k]--; } }
-    g.mode=v; paint(); panelHit(...document.querySelectorAll('.pct'),$('tgSum'));
+    g.mode=v; paint(); warp(...document.querySelectorAll('.pct'),$('tgSum'));
   });
   document.querySelectorAll('.pct').forEach(r=>{
     const k=r.dataset.k, i=$('i'+k);
@@ -2194,11 +2555,12 @@ function switchProfile(n){
 }
 function openFoods(){
   sfx('open');
-  setSheet(panel('Saved foods & meals','<input class="fld" id="fdQ" type="search" placeholder="Filter foods and meals" autocomplete="off">'+
+  setSheet(panel('Saved foods & meals','<input class="fld" id="fdQ" type="search" enterkeyhint="search" placeholder="Filter foods and meals" autocomplete="off">'+
     '<div class="rlist" id="fdList"></div><div class="pgnote">Hold an item to rename, share or delete it. Save a meal by selecting logged foods on the dashboard.</div>',true));
   bindPanel(openSettings);
-  const paint=()=>savedList($('fdList'),$('fdQ').value,f=>openFoodEdit(f,openFoods),openCombo);
+  const paint=()=>savedList($('fdList'),$('fdQ').value,f=>openFoodEdit(f,openFoods,true),openCombo);
   $('fdQ').oninput=paint;
+  searchKey($('fdQ'));
   paint();
 }
 function openSync(){
