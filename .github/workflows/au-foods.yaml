@@ -1,0 +1,30 @@
+# Refreshes the Australian food list the Food Diary searches on the phone: Open Food Facts'
+# Australian products plus the generic foods of the Australian Food Composition Database.
+# Runs on the 1st of each month (about 3 am Sydney time), or any time from the Actions tab.
+name: Australian food list
+on:
+  schedule:
+    - cron: '0 17 1 * *'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install the spreadsheet reader
+        run: pip install openpyxl
+      - name: Build the list
+        run: python tools/build_au_foods.py
+      - name: Publish it
+        run: |
+          git config user.name "food-list-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add au-foods.json au-foods.v.json
+          git diff --cached --quiet || git commit -m "Australian food list $(date +%Y-%m-%d)"
+          git push
