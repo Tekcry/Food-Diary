@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.25.21">
+<meta name="app-version" content="2026.09.25.25">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -295,8 +295,9 @@ html,body,.pgbody,.qlab,.lbl{overscroll-behavior:none}
 .selbar .btn{margin:0;height:38px;padding:0 6px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
 .selhead{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}
 #selN{font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--champ)}
-.sellinks{display:flex;gap:16px}
-.sellink{font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--bronze);padding:6px 0}
+.sellinks{display:flex;gap:10px}
+.sellink{font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--bronze);padding:7px 12px; border:1px solid var(--cardline);border-radius:5px}
+.sellink:active{border-color:var(--bronze);color:var(--champ)}
 .lh{font-family:var(--serif);font-size:9.5px;letter-spacing:.18em;color:var(--bronze);margin:14px 0 2px}
 body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .cnote{margin:0 0 10px}
@@ -343,6 +344,11 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .fk{font-size:14px;min-width:5ch;text-align:right}
 .swipe{height:32px;margin-top:4px}
 .fi.grp .fnm::after{content:' \25b8';color:var(--dimmer);font-size:11px}
+.fiw.held .fi{border-color:var(--bronze);box-shadow:0 0 12px -4px var(--bronze)}
+.fiw.lifting{opacity:.3}
+.fiw.lifted{position:fixed;z-index:90;margin:0;pointer-events:none;transform:scale(1.03);filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
+.fiw.lifted .fi{border-color:var(--bronze);background:var(--card)}
+.dropline{position:fixed;z-index:89;height:3px;border-radius:2px;background:var(--bronze);box-shadow:0 0 10px var(--bronze);pointer-events:none}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
 .whobtn svg{width:27px;height:27px;stroke-width:1.1}
 .crton{position:fixed;inset:0;z-index:300;pointer-events:none}
@@ -408,6 +414,8 @@ html.resumed.booted header,html.resumed.booted #main{animation:none}
 .ask>span{text-align:center;font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--bronze)}
 .ask .duo{margin:0}
 .srch{display:grid;grid-template-columns:1fr auto;gap:8px}
+.srch.one{grid-template-columns:1fr}
+.srch .sbox .fld{min-height:44px}
 .srch .btn{margin:0;padding:0 16px;width:auto;display:flex;align-items:center;justify-content:center;line-height:1}
 .srch .fld+.btn{height:36px}
 .srch .plus{width:44px;padding:0;font-size:22px;letter-spacing:0}
@@ -662,7 +670,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.25.21';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.25.25';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -701,12 +709,14 @@ function cleanFood(x){
     x:cleanX(x.x), bc:x.bc?String(x.bc).replace(/\D/g,'').slice(0,20):'',
     u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0)};
 }
+const place=e=>e.o||e.t;                            // where an entry sits in its day
 function cleanEntry(x){
   const f=cleanFood(x); if(!f) return null;
   return {id:f.id, fid:x.fid?String(x.fid).slice(0,24):'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x,
     q:orD(num(x.q,0.001,5000),1), w:['s','h','g'].includes(x.w)?x.w:'g', m:String(typeof x.m==='number'?'blds'[x.m]||'s':x.m||'s').slice(0,24),
     t:orD(num(x.t,0,1e13),0), e:orD(num(x.e,0,1e13),0),
-    ...(x.g?{g:String(x.g).slice(0,24), gn:cleanLabel(x.gn)||'Combined'}:{})};   // logged as one combined item
+    ...(x.g?{g:String(x.g).slice(0,24), gn:cleanLabel(x.gn)||'Combined'}:{}),   // logged as one combined item
+    ...(num(x.o,1,1e13)?{o:num(x.o,1,1e13)}:{})};                               // its place in the day, once dragged
 }
 /* A saved meal: a name and the foods in it, each a full snapshot with its amount. */
 function cleanCombo(x){
@@ -871,7 +881,7 @@ function mergeProfile(a,b){
   const days={};
   [b,a].forEach(p=>Object.keys(p.days).forEach(d=>{ days[d]=days[d]||{}; p.days[d].forEach(e=>pick(days[d],e)); }));
   Object.keys(days).forEach(d=>{
-    const v=Object.values(days[d]).filter(e=>!gone(e)).sort((x,y)=>x.t-y.t || (x.id<y.id?-1:1));
+    const v=Object.values(days[d]).filter(e=>!gone(e)).sort((x,y)=>place(x)-place(y) || (x.id<y.id?-1:1));
     if(v.length) o.days[d]=v;
   });
   Object.keys(Object.assign({},a.hit,b.hit)).forEach(d=>{
@@ -1519,7 +1529,7 @@ function render(){
     v.querySelectorAll('.swipe').forEach(el=>bindSwipe(el,1,0.45,()=>copyMeal(el.dataset.meal,src[el.dataset.meal])));
     v.querySelectorAll('.fiw').forEach(el=>{
       const ids=idsOf(el), e=all.find(x=>x.id===ids[0]);
-      bindHold(el,()=>startSelect(ids));
+      bindLift(el,()=>startSelect(ids),ids);
       bindSwipe(el,-1,0.5,()=>{
         el.style.setProperty('--dx',el.offsetWidth+'px');
         el.style.height=el.offsetHeight+'px'; void el.offsetHeight;
@@ -1580,7 +1590,7 @@ function cloneTo(d,es,m,p){
   p=p||P();
   const now=Date.now(), has=id=>p.meals.some(x=>x.id===id), gs={};
   (p.days[d]=p.days[d]||[]).push(...es.map((e,i)=>Object.assign({},e,{id:uid()+i, m:m||(has(e.m)?e.m:p.meals[0].id),
-    x:Object.assign({},e.x), t:now+i, e:now+i}, e.g?{g:gs[e.g]=gs[e.g]||uid()}:{})));
+    x:Object.assign({},e.x), t:now+i, e:now+i, o:0}, e.g?{g:gs[e.g]=gs[e.g]||uid()}:{})));
 }
 const items=n=>n+' ITEM'+(n===1?'':'S');
 /* A section's rows: each food on its own, a combined item as one row where its first food sits. */
@@ -1680,6 +1690,72 @@ function copyTo(d){
 /* A sideways drag on el (dir 1 right, -1 left). Released past frac of its width, fn runs.
    The pointer is only captured once the drag is clearly sideways, so taps and vertical
    scrolling pass through untouched, and the tap that ends a drag is swallowed. */
+/* Press and hold a food: let go and it's selected; keep holding and move, and it lifts to be
+   dragged, to another place in its section or into another one. Once held, the page stops
+   scrolling under the finger; a quick swipe still scrolls, and the side swipes still work. */
+function bindLift(el,onHold,ids){
+  let t=0, x0=0, y0=0, held=false, fired=0, lift=null;
+  const end=()=>{ clearTimeout(t); held=false; el.classList.remove('held'); };
+  el.addEventListener('pointerdown',e=>{ if(e.button) return; x0=e.clientX; y0=e.clientY; held=false; lift=null;
+    t=setTimeout(()=>{ held=true; fired=Date.now(); el.classList.add('held'); try{ navigator.vibrate(30); }catch(x){} },450); });
+  el.addEventListener('pointermove',e=>{
+    if(!held){ if(Math.abs(e.clientX-x0)>8 || Math.abs(e.clientY-y0)>8) clearTimeout(t); return; }
+    if(!lift && Math.abs(e.clientY-y0)>6){ lift=startLift(el,ids,e); try{ el.setPointerCapture(e.pointerId); }catch(x){} }
+    if(lift) lift.move(e.clientY);
+  });
+  el.addEventListener('touchmove',e=>{ if(held) e.preventDefault(); },{passive:false});   // held: the finger moves the food, not the page
+  el.addEventListener('pointerup',()=>{ const was=held, l=lift; end(); lift=null; if(l) l.drop(); else if(was) onHold(); });
+  el.addEventListener('pointercancel',()=>{ end(); if(lift){ lift.cancel(); lift=null; } });
+  el.addEventListener('click',e=>{ if(Date.now()-fired<600){ e.stopPropagation(); e.preventDefault(); } },true);
+  el.addEventListener('contextmenu',e=>e.preventDefault());
+}
+/* The lifted food: a copy follows the finger, a line shows where it will land, and the page
+   scrolls when the finger nears the top or bottom. */
+function startLift(el,ids,e){
+  const r=el.getBoundingClientRect(), dy=e.clientY-r.top, ghost=el.cloneNode(true), line=document.createElement('div');
+  ghost.className='fiw lifted'; ghost.style.cssText='left:'+r.left+'px;top:'+r.top+'px;width:'+r.width+'px';
+  line.className='dropline'; document.body.append(ghost,line);
+  el.classList.add('lifting'); sfx('tap');
+  let at=null, y=e.clientY, raf=0;
+  const target=()=>{
+    const meals=[...document.querySelectorAll('#main .meal')];
+    const m=meals.find(s=>{ const b=s.getBoundingClientRect(); return y>=b.top && y<=b.bottom; })
+      || meals.reduce((best,s)=>{ const b=s.getBoundingClientRect(), d=Math.min(Math.abs(y-b.top),Math.abs(y-b.bottom)); return !best||d<best.d?{s,d}:best; },null).s;
+    const rows=[...m.querySelectorAll('.fiw')].filter(w=>w!==el), before=rows.find(w=>{ const b=w.getBoundingClientRect(); return y<b.top+b.height/2; });
+    const box=(before||rows[rows.length-1]||m.querySelector('.mhl')||m).getBoundingClientRect();
+    line.style.cssText='left:'+(box.left)+'px;width:'+box.width+'px;top:'+((before?box.top:box.bottom)+(before?-3:3))+'px';
+    return {meal:m.dataset.m, before:before?before.dataset.ids.split(',')[0]:null};
+  };
+  const tick=()=>{                                   // scroll near the edges, then keep the line up to date
+    const edge=70, sc=document.body, v=innerHeight;
+    if(y<edge) sc.scrollTop-=Math.ceil((edge-y)/6); else if(y>v-edge) sc.scrollTop+=Math.ceil((y-(v-edge))/6);
+    at=target(); raf=requestAnimationFrame(tick);
+  };
+  const stop=()=>{ cancelAnimationFrame(raf); ghost.remove(); line.remove(); el.classList.remove('lifting'); };
+  tick();
+  return {
+    move(ny){ y=ny; ghost.style.top=(ny-dy)+'px'; },
+    drop(){ stop(); if(at) moveEntries(ids,at.meal,at.before); },
+    cancel(){ stop(); }
+  };
+}
+/* Put the foods ids before the food 'before' (or at the end) of section meal, and number the
+   day so the new order syncs; moved and renumbered foods count as changed. */
+function moveEntries(ids,meal,before){
+  const day=P().days[DAY]||[], was=new Set(day.filter(e=>ids.includes(e.id)).map(mealOf));
+  const moving=day.filter(e=>ids.includes(e.id)), rest=day.filter(e=>!ids.includes(e.id));
+  let at=before?rest.findIndex(e=>e.id===before):-1;
+  if(at<0){ at=rest.length; rest.forEach((e,i)=>{ if(mealOf(e)===meal) at=i+1; }); }
+  const order=[...rest.slice(0,at),...moving,...rest.slice(at)];
+  if(order.every((e,i)=>e===day[i]) && moving.every(e=>mealOf(e)===meal)) return;   // dropped where it was
+  const base=Math.min(...day.map(place)), now=Date.now();
+  moving.forEach(e=>{ e.m=meal; });
+  order.forEach((e,i)=>{ if(e.o!==base+i || moving.includes(e)){ e.o=base+i; e.e=now; } });
+  P().days[DAY]=order;
+  touch(); sfx('confirm');
+  renderMorph(...new Set([...was,meal]));
+  toast(was.size===1 && was.has(meal)?'MOVED':'MOVED TO '+(P().meals.find(m=>m.id===meal)||{n:''}).n.toUpperCase());
+}
 function bindSwipe(el,dir,frac,fn){
   let x0=null, y0=0, on=false, go=false, moved=0;
   const reset=()=>{ x0=null; on=false; el.classList.remove('drag','ready'); el.style.setProperty('--dx','0px'); };
@@ -1687,6 +1763,7 @@ function bindSwipe(el,dir,frac,fn){
   el.addEventListener('pointermove',e=>{
     if(x0===null) return;
     const dx=Math.max(0,(e.clientX-x0)*dir), dy=Math.abs(e.clientY-y0);
+    if(el.classList.contains('held')) return reset();
     if(!on){
       if(dy>12 && dy>dx) return reset();
       if(dx<10) return;
@@ -1713,7 +1790,7 @@ function tune(el,on){
 }
 /* Arrows and Return to Today warp the day; a pick from the calendar brings the full static. */
 function goDay(d,wash){
-  DAY=d; FOLLOW=d===today();
+  DAY=d; FOLLOW=d===today(); DB.fold={};             // a new day starts with every section open
   dropSelect(); closeSheet(); render();
   (wash?panelHit:warp)($('main'),$('rtt'),$('dCal'));
 }
@@ -1958,7 +2035,7 @@ function paintTab(){
     paintRecent(ADD.sq);
     paintResults();
   } else if(ADD.tab==='saved'){
-    b.innerHTML='<input class="fld" id="sfQ" type="search" enterkeyhint="search" placeholder="Filter foods and meals" autocomplete="off" value="'+esc(ADD.q)+'">'+
+    b.innerHTML='<div class="srch one"><input class="fld" id="sfQ" type="search" enterkeyhint="search" placeholder="Search saved foods" autocomplete="off" value="'+esc(ADD.q)+'"></div>'+
       '<div class="rlist" id="sfList"></div>';
     const paint=()=>savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo,'',true);
     $('sfQ').oninput=e=>{ ADD.q=e.target.value; paint(); };
@@ -2000,7 +2077,7 @@ function quickAdd(f,q,w,fid){
 }
 function quickMeal(c){
   const now=Date.now(), grp=ADD.group||{g:uid(), gn:c.n};
-  const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), m:ADD.meal, t:now+i, e:now+i, g:grp.g, gn:grp.gn}));
+  const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), m:ADD.meal, t:now+i, e:now+i, o:0, g:grp.g, gn:grp.gn}));
   (P().days[DAY]=P().days[DAY]||[]).push(...es); c.u=c.e=now;
   FRESH=new Set(es.map(e=>e.id));
   const hit=checkHits(); touch(); render();
@@ -2297,7 +2374,7 @@ function openCombo(c){
   $('cGo').onclick=()=>{
     if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
     const now=Date.now(), grp=ADD.group||{g:uid(), gn:c.n};
-    const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), q:e.q*st.q, m:st.m, t:now+i, e:now+i, g:grp.g, gn:grp.gn}));
+    const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), q:e.q*st.q, m:st.m, t:now+i, e:now+i, o:0, g:grp.g, gn:grp.gn}));
     (P().days[DAY]=P().days[DAY]||[]).push(...es);
     FRESH=new Set(es.map(e=>e.id));
     c.u=c.e=now;
@@ -2805,14 +2882,14 @@ function switchProfile(n,quick){
   ghFlush();
   const changed=n!==DB.cur;
   DB.cur=n; save();
-  DAY=today(); FOLLOW=true; ADD.q=''; ADD.results=[];
+  ADD.q=''; ADD.results=[];                        // same day as before: switching compares like with like
   dropSelect(); closeSheet(); render(); document.body.scrollTop=0;
   if(changed){ sfx('start'); (quick?warp:panelHit)($('main'),$('hdrK'),$('bolt'),$('dCal')); }
   if(ghOn()) ghSync(n);
 }
 function openFoods(){
   sfx('open');
-  setSheet(panel('Saved foods & meals','<input class="fld" id="fdQ" type="search" enterkeyhint="search" placeholder="Filter foods and meals" autocomplete="off">'+
+  setSheet(panel('Saved foods & meals','<div class="srch one"><input class="fld" id="fdQ" type="search" enterkeyhint="search" placeholder="Search saved foods" autocomplete="off"></div>'+
     '<div class="rlist" id="fdList"></div><div class="pgnote">Hold an item to rename, share or delete it. Save a meal by selecting logged foods on the dashboard.</div>',true));
   bindPanel(openSettings);
   const paint=()=>savedList($('fdList'),$('fdQ').value,f=>openQty(f,{}),openCombo);
@@ -2948,6 +3025,7 @@ setInterval(()=>{ if(FOLLOW && DAY!==today() && !document.querySelector('#sheetW
 /* Each start-up step is isolated, so one failing can't keep the app from showing. */
 const boot=(name,fn)=>{ try{ fn(); }catch(e){ console.error('start-up: '+name,e); } };
 boot('load',load);
+boot('open sections',()=>{ DB.fold={}; });        // opening the app starts with every section open
 boot('render',render);
 boot('sheets',watchSheets);
 boot('local list',()=>{ localLoad().then(()=>setTimeout(()=>localRefresh(),4000)); });
