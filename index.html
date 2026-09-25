@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.25.20">
+<meta name="app-version" content="2026.09.25.21">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -662,7 +662,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.25.20';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.25.21';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1951,7 +1951,7 @@ function paintTab(){
     b.innerHTML='<div class="srch"><input class="fld" id="osQ" type="search" enterkeyhint="search" placeholder="Search foods" autocomplete="off" value="'+esc(ADD.sq)+'">'+
       '<button class="btn plus" id="nfAdd" aria-label="New food">+</button></div>'+
       '<div class="rlist" id="rcList"></div><div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
-      '<div class="src">DATA: OPEN FOOD FACTS \u00b7 AUSTRALIAN PRODUCTS FIRST</div>';
+      '<div class="src">DATA: OPEN FOOD FACTS \u00b7 FOOD STANDARDS AUSTRALIA NEW ZEALAND (AFCD)</div>';
     $('osQ').oninput=e=>{ paintRecent(e.target.value); queueSearch(e.target.value); };
     searchKey($('osQ'),v=>{ const q=v.trim().toLowerCase(); if(q.length>=3 && !SRCACHE.has(q)){ clearTimeout(SRT); runSearch(q); } });
     $('nfAdd').onclick=()=>openQty({id:'', n:$('osQ').value.trim(), sv:'', k:0, p:0, c:0, f:0, x:{}, bc:''},{create:true});
@@ -1975,7 +1975,7 @@ function listRow(i,name,sub,kcal,plus){
     '<span class="rm"><span class="rn">'+esc(name)+'</span><span class="rs">'+sub+'</span></span><span class="rk">'+fmt(kcal)+'</span>'+
     (plus?'<button class="qadd" aria-label="Add">+</button>':'')+'</div></div>';
 }
-const foodRow=(f,i)=>listRow(i,f.n,esc(f.sv)+' \u00b7 P'+r1(f.p)+' C'+r1(f.c)+' F'+r1(f.f),f.k,true);
+const foodRow=(f,i)=>listRow(i,f.n,esc(f.sv)+' \u00b7 P'+r1(f.p)+' C'+r1(f.c)+' F'+r1(f.f)+(f.src==='afcd'?' \u00b7 AFCD':''),f.k,true);
 /* Wire a list: open on tap, + to add, and optionally swipe to delete. */
 function bindRows(L,open,add,del){
   L.querySelectorAll('.lw').forEach(w=>{
@@ -2433,19 +2433,30 @@ async function localRefresh(force){
   }catch(e){ return 'failed'; }
   finally{ LOCAL.busy=false; }
 }
-/* One row of the list as a product, so it becomes a food exactly as an online result does. */
+/* One row of the list as a product, so it becomes a food exactly as an online result does.
+   Rows keyed afcd-... are generic foods from the Australian Food Composition Database:
+   no barcode, no brand, per 100 g. */
+const isAfcd=r=>String(r[0]).startsWith('afcd-');
 function localFood(r){
   const n={'energy-kcal_100g':r[4], proteins_100g:r[5], carbohydrates_100g:r[6], fat_100g:r[7]};
   XN.forEach(([,,,,off],i)=>{ if(r[8+i]) n[off+'_100g']=r[8+i]; });
-  return offMap({code:r[0], product_name:r[1], brands:r[2], serving_size:r[3], nutriments:n});
+  const f=offMap({code:isAfcd(r)?'':r[0], product_name:r[1], brands:r[2], serving_size:r[3], nutriments:n});
+  if(f && isAfcd(r)) f.src='afcd';
+  return f;
 }
 /* Every word typed has to appear in the brand or name; closer and shorter matches first. */
 function localSearch(q){
   if(!LOCAL.d) return [];
   if(!LOCAL.idx) LOCAL.idx=LOCAL.d.map(r=>((r[2]||'')+' '+r[1]).toLowerCase());
   const words=q.toLowerCase().split(/\s+/).filter(Boolean), hits=[];
-  for(let i=0;i<LOCAL.idx.length;i++){ const s=LOCAL.idx[i]; if(words.every(w=>s.includes(w))) hits.push([s.indexOf(words[0])+s.length/40,i]); }
+  for(let i=0;i<LOCAL.idx.length;i++){ const s=LOCAL.idx[i];                  // generic foods ahead of brands for plain searches
+    if(words.every(w=>s.includes(w))) hits.push([s.indexOf(words[0])+s.length/40-(isAfcd(LOCAL.d[i])?1.5:0),i]); }
   return hits.sort((x,y)=>x[0]-y[0]).slice(0,40).map(([,i])=>localFood(LOCAL.d[i])).filter(Boolean);
+}
+function localSummary(){
+  if(!LOCAL.d) return 'not downloaded yet';
+  const g=LOCAL.d.reduce((n,r)=>n+(isAfcd(r)?1:0),0);
+  return fmt(LOCAL.d.length-g)+' products'+(g?' + '+fmt(g)+' generic':'')+' \u00b7 '+shortDay(LOCAL.v).slice(4);
 }
 function localCode(code){
   if(!LOCAL.d) return null;
@@ -2553,7 +2564,7 @@ function showResults(out,failed){
 }
 function paintResults(){
   const L=$('osList'), list=ADD.results.slice(0,40);
-  L.innerHTML=(list.length?'<div class="lh">OPEN FOOD FACTS</div>':'')+list.map((f,i)=>foodRow(f,i)).join('');
+  L.innerHTML=(list.length?'<div class="lh">RESULTS</div>':'')+list.map((f,i)=>foodRow(f,i)).join('');
   const pick=i=>{ const f=ADD.results[i]; return (f.bc && P().foods.find(x=>x.bc===f.bc))||f; };
   bindRows(L,i=>openQty(pick(i),{}),i=>{ const f=pick(i); quickAdd(f,1,'',P().foods.includes(f)?f.id:''); });
 }
@@ -2582,7 +2593,7 @@ function openSettings(){
     row('stPr','Profiles','active: '+DB.cur)+
     row('stFd','Saved foods & meals',P().foods.length+' foods \u00b7 '+P().combos.length+' meals')+
     row('stSy','Sync and backup',ghWhen())+
-    row('stAu','Australian food list',LOCAL.d?fmt(LOCAL.d.length)+' products \u00b7 '+shortDay(LOCAL.v).slice(4):'not downloaded yet')+
+    row('stAu','Australian food list',localSummary())+
     row('stDp','Display',THEMES[DB.theme])+
     row('stSn','Sound',DB.sfx?'on':'off')+
     '</div><div class="tiny">v'+APP_VERSION+'</div>'));
@@ -2596,7 +2607,7 @@ function openSettings(){
   $('stAu').onclick=async()=>{ const s=$('stAu').querySelector('.srsub'); s.textContent='CHECKING\u2026';
     const r=await localRefresh(true);
     toast({updated:'FOOD LIST UPDATED',current:'FOOD LIST IS UP TO DATE',offline:'NO CONNECTION',missing:'NO LIST PUBLISHED YET',failed:'UPDATE FAILED \u2014 TRY AGAIN'}[r]);
-    s.textContent=(LOCAL.d?fmt(LOCAL.d.length)+' products \u00b7 '+shortDay(LOCAL.v).slice(4):'not downloaded yet').toUpperCase(); warp($('stAu')); };
+    s.textContent=(localSummary()).toUpperCase(); warp($('stAu')); };
   $('stSn').onclick=()=>{
     DB.sfx=!DB.sfx; save();
     $('stSn').querySelector('.srsub').textContent=DB.sfx?'ON':'OFF';
