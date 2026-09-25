@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.25.2">
+<meta name="app-version" content="2026.09.25.9">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -295,6 +295,7 @@ html,body,.pgbody,.qlab,.lbl{overscroll-behavior:none}
 .selbar .btn{margin:0;height:38px;padding:0 6px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
 .selhead{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}
 #selN{font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--champ)}
+.sellinks{display:flex;gap:16px}
 .sellink{font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--bronze);padding:6px 0}
 .lh{font-family:var(--serif);font-size:9.5px;letter-spacing:.18em;color:var(--bronze);margin:14px 0 2px}
 body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
@@ -339,6 +340,7 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .fsb{flex:none;margin:0;font-size:10.5px;letter-spacing:.04em}
 .fk{font-size:14px;min-width:3ch;text-align:right}
 .swipe{height:32px;margin-top:4px}
+.fi.grp .fnm::after{content:' \25b8';color:var(--dimmer);font-size:11px}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
 .whobtn svg{width:27px;height:27px;stroke-width:1.1}
 .crton{position:fixed;inset:0;z-index:300;pointer-events:none}
@@ -350,7 +352,8 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 @keyframes crtTop{to{transform:translateY(-101%)}}
 @keyframes crtBot{to{transform:translateY(101%)}}
 @keyframes crtwake{0%{filter:brightness(2.8) contrast(1.3) blur(1.2px)}35%{filter:brightness(1.7) blur(.5px)} 70%{filter:brightness(1.1)}100%{filter:none}}
-html.ios .crton{display:none}
+html.ios .crton,html.resumed .crton{display:none}
+html.resumed.booted header,html.resumed.booted #main{animation:none}
 @media (prefers-reduced-motion: reduce){
   .crton{display:none}
 }
@@ -479,12 +482,14 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .qty .qper{height:20px;line-height:20px;white-space:nowrap;overflow:hidden}
 .qsvi{height:20px;line-height:20px}
 .mpick button:disabled{opacity:.28}
-.rlist .lw{margin-top:5px;border-radius:6px}
+.rlist .lw{margin-top:3px;border-radius:6px}
 .rlist .lw .ri{position:relative;background:var(--card);border:1px solid var(--cardhair);border-radius:6px; padding:0 4px 0 12px;align-items:center;transform:translateX(calc(var(--dx,0px)*-1))}
-.rlist .lw .rm{padding:6px 0}
+.rlist .lw .rm{padding:4px 0}
+.rlist .lw .rn{line-height:1.2}
+.rlist .lw .rs{margin-top:1px}
 .rlist .lw .bin{border-radius:6px}
 .lw:not(.drag) .ri{transition:transform .25s ease}
-.radd{flex:none;width:32px;height:32px;margin:0;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;color:var(--bronze)}
+.radd{flex:none;width:32px;height:30px;margin:0;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;color:var(--bronze)}
 .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .qlab{flex:1;min-height:0;overflow:auto;scrollbar-width:none;border-top:1px solid var(--cardline)}
 .lrow{display:grid;grid-template-columns:1fr 92px 92px;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--hair)}
@@ -606,6 +611,9 @@ function applyTheme(t){
   document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').content=v==='light'?'default':'black-translucent';
 }
 try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'crt'); }catch(e){ applyTheme('crt'); }
+/* iOS shuts a background app down after a few minutes and reloads it on return. Coming back
+   within the hour is a resume: straight to the dashboard, no power-on from black. */
+try{ if(Date.now()-(+localStorage.getItem('food_log_seen')||0)<36e5) document.documentElement.classList.add('resumed'); }catch(e){}
 document.documentElement.classList.add('booting');
 /* The home-screen app sizes its viewport short of the glass; 100vh is the whole screen there. */
 if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.documentElement.classList.add('standalone');
@@ -626,7 +634,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
   </div>
 </header>
 <div class="wrap" id="main"></div>
-<div class="selbar tune" id="selbar" hidden><div class="selhead"><span id="selN"></span><button class="sellink" id="selMeal">SAVE AS MEAL ›</button></div>
+<div class="selbar tune" id="selbar" hidden><div class="selhead"><span id="selN"></span><span class="sellinks"><button class="sellink" id="selComb">COMBINE</button><button class="sellink" id="selMeal">SAVE AS MEAL ›</button></span></div>
   <button class="btn ghost" id="selX">[ CANCEL ]</button><button class="btn ghost" id="selDel">[ DELETE ]</button><button class="btn" id="selGo">[ COPY TO… ]</button></div>
 <div id="sheetWrap"></div>
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
@@ -645,7 +653,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.25.2';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.25.9';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -662,7 +670,10 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const r1=v=>Math.round((+v||0)*10)/10;
 const fmt=v=>Math.round(+v||0).toLocaleString('en-AU');
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Profile and section names stay short and plain: profiles become file names and sections sit
+   on small buttons. Food and meal names can be long and carry any punctuation. */
 const cleanName=n=>String(n||'').replace(/[^\w .'-]/g,'').replace(/\s+/g,' ').trim().replace(/^_+/,'').slice(0,24);
+const cleanLabel=n=>String(n||'').replace(/\s+/g,' ').trim().slice(0,80);
 
 function blankProfile(){
   return {goal:Object.assign({},DEF_GOAL), meals:DEF_MEALS.map(m=>Object.assign({},m)),
@@ -675,8 +686,8 @@ function cleanX(x){
 }
 function cleanFood(x){
   if(!x || typeof x!=='object') return null;
-  const n=String(x.n||'').replace(/\s+/g,' ').trim().slice(0,80); if(!n) return null;
-  return {id:String(x.id||uid()).slice(0,24), n, sv:String(x.sv||'').trim().slice(0,30)||'1 serving',
+  const n=cleanLabel(x.n); if(!n) return null;
+  return {id:String(x.id||uid()).slice(0,24), n, sv:String(x.sv||'').trim().slice(0,40)||'1 serving',
     k:orD(num(x.k,0,9000),0), p:orD(num(x.p,0,900),0), c:orD(num(x.c,0,1500),0), f:orD(num(x.f,0,900),0),
     x:cleanX(x.x), bc:x.bc?String(x.bc).replace(/\D/g,'').slice(0,20):'',
     u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0)};
@@ -685,12 +696,13 @@ function cleanEntry(x){
   const f=cleanFood(x); if(!f) return null;
   return {id:f.id, fid:x.fid?String(x.fid).slice(0,24):'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x,
     q:orD(num(x.q,0.001,5000),1), w:['s','h','g'].includes(x.w)?x.w:'g', m:String(typeof x.m==='number'?'blds'[x.m]||'s':x.m||'s').slice(0,24),
-    t:orD(num(x.t,0,1e13),0), e:orD(num(x.e,0,1e13),0)};
+    t:orD(num(x.t,0,1e13),0), e:orD(num(x.e,0,1e13),0),
+    ...(x.g?{g:String(x.g).slice(0,24), gn:cleanLabel(x.gn)||'Combined'}:{})};   // logged as one combined item
 }
 /* A saved meal: a name and the foods in it, each a full snapshot with its amount. */
 function cleanCombo(x){
   if(!x || typeof x!=='object') return null;
-  const n=cleanName(x.n), items=(Array.isArray(x.items)?x.items:[]).map(cleanEntry).filter(Boolean).slice(0,30)
+  const n=cleanLabel(x.n), items=(Array.isArray(x.items)?x.items:[]).map(cleanEntry).filter(Boolean).slice(0,30)
     .map(e=>({fid:e.fid, n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, q:e.q, w:e.w}));
   if(!n || !items.length) return null;
   return {id:String(x.id||uid()).slice(0,24), n, items, u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0)};
@@ -1226,6 +1238,7 @@ function closeSheet(){
   lock(false);
   if(!wrap.querySelector('.sheet')) return;
   sfx('close');
+  if(FRESH.size) setTimeout(render,120);                        // foods logged while a list was open glow now
   wrap.querySelectorAll('.sheet').forEach(s=>{ s.classList.remove('cut'); s.classList.add('out'); });
   wrap.querySelectorAll('.veil').forEach(v=>v.classList.add('out'));
   const gone=[...wrap.children];
@@ -1357,12 +1370,12 @@ function panel(title,body,back,foot){
     '<div class="pgbody">'+body+'</div>'+(foot?'<div class="pfoot">'+foot+'</div>':'')+'</div>';
 }
 function bindPanel(back){ $('veil').onclick=closeSheet; $('pnX').onclick=back||closeSheet; }
-function promptSheet(title,val,onSave){
+function promptSheet(title,val,onSave,long){
   setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">'+esc(title)+
     '<button class="shx back" id="psBack" aria-label="Back">\u2039</button></h3>'+
-    '<input class="fld" id="psV" maxlength="24" autocomplete="off" value="'+esc(val)+'">'+
+    '<input class="fld" id="psV" maxlength="'+(long?80:24)+'" autocomplete="off" value="'+esc(val)+'">'+
     '<button class="btn" id="psGo">[ SAVE ]</button></div>',true);
-  const V=$('psV'), go=()=>{ const v=cleanName(V.value); if(!v){ sfx('nope'); return toast('ENTER A NAME'); } onSave(v); };
+  const V=$('psV'), go=()=>{ const v=(long?cleanLabel:cleanName)(V.value); if(!v){ sfx('nope'); return toast('ENTER A NAME'); } onSave(v); };
   lastVeil().onclick=popSheet; $('psBack').onclick=popSheet;
   $('psGo').onclick=go;
   V.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); go(); } };
@@ -1410,10 +1423,10 @@ function render(){
       (!SEL?'<button class="madd" data-meal="'+esc(m.id)+'" aria-label="Add to '+esc(m.n)+'">+</button>'
         :es.length?'<button class="madd" data-msel="'+esc(m.id)+'" aria-label="Select all in '+esc(m.n)+'"><span class="chk"></span></button>'
         :'<span class="madd"></span>')+'</div><div class="mbody">';
-    h+=es.map(e=>'<div class="fiw" data-e="'+esc(e.id)+'"><span class="bin">'+BIN+'</span>'+
-      '<button class="fi'+(FRESH.has(e.id)?' fresh':'')+'" data-e="'+esc(e.id)+'">'+(SEL?'<span class="chk"></span>':'')+'<span class="fm">'+
-      '<span class="fnm">'+esc(e.n)+'</span><span class="fsb">'+esc(qtyTxt(e))+'</span></span>'+
-      '<span class="fk">'+fmt(e.k*e.q)+'</span></button></div>').join('');
+    h+=rowsOf(es).map(r=>'<div class="fiw" data-ids="'+esc(r.ids.join(','))+'"><span class="bin">'+BIN+'</span>'+
+      '<button class="fi'+(r.g?' grp':'')+(r.ids.some(id=>FRESH.has(id))?' fresh':'')+'">'+(SEL?'<span class="chk"></span>':'')+'<span class="fm">'+
+      '<span class="fnm">'+esc(r.n)+'</span><span class="fsb">'+esc(r.sub)+'</span></span>'+
+      '<span class="fk">'+fmt(r.k)+'</span></button></div>').join('');
     const c=!SEL && !es.length && DAY<=today() && copySource(m.id);
     if(c){
       src[m.id]=c;
@@ -1435,28 +1448,30 @@ function render(){
     const ids=all.filter(e=>mealOf(e)===b.dataset.fold).map(e=>e.id);
     if(ids.length) bindHold(b,()=>SEL?pickEntries(ids):startSelect(ids));
   });
+  const idsOf=el=>el.closest('.fiw').dataset.ids.split(',');
   if(SEL){
-    v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>pickEntries([b.dataset.e]));
+    v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>pickEntries(idsOf(b)));
     v.querySelectorAll('[data-msel]').forEach(b=>b.onclick=()=>pickEntries(all.filter(e=>mealOf(e)===b.dataset.msel).map(e=>e.id)));
     paintSel();
   } else {
     v.querySelectorAll('.madd').forEach(b=>b.onclick=()=>openAdd(b.dataset.meal));
-    v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>{ const e=all.find(x=>x.id===b.dataset.e); if(e) openQty(e,{entry:e}); });
+    v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>{ const ids=idsOf(b), e=all.find(x=>x.id===ids[0]); if(!e) return;
+      ids.length>1 || e.g ? openGroup(e.g) : openQty(e,{entry:e}); });
     v.querySelectorAll('.swipe').forEach(el=>bindSwipe(el,1,0.45,()=>copyMeal(el.dataset.meal,src[el.dataset.meal])));
     v.querySelectorAll('.fiw').forEach(el=>{
-      const e=all.find(x=>x.id===el.dataset.e);
-      bindHold(el,()=>startSelect([e.id]));
+      const ids=idsOf(el), e=all.find(x=>x.id===ids[0]);
+      bindHold(el,()=>startSelect(ids));
       bindSwipe(el,-1,0.5,()=>{
         el.style.setProperty('--dx',el.offsetWidth+'px');
         el.style.height=el.offsetHeight+'px'; void el.offsetHeight;
         el.classList.add('gone');
         sfx('close');
-        setTimeout(()=>{ dropEntries([e.id]); renderMorph(mealOf(e)); toast('REMOVED'); },300);
+        setTimeout(()=>{ dropEntries(ids); renderMorph(mealOf(e)); toast('REMOVED'); },300);
       });
     });
   }
   const f=v.querySelector('.fi.fresh');
-  if(f){ FRESH.clear(); f.scrollIntoView({block:'nearest',behavior:calm()?'auto':'smooth'}); }
+  if(f && !document.querySelector('#sheetWrap .sheet:not(.out)')){ FRESH.clear(); f.scrollIntoView({block:'nearest',behavior:calm()?'auto':'smooth'}); }
 }
 /* Re-render with the named sections held at their old height while only they warp, then
    glide them to the new height; the sections below follow in step. */
@@ -1499,16 +1514,61 @@ function dropEntries(ids){
   ids.forEach(id=>P().del[id]=now);
   touch();
 }
-/* Fresh copies of entries onto day d, into section m when given, else their own. */
 /* Fresh copies of entries onto day d of profile p: into section m when given, otherwise
-   their own section, or p's first if p has no such section. */
+   their own section, or p's first if p has no such section. Combined items stay combined,
+   each copy under a new group so it can't merge with the original. */
 function cloneTo(d,es,m,p){
   p=p||P();
-  const now=Date.now(), has=id=>p.meals.some(x=>x.id===id);
+  const now=Date.now(), has=id=>p.meals.some(x=>x.id===id), gs={};
   (p.days[d]=p.days[d]||[]).push(...es.map((e,i)=>Object.assign({},e,{id:uid()+i, m:m||(has(e.m)?e.m:p.meals[0].id),
-    x:Object.assign({},e.x), t:now+i, e:now+i})));
+    x:Object.assign({},e.x), t:now+i, e:now+i}, e.g?{g:gs[e.g]=gs[e.g]||uid()}:{})));
 }
 const items=n=>n+' ITEM'+(n===1?'':'S');
+/* A section's rows: each food on its own, a combined item as one row where its first food sits. */
+function rowsOf(es){
+  const out=[], at={};
+  es.forEach(e=>{
+    if(!e.g) return out.push({ids:[e.id], n:e.n, sub:qtyTxt(e), k:e.k*e.q});
+    if(at[e.g]){ const r=at[e.g]; r.ids.push(e.id); r.k+=e.k*e.q; r.sub=items(r.ids.length).toLowerCase(); return; }
+    out.push(at[e.g]={g:e.g, ids:[e.id], n:e.gn, sub:'1 item', k:e.k*e.q});
+  });
+  return out;
+}
+/* A combined item opened up: its foods, each changeable or removable, more can be added, and
+   UNCOMBINE splits it back into separate foods. A saved meal it came from is never touched. */
+function openGroup(g){
+  const list=()=>entries().filter(e=>e.g===g), stack=!!topSheet();
+  setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
+  const box=topSheet(), back=stack?popSheet:closeSheet;
+  lastVeil().onclick=back;
+  const draw=()=>{
+    const es=list();
+    if(!es.length) return back();
+    const t=es.reduce((a,e)=>{ a.k+=e.k*e.q; a.p+=e.p*e.q; a.c+=e.c*e.q; a.f+=e.f*e.q; return a; },{k:0,p:0,c:0,f:0}), m=P().meals.find(x=>x.id===mealOf(es[0]));
+    box.innerHTML='<h3 class="qt"><span>'+esc(es[0].gn)+'</span><button class="shx'+(stack?' back':'')+'" aria-label="Close">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
+      '<div class="qper">'+items(es.length)+' \u00b7 '+esc((m?m.n:'').toUpperCase())+'</div>'+
+      '<div class="qact"><div class="duo"><button class="btn" id="gAdd">[ ADD ITEM ]</button><button class="btn ghost" id="gSplit">[ UNCOMBINE ]</button></div></div>'+
+      '<div class="rlist qlab" id="gList">'+es.map((e,i)=>listRow(i,e.n,esc(qtyTxt(e))+' \u00b7 P'+r1(e.p*e.q)+' C'+r1(e.c*e.q)+' F'+r1(e.f*e.q),e.k*e.q,false)).join('')+
+        '<div class="lrow lday"><span>Total</span><b>'+fmt(t.k)+' kcal</b><b>P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div></div>';
+    box.querySelector('.shx').onclick=back;
+    bindRows($('gList'),i=>openQty(es[i],{entry:es[i]}),null,i=>{ dropEntries([es[i].id]); render(); draw(); toast('REMOVED'); });
+    $('gAdd').onclick=()=>{ closeSheet(); setTimeout(()=>openAdd(mealOf(es[0]),{g, gn:es[0].gn}),200); };
+    $('gSplit').onclick=()=>{ const now=Date.now(); es.forEach(e=>{ delete e.g; delete e.gn; e.e=now; }); touch(); closeSheet();
+      setTimeout(()=>renderMorph(mealOf(es[0])),220); toast('UNCOMBINED'); };
+  };
+  box.refresh=draw;                                  // redrawn when a food inside is changed
+  draw();
+}
+/* Select mode: the chosen foods become one combined item, in the first one's section. */
+function combineSel(){
+  const es=entries().filter(e=>SEL.has(e.id));
+  if(es.length<2){ sfx('nope'); return toast('SELECT 2 OR MORE'); }
+  promptSheet('Combine as','',n=>{
+    const g=uid(), m=mealOf(es[0]), now=Date.now();
+    es.forEach(e=>Object.assign(e,{g, gn:n, m, e:now}));
+    touch(); closeSheet(); endSelect(); sfx('confirm'); toast('COMBINED \u00b7 '+n.toUpperCase());
+  },true);
+}
 function copyMeal(mid,src){
   cloneTo(DAY,src.es,mid);
   const hit=checkHits();
@@ -1539,7 +1599,7 @@ function pickEntries(ids){
 }
 function paintSel(){
   const v=$('main');
-  v.querySelectorAll('.fiw').forEach(w=>w.classList.toggle('on',SEL.has(w.dataset.e)));
+  v.querySelectorAll('.fiw').forEach(w=>w.classList.toggle('on',w.dataset.ids.split(',').every(id=>SEL.has(id))));
   v.querySelectorAll('[data-msel]').forEach(b=>b.classList.toggle('on',
     entries().filter(e=>mealOf(e)===b.dataset.msel).every(e=>SEL.has(e.id))));
   $('selN').textContent=items(SEL.size)+' SELECTED';
@@ -1811,17 +1871,18 @@ function celebrate(d){
 /* =====================================================================
    Adding food
    ===================================================================== */
-const ADD={meal:'', tab:'', q:'', sq:'', results:[]};
-function openAdd(meal){
-  ADD.meal=meal;
+const ADD={meal:'', tab:'', q:'', sq:'', results:[], group:null};
+function openAdd(meal,group){
+  ADD.meal=meal; ADD.group=group||null;
   ADD.tab='search';
   ADD.q=ADD.sq=''; ADD.results=[];
   sfx('open');
-  setSheet(panel('Add food',
+  setSheet(panel(ADD.group?'Add to '+ADD.group.gn:'Add food',
     picker('adMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),ADD.meal)+
     picker('adTabs',[['search','SEARCH'],['saved','SAVED'],['scan','SCAN']],ADD.tab)+
     '<div id="adBody"></div>'));
   bindPanel();
+  topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
   onPick('adMeal',v=>ADD.meal=v);
   onPick('adTabs',v=>{ stopScan(); ADD.tab=v; paintTab(); warp($('adBody')); });
   paintTab();
@@ -1872,7 +1933,7 @@ function bindRows(L,open,add,del){
 /* Log a food straight from a list: the amount given, into the section chosen at the top. */
 function quickAdd(f,q,w,fid){
   const now=Date.now(), g=gramsOf(f.sv), en={id:uid(), fid:fid||'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:Object.assign({},f.x),
-    q:q||1, w:w||(g?'g':'s'), m:ADD.meal, t:now, e:now};
+    q:q||1, w:w||(g?'g':'s'), m:ADD.meal, t:now, e:now, ...(ADD.group||{})};
   (P().days[DAY]=P().days[DAY]||[]).push(en);
   const saved=fid && P().foods.find(x=>x.id===fid); if(saved) saved.u=now;
   FRESH=new Set([en.id]);
@@ -1880,7 +1941,8 @@ function quickAdd(f,q,w,fid){
   if(!hit){ sfx('confirm'); toast('ADDED \u00b7 '+fmt(f.k*en.q)+' KCAL'); }
 }
 function quickMeal(c){
-  const now=Date.now(), es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), m:ADD.meal, t:now+i, e:now+i}));
+  const now=Date.now(), grp=ADD.group||{g:uid(), gn:c.n};
+  const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), m:ADD.meal, t:now+i, e:now+i, g:grp.g, gn:grp.gn}));
   (P().days[DAY]=P().days[DAY]||[]).push(...es); c.u=c.e=now;
   FRESH=new Set(es.map(e=>e.id));
   const hit=checkHits(); touch(); render();
@@ -1892,7 +1954,7 @@ const recentKey=e=>e.fid||e.n+'|'+e.sv;
 function recentFoods(){
   const seen=new Set(), out=[], rh=P().rh;
   Object.keys(P().days).filter(d=>d<=today()).forEach(d=>P().days[d].forEach(e=>out.push(e)));
-  return out.sort((x,y)=>y.t-x.t).filter(e=>{ const k=recentKey(e); if(seen.has(k)) return false; seen.add(k); return !(rh[k]>=e.t); }).slice(0,40);
+  return out.sort((x,y)=>y.t-x.t).filter(e=>{ const k=recentKey(e); if(seen.has(k)) return false; seen.add(k); return !(rh[k]>=e.t); }).slice(0,11);
 }
 /* Saved meals and foods as one list. Tap opens one; hold opens its editor in place: rename,
    share with another profile, or delete with a second tap. */
@@ -1904,7 +1966,7 @@ function savedList(L,q,onFood,onMeal,ed,plus){
   const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur);
   const row=(r,i)=>{
     const o=r.o, m=r.t==='meal', t=m?tot(o):o;
-    if(o.id===ed) return '<div class="ri edit"><input class="fld" id="svE" maxlength="24" autocomplete="off" value="'+esc(o.n)+'">'+
+    if(o.id===ed) return '<div class="ri edit"><input class="fld" id="svE" maxlength="80" autocomplete="off" value="'+esc(o.n)+'">'+
       (others.length?'<button class="rx" id="svShare" aria-label="Share with another profile">\u2197</button>':'')+
       '<button class="rx" id="svDel" aria-label="Delete">\u00d7</button></div>'+
       '<div class="duo"><button class="btn ghost" id="svX">[ CLOSE ]</button><button class="btn" id="svOk">[ ACCEPT ]</button></div>';
@@ -1923,7 +1985,7 @@ function savedList(L,q,onFood,onMeal,ed,plus){
   const r=rows.find(x=>x.o.id===ed), I=$('svE'); if(!r) return again();
   setTimeout(()=>{ I.focus(); I.select(); },150);
   $('svX').onclick=()=>again();
-  const ok=()=>{ const n=cleanName(I.value); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
+  const ok=()=>{ const n=cleanLabel(I.value); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
     if(n!==r.o.n){ r.o.n=n; r.o.e=Date.now(); touch(); } sfx('confirm'); again(); };
   $('svOk').onclick=ok;
   I.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); ok(); } };
@@ -2005,7 +2067,7 @@ function parseLabel(txt){
     if(n.length) rows[k]=n;
   });
   if(!rows.k || Object.keys(rows).length<2) return null;
-  const sm=txt.match(/serving size[:\s]*([^\n]+)/i), sv=sm?sm[1].trim().slice(0,30):'', w=gramsOf(sv);
+  const sm=txt.match(/serving size[:\s]*([^\n]+)/i), sv=sm?sm[1].trim().slice(0,40):'', w=gramsOf(sv);
   const h={};
   Object.entries(rows).forEach(([k,n])=>{
     const v=n.length>1?n[1]:(w && sv?n[0]*100/w.n:n[0]);        // one number with a serving size is that serving's
@@ -2054,7 +2116,7 @@ function openQty(food,o){
       :'<div class="duo"><button class="btn" id="qGo">[ LOG IT ]</button><button class="btn ghost" id="qEdit">[ EDIT NUTRITION ]</button></div>';
     box.innerHTML='<h3 class="qt">'+(edit?'<input class="qname" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'">':'<span>'+esc(food.n)+'</span>')+
         '<button class="shx'+(stack?' back':'')+'"'+(edit?' style="visibility:hidden"':'')+' aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
-      '<div class="qper">SERVING \u00b7 '+(edit?'<input class="qsvi" id="qS" maxlength="30" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'
+      '<div class="qper">SERVING \u00b7 '+(edit?'<input class="qsvi" id="qS" maxlength="40" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'
         :esc(food.sv.toUpperCase()))+'</div>'+
       '<div class="qact">'+btns+'</div>'+
       '<div class="qctl'+(edit?' off':'')+'">'+picker('qMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
@@ -2064,7 +2126,8 @@ function openQty(food,o){
     const V=$('qV'), per={s:1, h:g?g.n/100:1, g:g?g.n:1};          // amount typed = servings x per[unit]
     V.value=r1(st.q*per[st.w]);
     onPick('qMeal',v=>st.m=v);
-    onPick('qUnit',v=>{ st.w=v; V.value=r1(st.q*per[st.w]); update(); });
+    onPick('qUnit',v=>{ st.w=v; if(v!=='g') st.q=1/per[v];             // 1 serving, or 1 x 100 g; type 0.5 for 50 g
+      V.value=r1(st.q*per[st.w]); update(); });
     V.oninput=()=>{ st.q=Math.max(0,+V.value||0)/per[st.w]; update(); };
     V.onfocus=()=>V.select();
     /* The label: the amount beside per 100 g (per serving when the food has no weight). In
@@ -2136,15 +2199,20 @@ function openQty(food,o){
       if(saved){ saved.u=saved.e=now; }
       if(e) Object.assign(e,{q:st.q, w:st.w, m:st.m, e:now});
       else {
-        const en={id:uid(), fid:saved?saved.id:'', n:food.n, sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now};
+        const en={id:uid(), fid:saved?saved.id:'', n:food.n, sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now,
+          ...(ADD.group && !o.entry?ADD.group:{})};
         (P().days[DAY]=P().days[DAY]||[]).push(en);
         FRESH=new Set([en.id]);
       }
       const hit=checkHits();
-      touch(); closeSheet(); setTimeout(()=>renderMorph(...new Set([was,st.m])),220);
+      touch();
+      if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }   // back to the list for the next food
+      else { closeSheet(); setTimeout(()=>renderMorph(...new Set([was,st.m])),220); }
       if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(food.k*st.q)+' KCAL'); }
     };
-    if(e) arm($('qDel'),()=>{ dropEntries([e.id]); closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); toast('REMOVED'); });
+    if(e) arm($('qDel'),()=>{ dropEntries([e.id]); toast('REMOVED');
+      if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
+      else { closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); } });
     $('qEdit').onclick=()=>{                       // per 100 g is what editing works from
       const w=gramsOf(food.sv); h={};
       if(w) rows.forEach(([k])=>{ if(k!=='kj'){ const x=val(Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f}),k); if(x>0) h[k]=x*100/w.n; } });
@@ -2177,12 +2245,15 @@ function openCombo(c){
   paint();
   $('cGo').onclick=()=>{
     if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
-    const now=Date.now(), es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), q:e.q*st.q, m:st.m, t:now+i, e:now+i}));
+    const now=Date.now(), grp=ADD.group||{g:uid(), gn:c.n};
+    const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), q:e.q*st.q, m:st.m, t:now+i, e:now+i, g:grp.g, gn:grp.gn}));
     (P().days[DAY]=P().days[DAY]||[]).push(...es);
     FRESH=new Set(es.map(e=>e.id));
     c.u=c.e=now;
     const hit=checkHits();
-    touch(); closeSheet(); setTimeout(()=>renderMorph(st.m),220);
+    touch();
+    if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
+    else { closeSheet(); setTimeout(()=>renderMorph(st.m),220); }
     if(!hit){ sfx('confirm'); toast('LOGGED '+c.n.toUpperCase()+' \u00b7 '+fmt(sum(st.q).k)+' KCAL'); }
   };
 }
@@ -2192,7 +2263,7 @@ function saveMeal(){
     const now=Date.now();
     P().combos.unshift(cleanCombo({id:uid(), n, items:es, u:now, e:now}));
     touch(); closeSheet(); endSelect(); sfx('confirm'); toast('MEAL SAVED \u00b7 '+n.toUpperCase());
-  });
+  },true);
 }
 /* ---------- barcodes: the browser's detector where there is one, ZXing on iPhone ---------- */
 const SCAN={on:false, stream:null, raf:0, zx:null, host:null, cb:null};
@@ -2594,7 +2665,7 @@ function switchProfile(n,quick){
   DB.cur=n; save();
   DAY=today(); FOLLOW=true; ADD.q=''; ADD.results=[];
   dropSelect(); closeSheet(); render(); document.body.scrollTop=0;
-  if(changed){ sfx('start'); (quick?warp:panelHit)($('main'),$('hdrK'),$('bolt'),$('dCal')); toast('PROFILE: '+n.toUpperCase()); }
+  if(changed){ sfx('start'); (quick?warp:panelHit)($('main'),$('hdrK'),$('bolt'),$('dCal')); }
   if(ghOn()) ghSync(n);
 }
 function openFoods(){
@@ -2696,7 +2767,7 @@ async function checkUpdate(){
     const r=await fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'});
     const v=(await r.text()).match(/APP_VERSION='([\d.]+)'/);
     if(v && newer(v[1],APP_VERSION) && !GHT && !GHBUSY && !document.querySelector('#sheetWrap .sheet'))
-      location.replace(location.pathname+'?v='+v[1]);
+      { seen(); location.replace(location.pathname+'?v='+v[1]); }          // an update is a resume too
   }catch(e){}
 }
 
@@ -2708,6 +2779,7 @@ $('dNext').onclick=()=>goDay(shift(DAY,1));
 $('dCal').onclick=()=>openCalendar();
 $('selX').onclick=endSelect;
 $('selMeal').onclick=saveMeal;
+$('selComb').onclick=combineSel;
 arm($('selDel'),deleteSel);
 $('selGo').onclick=()=>openCalendar(copyTo,'COPY '+items(SEL.size)+' TO\u2026',true);
 $('rtt').onclick=()=>goDay(today());
@@ -2722,8 +2794,10 @@ $('imFile').onchange=e=>{ const f=e.target.files[0]; if(f) f.text().then(importT
 document.addEventListener('click',e=>{
   if(e.target.closest('button,[role=button],.veil') && Date.now()-SFXAT>150) sfx('tap');
 });
+const seen=()=>{ try{ localStorage.setItem('food_log_seen',Date.now()); }catch(e){} };   // see 'resumed' in the page head
+addEventListener('pagehide',seen);
 document.addEventListener('visibilitychange',()=>{
-  if(document.hidden){ ghFlush(); stopScan(); return; }
+  if(document.hidden){ seen(); ghFlush(); stopScan(); return; }
   if(FOLLOW && DAY!==today()){ DAY=today(); render(); }
   if(ghOn()) ghSyncAll().then(render);
   checkUpdate();
