@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.24.59">
+<meta name="app-version" content="2026.09.25.2">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -313,6 +313,32 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .fk{flex:none;font-family:var(--serif);font-size:15px;color:var(--champ);font-variant-numeric:tabular-nums}
 .fi.fresh{animation:fresh 3.2s ease-out}
 @keyframes fresh{0%,62%{border-color:var(--bronze);box-shadow:inset 0 0 16px -5px var(--bronze)}}
+#main>.card{margin-bottom:6px}
+.intake{padding:10px 12px 6px}
+.kline{margin-top:6px}
+.kc{font-size:38px}
+.mseg{margin:8px 0 2px}
+.macros{margin-top:6px}
+.mac{padding:3px 0}
+#main .wcard{padding:8px 12px}
+#main .wline{margin-top:2px;gap:12px}
+#main .wv{font-size:21px}
+#main .ws{margin-top:3px}
+#main .wa span{line-height:1.25}
+#main .wa b{margin:0;line-height:1.25}
+#main .wg.mini{height:30px}
+.meal{padding:6px 10px 8px 12px}
+.mhl{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:2px}
+.mhl h3{flex:none}
+.mt{flex:1 0 auto;margin:0;display:block;text-align:right;letter-spacing:.03em}
+.madd{width:32px;height:32px;font-size:26px}
+.fiw{margin-top:3px}
+.fi{padding:6px 10px;gap:8px}
+.fm{display:flex;align-items:baseline;gap:8px}
+.fnm{flex:1;min-width:0;font-size:14px;line-height:1.3}
+.fsb{flex:none;margin:0;font-size:10.5px;letter-spacing:.04em}
+.fk{font-size:14px;min-width:3ch;text-align:right}
+.swipe{height:32px;margin-top:4px}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
 .whobtn svg{width:27px;height:27px;stroke-width:1.1}
 .crton{position:fixed;inset:0;z-index:300;pointer-events:none}
@@ -357,7 +383,9 @@ html.ios .crton{display:none}
 .wstats b{display:block;margin-top:4px;font-weight:400;font-family:var(--serif);font-size:15px;color:var(--champ);font-variant-numeric:tabular-nums}
 .wgbox{touch-action:none;cursor:pointer}
 .wsel{margin:10px 0 4px;text-align:center;font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--bronze)}
-#wtBody.hit>*{filter:url(#uiwarp)}
+#wtBody.hit>*,#wBtns.hit>*{filter:url(#uiwarp)}
+.wone{display:flex;justify-content:center}
+.wone .btn{width:calc(50% - 4px);margin:0}
 .mpick{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 .mpick button{flex:1 1 64px;height:36px;padding:0 4px;border:1px solid var(--cardhair);border-radius:4px; font-family:var(--serif);font-size:9.5px;letter-spacing:.12em;color:var(--dimmer); white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mpick:has(>:nth-child(5)) button{font-size:8.5px;letter-spacing:.04em}
@@ -368,25 +396,12 @@ html.ios .crton{display:none}
 .fld::placeholder{color:var(--dimmer);opacity:.75}
 .flab{display:flex;align-items:center;gap:8px;font-family:var(--serif);font-size:9.5px;letter-spacing:.18em; color:var(--dimmer);margin:12px 0 5px;text-transform:uppercase}
 .flab.fsec{color:var(--bronze);margin-top:20px}
-.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
-.fgrid.sw{grid-template-columns:2fr 1fr}
-.fflabel{margin-top:14px}
-.ntab{border-top:1px solid var(--cardline);margin-top:2px}
-.nrow{display:grid;grid-template-columns:1fr 96px 70px;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--hair)}
-.nl{font-size:14px;color:var(--tx)}
-.nsub .nl{padding-left:12px;font-size:13px;color:var(--dim)}
-.nrow .fld{height:32px;padding:0 8px;text-align:right}
-.nu{font-family:var(--serif);font-size:10px;letter-spacing:.14em;color:var(--dimmer)}
-.nrow .eu{margin:0;gap:3px}
-.nrow .eu button{padding:3px 5px}
 .fld.auto{border-color:var(--bronze);background:var(--tint)}
+.lbl+.trio{margin-top:12px}
 .lbl{height:auto;min-height:170px;padding:10px 12px;font-size:16px;line-height:1.5;resize:none;margin-top:12px}
 .ask{display:flex;flex-direction:column;gap:8px}
 .ask>span{text-align:center;font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--bronze)}
 .ask .duo{margin:0}
-.eu{margin-left:auto;display:flex;gap:4px}
-.eu button{white-space:nowrap;font-size:9px;letter-spacing:.14em;color:var(--dimmer);border:1px solid var(--cardhair);border-radius:3px;padding:3px 7px}
-.eu button.on{color:var(--bronze);border-color:var(--bronze)}
 .srch{display:grid;grid-template-columns:1fr auto;gap:8px}
 .srch .btn{margin:0;padding:0 16px;width:auto;display:flex;align-items:center;justify-content:center;line-height:1}
 .srch .fld+.btn{height:36px}
@@ -395,7 +410,7 @@ html.ios .crton{display:none}
 .pfoot .btn{margin:0}
 .btn:disabled{opacity:.3;cursor:default}
 .radd{margin-top:12px}
-.sheet .pgbody>.btn,.sheet .pgcard>.btn,.sheet .fgrid+.btn,.sheet .srch+.btn{margin-top:16px}
+.sheet .pgbody>.btn,.sheet .pgcard>.btn,.sheet .srch+.btn{margin-top:16px}
 .srows+.tiny{margin-top:9px}
 html.standalone .sheet.full{height:100vh}
 html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
@@ -440,22 +455,47 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .qty>h3{padding:0 40px;line-height:1.3}
 .qper{font-family:var(--serif);font-size:10.5px;letter-spacing:.08em;line-height:1.5;color:var(--dimmer);text-align:center}
 .qty .mpick{margin:0}
-.qty .qfoot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
-.qty .qfoot .duo,.qty .qfoot .trio{margin:0}
+.qact .duo,.qact .trio{margin:0}
+.qin{height:30px;padding:0 8px;text-align:center;font-family:var(--serif);color:var(--champ)}
+.qname,.qsvi,.lin{border:none;border-bottom:1px dashed var(--cardline);border-radius:0;background:transparent; -webkit-appearance:none;appearance:none;font-size:16px;color:inherit;padding:0}
+.qname:focus,.qsvi:focus,.lin:focus{outline:none;border-bottom:1px solid var(--bronze)}
+.qname{width:100%;font-family:inherit;letter-spacing:inherit;text-transform:uppercase;text-align:center;line-height:inherit}
+.qsvi{width:88%;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;text-align:center; transform:scale(.72);transform-origin:left center;margin-right:-25%;vertical-align:middle}
+.lin{width:128%;margin-left:-28%;height:18px;font-family:var(--serif);color:var(--champ);text-align:right; transform:scale(.78);transform-origin:right center;font-variant-numeric:tabular-nums}
+.qact .duo,.qact .trio{gap:8px}
+.qctl{display:grid;gap:8px}
+.qty .qctl .mpick{margin:0;gap:8px}
+.qty .qctl .mpick button{flex:1 1 0;height:30px}
+.qamt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch}
+.qamt .mpick{display:contents}
+.qamt .qin{height:30px;margin:0}
+.qctl.off{opacity:.45;pointer-events:none}
+.qname::placeholder,.qsvi::placeholder,.lin::placeholder{color:var(--dimmer);opacity:.75}
+.lin.auto{border-bottom:1px solid var(--bronze);color:var(--bronze)}
+.qctl.off .mpick button,.qctl.off .mpick button.on,.qctl.off .qin{border-color:var(--cardhair);background:none;color:var(--dimmer); box-shadow:none !important;text-shadow:none !important}
+.qty h3.qt{height:24px;line-height:24px;padding:0 34px}
+.qt>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.qt .qname{height:24px;line-height:24px}
+.qty .qper{height:20px;line-height:20px;white-space:nowrap;overflow:hidden}
+.qsvi{height:20px;line-height:20px}
+.mpick button:disabled{opacity:.28}
+.rlist .lw{margin-top:5px;border-radius:6px}
+.rlist .lw .ri{position:relative;background:var(--card);border:1px solid var(--cardhair);border-radius:6px; padding:0 4px 0 12px;align-items:center;transform:translateX(calc(var(--dx,0px)*-1))}
+.rlist .lw .rm{padding:6px 0}
+.rlist .lw .bin{border-radius:6px}
+.lw:not(.drag) .ri{transition:transform .25s ease}
+.radd{flex:none;width:32px;height:32px;margin:0;display:flex;align-items:center;justify-content:center;font-size:22px;line-height:1;color:var(--bronze)}
 .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.qty .qrow{grid-template-columns:48px 1fr 48px}
-.qty .qrow button{font-size:26px}
-.qty .qrow .bignum{padding:6px;font-size:26px;height:auto}
 .qlab{flex:1;min-height:0;overflow:auto;scrollbar-width:none;border-top:1px solid var(--cardline)}
 .lrow{display:grid;grid-template-columns:1fr 92px 92px;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--hair)}
 .lrow span{font-size:14px;color:var(--tx)}
 .lrow b{font-weight:400;font-family:var(--serif);font-size:12.5px;color:var(--champ);text-align:right;font-variant-numeric:tabular-nums}
 .lrow.lsub span{padding-left:12px;font-size:13px;color:var(--dim)}
 .lrow.lsub b{color:var(--dim)}
-.lhead b{font-size:9.5px;letter-spacing:.14em;color:var(--dimmer)}
+.lhead b{font-size:9.5px;letter-spacing:.08em;color:var(--dimmer);white-space:nowrap}
 .lday{border-bottom:none;border-top:1px solid var(--cardline)}
 .lday span{font-family:var(--serif);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
-.qfoot .btn{margin:0}
+.qact .btn{margin:0}
 .qrow{display:grid;grid-template-columns:54px 1fr 54px;gap:8px}
 .qrow button{font-size:32px}
 .qrow .bignum{margin:0;padding:12px 6px}
@@ -500,19 +540,13 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .fld,.srch .fld+.btn{height:32px}
 .flab{margin:8px 0 3px}
 .flab.fsec{margin-top:12px}
-.fflabel{margin-top:10px}
 .mpick{gap:5px;margin-bottom:6px}
 .mpick button{height:30px}
 .rlist .rm{padding:5px 0}
-.nrow{padding:2px 0}
-.nrow .fld{height:28px}
-.nl{font-size:13.5px}
-.nsub .nl{font-size:12.5px}
 .qper{line-height:1.3}
 .qunit{margin:3px 0}
-.qty .qrow{grid-template-columns:44px 1fr 44px}
-.qty .qrow button,#wtBody .qrow button{font-size:22px}
-.qty .qrow .bignum,#wtBody .qrow .bignum{padding:2px;font-size:22px}
+#wtBody .qrow button{font-size:22px}
+#wtBody .qrow .bignum{padding:2px;font-size:22px}
 .lrow{padding:4px 0}
 .lrow span{font-size:13px}
 .lrow b{font-size:12px}
@@ -548,8 +582,8 @@ html.ios .btn.armed{background:rgba(255,59,48,.12)}
 html.ios .btn:hover,html.ios .btn:active,html.ios .srow:hover,html.ios .srow:active{background:var(--tint);color:var(--bronze);border-color:transparent}
 html.ios .fld,html.ios .bignum{background:var(--fill);border:1px solid transparent;border-radius:10px;color:var(--tx)}
 html.ios .fld:focus{border-color:var(--bronze)}
-html.ios .mpick button,html.ios .eu button{background:var(--fill);border-color:transparent;border-radius:8px;color:var(--dim)}
-html.ios .mpick button.on,html.ios .eu button.on{background:var(--bronze);color:#fff}
+html.ios .mpick button{background:var(--fill);border-color:transparent;border-radius:8px;color:var(--dim)}
+html.ios .mpick button.on{background:var(--bronze);color:#fff}
 html.ios .rtt{border-color:transparent;background:var(--fill);border-radius:12px}
 html.ios .selbar{background:var(--card);border-top-color:var(--hair)}
 html.ios .toast{background:rgba(44,44,46,.94);color:#fff;border-radius:18px}
@@ -611,7 +645,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.24.59';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.25.2';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -632,7 +666,7 @@ const cleanName=n=>String(n||'').replace(/[^\w .'-]/g,'').replace(/\s+/g,' ').tr
 
 function blankProfile(){
   return {goal:Object.assign({},DEF_GOAL), meals:DEF_MEALS.map(m=>Object.assign({},m)),
-          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, at:0, ge:0, me:0, pid:''};
+          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, at:0, ge:0, me:0, pid:''};
 }
 function cleanX(x){
   const o={};
@@ -688,6 +722,7 @@ function cleanProfile(p){
   Object.keys(p.hit||{}).sort().forEach(d=>{ const h=p.hit[d]; if(DATE_RE.test(d)&&h) o.hit[d]={k:!!h.k,p:!!h.p}; });
   Object.keys(p.wt||{}).sort().forEach(d=>{ const w=p.wt[d], v=w&&num(w.v,0,500), t=w&&num(w.e,1,1e13);
     if(DATE_RE.test(d) && v!==null && t) o.wt[d]={v:r1(v),e:t}; });                    // v 0: removed, kept so phones agree
+  Object.keys(p.rh||{}).forEach(k=>{ const t=num(p.rh[k],1,1e13); if(k.length<=120 && t) o.rh[k]=t; });   // hidden from Recent, until logged again
   Object.keys(p.del||{}).sort().forEach(id=>{ const t=num(p.del[id],1,1e13); if(t) o.del[id]=t; });
   ['at','ge','me'].forEach(k=>{ o[k]=orD(num(p[k],0,1e13),0); });
   o.pid=String(p.pid||'').slice(0,24);
@@ -821,6 +856,7 @@ function mergeProfile(a,b){
   Object.keys(Object.assign({},a.hit,b.hit)).forEach(d=>{
     const x=a.hit[d]||{}, y=b.hit[d]||{}; o.hit[d]={k:!!(x.k||y.k), p:!!(x.p||y.p)};
   });
+  Object.keys(Object.assign({},a.rh,b.rh)).forEach(k=>{ o.rh[k]=Math.max(a.rh[k]||0,b.rh[k]||0); });
   Object.keys(Object.assign({},a.wt,b.wt)).forEach(d=>{ const x=a.wt[d], y=b.wt[d]; o.wt[d]=!x?y:!y?x:y.e>x.e?y:x; });
   o.at=Math.max(a.at,b.at);
   return cleanProfile(o);
@@ -1290,9 +1326,10 @@ function segs(v,g,n,over){
   for(let i=0;i<n;i++) s+='<b class="'+(i<on?(over?'ov':'on'):'')+'"></b>';
   return s+'</div>';
 }
+/* Buttons that pick one of several; an item with a third value of true is shown but greyed out. */
 function picker(id,items,on){
-  return '<div class="mpick" id="'+id+'">'+items.map(([v,l])=>
-    '<button data-v="'+esc(v)+'" class="'+(v===on?'on':'')+'">'+esc(l)+'</button>').join('')+'</div>';
+  return '<div class="mpick" id="'+id+'">'+items.map(([v,l,off])=>
+    '<button data-v="'+esc(v)+'" class="'+(v===on?'on':'')+'"'+(off?' disabled':'')+'>'+esc(l)+'</button>').join('')+'</div>';
 }
 /* The pressed button warps; whatever it changes below takes the interference with it. */
 function onPick(id,fn){
@@ -1375,7 +1412,7 @@ function render(){
         :'<span class="madd"></span>')+'</div><div class="mbody">';
     h+=es.map(e=>'<div class="fiw" data-e="'+esc(e.id)+'"><span class="bin">'+BIN+'</span>'+
       '<button class="fi'+(FRESH.has(e.id)?' fresh':'')+'" data-e="'+esc(e.id)+'">'+(SEL?'<span class="chk"></span>':'')+'<span class="fm">'+
-      '<span class="fnm">'+esc(e.n)+'</span><span class="fsb">'+esc(qtyTxt(e))+' \u00b7 P'+r1(e.p*e.q)+' C'+r1(e.c*e.q)+' F'+r1(e.f*e.q)+'</span></span>'+
+      '<span class="fnm">'+esc(e.n)+'</span><span class="fsb">'+esc(qtyTxt(e))+'</span></span>'+
       '<span class="fk">'+fmt(e.k*e.q)+'</span></button></div>').join('');
     const c=!SEL && !es.length && DAY<=today() && copySource(m.id);
     if(c){
@@ -1594,7 +1631,7 @@ function plot(pts,sel,W,H,mini){
   const L=mini?3:PL.L, R=mini?3:PL.R, Tp=mini?4:PL.T, B=mini?4:PL.B;
   const x=i=>L+i*(W-L-R)/(n-1), y=v=>Tp+(mx-v)*(H-Tp-B)/(mx-mn), avg=have.length?have.reduce((s,v)=>s+v,0)/have.length:null;
   const pts2=vals.map((v,i)=>v?[x(i),y(v)]:null).filter(Boolean), si=pts.findIndex(p=>p.k===sel);
-  let s='<svg class="wg'+(mini?' mini':'')+'" viewBox="0 0 '+W+' '+H+'">';
+  let s='<svg class="wg'+(mini?' mini':'')+'" viewBox="0 0 '+W+' '+H+'"'+(mini?' preserveAspectRatio="none"':'')+'>';
   if(!mini){
     [mx-pad,(mn+mx)/2,mn+pad].forEach(v=>{ s+='<line class="gr" x1="'+L+'" x2="'+(W-R)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(L-6)+'" y="'+(y(v)+3)+'" text-anchor="end">'+v.toFixed(1)+'</text>'; });
     pts.forEach((p,i)=>{ s+='<text data-k="'+p.k+'" class="'+(p.k===sel?'on':p.k===today()?'now':'')+'" x="'+x(i)+'" y="'+(H-6)+'" text-anchor="middle">'+p.lab+'</text>'; });
@@ -1662,13 +1699,14 @@ function paintW(){
     '<div class="qrow"><button id="wDn" aria-label="Less">\u2212</button>'+
       '<input class="bignum" id="wV" type="number" enterkeyhint="done" step="0.1" placeholder="kg" value="'+(start?start.toFixed(1):'')+'">'+
       '<button id="wUp" aria-label="More">+</button></div><div class="qunit">KG</div>'+
-    '<div class="duo"><button class="btn" id="wGo">'+(v?'[ UPDATE ]':'[ SAVE ]')+'</button>'+
-      (v?'<button class="btn ghost" id="wDel">[ REMOVE ]</button>':'<span></span>')+'</div>';
+    '<div id="wBtns" class="'+(v?'duo':'wone')+'"><button class="btn" id="wGo">'+(v?'[ UPDATE ]':'[ SAVE ]')+'</button>'+
+      (v?'<button class="btn ghost" id="wDel">[ REMOVE ]</button>':'')+'</div>';
   const V=$('wV'), step=d=>{ const n=r1((+V.value||start||0)+d*0.1); if(n>0) V.value=n.toFixed(1); };
   $('wDn').onclick=()=>step(-1); $('wUp').onclick=()=>step(1);
   V.onfocus=()=>V.select();
   V.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('wGo').click(); } };   // the keyboard's Done saves
-  const set=val=>{ P().wt[sel]={v:val,e:Date.now()}; touch(); render(); drawWeight(); };
+  const set=val=>{ const had=!!v; P().wt[sel]={v:val,e:Date.now()}; touch(); render(); drawWeight();
+    if(had!==!!val) warp($('wBtns')); };                    // SAVE <-> UPDATE / REMOVE: only the buttons warp
   $('wGo').onclick=()=>{ const n=num(V.value,20,400); if(n===null){ sfx('nope'); return toast('ENTER A WEIGHT IN KG'); }
     V.blur(); set(r1(n)); sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); };
   if(v) arm($('wDel'),()=>{ set(0); toast('WEIGHT REMOVED'); });
@@ -1797,13 +1835,13 @@ function paintTab(){
       '<div class="src">DATA: OPEN FOOD FACTS \u00b7 AUSTRALIAN PRODUCTS FIRST</div>';
     $('osQ').oninput=e=>{ paintRecent(e.target.value); queueSearch(e.target.value); };
     searchKey($('osQ'),v=>{ const q=v.trim().toLowerCase(); if(q.length>=3 && !SRCACHE.has(q)){ clearTimeout(SRT); runSearch(q); } });
-    $('nfAdd').onclick=()=>openNewFood({n:$('osQ').value.trim()});
+    $('nfAdd').onclick=()=>openQty({id:'', n:$('osQ').value.trim(), sv:'', k:0, p:0, c:0, f:0, x:{}, bc:''},{create:true});
     paintRecent(ADD.sq);
     paintResults();
   } else if(ADD.tab==='saved'){
     b.innerHTML='<input class="fld" id="sfQ" type="search" enterkeyhint="search" placeholder="Filter foods and meals" autocomplete="off" value="'+esc(ADD.q)+'">'+
       '<div class="rlist" id="sfList"></div>';
-    const paint=()=>savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo);
+    const paint=()=>savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo,'',true);
     $('sfQ').oninput=e=>{ ADD.q=e.target.value; paint(); };
     searchKey($('sfQ'));
     paint();
@@ -1811,38 +1849,54 @@ function paintTab(){
     scanView(b,lookupCode);
   }
 }
-/* A food by hand, opened from the + on the search bar (with whatever was typed as its name)
-   or from a barcode that found nothing. The form clears once the food is logged. */
-function openNewFood(f){
-  setSheet(panel('New food',foodForm(Object.assign({x:{}},f)),true,'<button class="btn" id="nfGo" disabled>[ SAVE AND LOG ]</button>'),true);
-  const box=topSheet();
-  lastVeil().onclick=box.querySelector('.shx').onclick=popSheet;
-  bindFoodForm(box,$('nfGo'));
-  $('nfGo').onclick=()=>{
-    const food=readFoodForm(box); if(!food) return;
-    box.querySelectorAll('input').forEach(i=>i.value='');
-    box.querySelectorAll('.eu').forEach(t=>{ const b=t.querySelector('button'); t.dataset.v=b.dataset.v;
-      t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b)); });
-    $('nfGo').disabled=true;
-    const saved=upsertFood(food); touch(); sfx('confirm');
-    openQty(saved,{});
-  };
+/* A list row: tap opens the food, + logs it straight into the chosen section, and (where
+   there's something to delete) a swipe left deletes it, as on the dashboard. */
+function listRow(i,name,sub,kcal,plus){
+  return '<div class="fiw lw" data-i="'+i+'"><span class="bin">'+BIN+'</span><div class="ri" role="button" tabindex="0">'+
+    '<span class="rm"><span class="rn">'+esc(name)+'</span><span class="rs">'+sub+'</span></span><span class="rk">'+fmt(kcal)+'</span>'+
+    (plus?'<button class="radd" aria-label="Add">+</button>':'')+'</div></div>';
 }
-function foodRow(f,i){
-  return '<div class="ri"><button class="rm" data-i="'+i+'"><span class="rn">'+esc(f.n)+'</span>'+
-    '<span class="rs">'+esc(f.sv)+' \u00b7 P'+r1(f.p)+' C'+r1(f.c)+' F'+r1(f.f)+'</span></button>'+
-    '<span class="rk">'+fmt(f.k)+'</span></div>';
+const foodRow=(f,i)=>listRow(i,f.n,esc(f.sv)+' \u00b7 P'+r1(f.p)+' C'+r1(f.c)+' F'+r1(f.f),f.k,true);
+/* Wire a list: open on tap, + to add, and optionally swipe to delete. */
+function bindRows(L,open,add,del){
+  L.querySelectorAll('.lw').forEach(w=>{
+    const i=+w.dataset.i, row=w.querySelector('.ri'), plus=w.querySelector('.radd');
+    row.onclick=ev=>{ if(!ev.target.closest('.radd')) open(i,w); };
+    if(plus) plus.onclick=ev=>{ ev.stopPropagation(); add(i); warp(row); };
+    if(del) bindSwipe(w,-1,0.5,()=>{
+      w.style.setProperty('--dx',w.offsetWidth+'px'); w.style.height=w.offsetHeight+'px'; void w.offsetHeight;
+      w.classList.add('gone'); sfx('close'); setTimeout(()=>del(i),300);
+    });
+  });
+}
+/* Log a food straight from a list: the amount given, into the section chosen at the top. */
+function quickAdd(f,q,w,fid){
+  const now=Date.now(), g=gramsOf(f.sv), en={id:uid(), fid:fid||'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:Object.assign({},f.x),
+    q:q||1, w:w||(g?'g':'s'), m:ADD.meal, t:now, e:now};
+  (P().days[DAY]=P().days[DAY]||[]).push(en);
+  const saved=fid && P().foods.find(x=>x.id===fid); if(saved) saved.u=now;
+  FRESH=new Set([en.id]);
+  const hit=checkHits(); touch(); render();
+  if(!hit){ sfx('confirm'); toast('ADDED \u00b7 '+fmt(f.k*en.q)+' KCAL'); }
+}
+function quickMeal(c){
+  const now=Date.now(), es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), m:ADD.meal, t:now+i, e:now+i}));
+  (P().days[DAY]=P().days[DAY]||[]).push(...es); c.u=c.e=now;
+  FRESH=new Set(es.map(e=>e.id));
+  const hit=checkHits(); touch(); render();
+  if(!hit){ sfx('confirm'); toast('ADDED '+c.n.toUpperCase()); }
 }
 /* Foods most recently logged, newest first, drawn from the log itself: anything added and
    then removed was never really eaten, so it never appears here. */
+const recentKey=e=>e.fid||e.n+'|'+e.sv;
 function recentFoods(){
-  const seen=new Set(), out=[];
+  const seen=new Set(), out=[], rh=P().rh;
   Object.keys(P().days).filter(d=>d<=today()).forEach(d=>P().days[d].forEach(e=>out.push(e)));
-  return out.sort((x,y)=>y.t-x.t).filter(e=>{ const k=e.fid||e.n+'|'+e.sv; if(seen.has(k)) return false; seen.add(k); return true; }).slice(0,40);
+  return out.sort((x,y)=>y.t-x.t).filter(e=>{ const k=recentKey(e); if(seen.has(k)) return false; seen.add(k); return !(rh[k]>=e.t); }).slice(0,40);
 }
 /* Saved meals and foods as one list. Tap opens one; hold opens its editor in place: rename,
    share with another profile, or delete with a second tap. */
-function savedList(L,q,onFood,onMeal,ed){
+function savedList(L,q,onFood,onMeal,ed,plus){
   const s=q.trim().toLowerCase(), has=x=>!s || x.n.toLowerCase().includes(s), az=(x,y)=>x.n.localeCompare(y.n);
   const meals=P().combos.filter(has).sort(az), foods=P().foods.filter(has).sort(az);
   const rows=meals.map(o=>({t:'meal',o})).concat(foods.map(o=>({t:'food',o})));
@@ -1854,20 +1908,17 @@ function savedList(L,q,onFood,onMeal,ed){
       (others.length?'<button class="rx" id="svShare" aria-label="Share with another profile">\u2197</button>':'')+
       '<button class="rx" id="svDel" aria-label="Delete">\u00d7</button></div>'+
       '<div class="duo"><button class="btn ghost" id="svX">[ CLOSE ]</button><button class="btn" id="svOk">[ ACCEPT ]</button></div>';
-    return '<div class="ri" data-i="'+i+'" role="button" tabindex="0"><span class="rm"><span class="rn">'+esc(o.n)+'</span>'+
-      '<span class="rs">'+(m?o.items.length+' ITEM'+(o.items.length===1?'':'S'):esc(o.sv))+' \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</span></span>'+
-      '<span class="rk">'+fmt(t.k)+'</span></div>';
+    return listRow(i,o.n,(m?o.items.length+' ITEM'+(o.items.length===1?'':'S'):esc(o.sv))+' \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f),t.k,plus);
   };
   const head=(label,n)=>n && rows.length>n?'<div class="lh">'+label+'</div>':'';
   L.innerHTML=rows.length?head('MEALS',meals.length)+rows.slice(0,meals.length).map(row).join('')+
       head('FOODS',foods.length)+rows.slice(meals.length).map((r,i)=>row(r,i+meals.length)).join('')
     :'<div class="stat">'+(P().foods.length||P().combos.length?'NOTHING MATCHES':'NOTHING SAVED YET')+'</div>';
-  const again=id=>savedList(L,q,onFood,onMeal,id);
-  L.querySelectorAll('.ri[data-i]').forEach(el=>{
-    const r=rows[el.dataset.i];
-    el.onclick=()=>r.t==='meal'?onMeal(r.o):onFood(r.o);
-    bindHold(el,()=>again(r.o.id));
-  });
+  const again=id=>savedList(L,q,onFood,onMeal,id,plus);
+  bindRows(L,i=>rows[i].t==='meal'?onMeal(rows[i].o):onFood(rows[i].o),
+    i=>rows[i].t==='meal'?quickMeal(rows[i].o):quickAdd(rows[i].o,1,'',rows[i].o.id),
+    i=>{ dropSaved(rows[i].t,rows[i].o.id); toast(rows[i].t==='meal'?'MEAL DELETED':'FOOD DELETED'); again(); });
+  L.querySelectorAll('.lw').forEach(w=>bindHold(w,()=>again(rows[w.dataset.i].o.id)));
   if(!ed) return;
   const r=rows.find(x=>x.o.id===ed), I=$('svE'); if(!r) return again();
   setTimeout(()=>{ I.focus(); I.select(); },150);
@@ -1912,97 +1963,28 @@ function dropSaved(kind,id){
 const NP=[['k','Energy','kcal',0],['p','Protein','g',0],['f','Fat, total','g',0],['sf','\u2013 saturated','g',1],['tf','\u2013 trans','g',1],
   ['pf','\u2013 polyunsaturated','g',1],['mf','\u2013 monounsaturated','g',1],['c','Carbohydrate','g',0],['su','\u2013 sugars','g',1],
   ['fi','Dietary fibre','g',0],['na','Sodium','mg',0],['ch','Cholesterol','mg',0]];
-const npVal=(f,k)=>'kpcf'.includes(k)?f[k]:f.x[k];
-function foodForm(f){
-  const v=x=>x===undefined||x===null?'':x;
-  const tog=(id,items)=>'<span class="eu" id="'+id+'" data-v="'+items[0][0]+'">'+items.map(([k,l],i)=>'<button type="button" data-v="'+k+'"'+(i?'':' class="on"')+'>'+l+'</button>').join('')+'</span>';
-  const row=([k,l,unit,sub])=>{ const id='kpcf'.includes(k)?'ff'+k:'fx'+k;
-    return '<label class="nrow'+(sub?' nsub':'')+'" for="'+id+'"><span class="nl">'+l+'</span>'+
-      '<input class="fld" id="'+id+'" type="number" inputmode="decimal" step="any" placeholder="0" value="'+v(npVal(f,k))+'"><span class="nu">'+unit+'</span></label>'; };
-  return '<label class="flab" for="ffN">Name</label><input class="fld" id="ffN" maxlength="80" autocomplete="off" value="'+esc(f.n||'')+'" placeholder="e.g. Chicken breast, grilled">'+
-    '<div class="fgrid sw"><div><label class="flab" for="ffS">Serving</label><input class="fld" id="ffS" maxlength="30" autocomplete="off" value="'+esc(f.sv||'')+'" placeholder="e.g. 1 slice, 1 cup"></div>'+
-      '<div><label class="flab" for="ffW">Weight g</label><input class="fld" id="ffW" type="number" inputmode="decimal" step="any" placeholder="0"></div></div>'+
-    '<label class="flab" for="ffBc">Barcode</label><div class="srch"><input class="fld" id="ffBc" readonly placeholder="None" value="'+esc(f.bc||'')+'">'+
-      '<button class="btn" type="button" id="ffScan">[ SCAN ]</button></div>'+
-    '<button class="btn ghost fflabel" type="button" id="ffLabel">[ SCAN NUTRITION LABEL ]</button>'+
-    '<div class="flab fsec">Nutrition per'+tog('ffB',[['s','SERVING'],['h','100 G'],['1','1 G']])+'</div>'+
-    '<div class="ntab"><div class="nrow"><label class="nl" for="ffK">Energy</label>'+
-      '<input class="fld" id="ffK" type="number" inputmode="decimal" step="any" placeholder="0" value="'+v(f.k)+'">'+tog('ffU',[['k','KCAL'],['j','KJ']])+'</div>'+
-      NP.slice(1).map(row).join('')+'</div>';
-}
-/* The save button stays disabled until the food has a name and an energy value. */
-/* The save button stays disabled until the food has a name and an energy value. */
-function bindFoodForm(box,btn){
-  box.querySelectorAll('.eu').forEach(t=>t.querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    if(t.dataset.v===b.dataset.v) return;
-    t.dataset.v=b.dataset.v;
-    t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-    warp(b);
-  }));
-  const ready=()=>{ btn.disabled=!box.querySelector('#ffN').value.trim() || box.querySelector('#ffK').value===''; };
-  box.oninput=ready;
-  box.querySelector('#ffScan').onclick=()=>scanInto(box,ready);
-  box.querySelector('#ffLabel').onclick=()=>scanLabel(box,ready);
-  ready();
-}
-/* Scan a barcode onto the food being entered. If Open Food Facts knows it, anything not
-   yet filled in is filled from the label data there. */
-function scanInto(box,ready){
-  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Scan barcode<button class="shx back" id="bsBack" aria-label="Back">\u2039</button></h3>'+
-    '<div id="bsHost"></div></div>',true);
-  lastVeil().onclick=popSheet; $('bsBack').onclick=popSheet;
-  scanView($('bsHost'),async code=>{
-    scStat('LOOKING UP '+code+'\u2026');
-    let f=null; try{ f=await offLookup(code); }catch(e){}
-    popSheet();
-    box.querySelector('#ffBc').value=code;
-    if(!f){ sfx('confirm'); toast('BARCODE ADDED \u00b7 NOT IN OPEN FOOD FACTS'); return; }
-    if(!fillForm(box,Object.assign({basis:'s',unit:'k'},f),ready)){ sfx('confirm'); toast('BARCODE ADDED'); }
-  });
-  startScan();
-}
-/* Put label values into the form: name and serving only where still empty, and the numbers
-   only as a set, when no energy has been typed yet. Anything filled is marked, and the footer
-   asks whether it's right: CONFIRM keeps it, CLEAR puts the form back as it was. */
-function fillForm(box,f,ready){
-  const q=id=>box.querySelector('#'+id), snap=[...box.querySelectorAll('input.fld')].map(i=>[i,i.value]),
-    togs=[...box.querySelectorAll('.eu')].map(t=>[t,t.dataset.v]), filled=[];
-  const fill=(id,val)=>{ if(q(id).value==='' && val!==null && val!==undefined && val!==''){ q(id).value=val; filled.push(q(id)); } };
-  const setTog=(t,v)=>{ t.dataset.v=v; t.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.v===v)); };
-  fill('ffN',f.n); fill('ffS',f.sv); fill('ffW',f.w);
-  const fresh=q('ffK').value==='';
-  if(fresh){
-    setTog(q('ffB'),f.basis); setTog(q('ffU'),f.unit);
-    fill('ffK',f.k); fill('ffp',f.p); fill('ffc',f.c); fill('fff',f.f); XN.forEach(([k])=>fill('fx'+k,f.x[k]));
-  }
-  if(!filled.length) return false;
-  filled.forEach(i=>i.classList.add('auto'));
-  const foot=box.querySelector('.pfoot');
-  [...foot.children].forEach(c=>c.hidden=true);
-  foot.insertAdjacentHTML('afterbegin','<div class="ask"><span>FILLED IN \u00b7 IS THIS CORRECT?</span>'+
-    '<div class="duo"><button class="btn ghost" id="askX">[ CLEAR ]</button><button class="btn" id="askOk">[ CONFIRM ]</button></div></div>');
-  const done=()=>{ filled.forEach(i=>i.classList.remove('auto')); foot.querySelector('.ask').remove(); [...foot.children].forEach(c=>c.hidden=false); ready(); };
-  $('askOk').onclick=()=>{ sfx('confirm'); done(); };
-  $('askX').onclick=()=>{ snap.forEach(([i,v])=>i.value=v); togs.forEach(([t,v])=>setTog(t,v)); done(); toast('CLEARED'); };
-  ready(); sfx('confirm');
-  return true;
-}
-/* The label is read by the phone itself: iPhone's Scan Text types what the camera sees into the
-   box (paste works too), and the rows are matched here. On an Australian panel the first number
-   on a row is per serving, the second per 100 g. */
-function scanLabel(box,ready){
+/* The label read by the phone itself: iPhone's Scan Text types what the camera sees into
+   the box (paste works too), and the rows are matched here. On an Australian panel the first
+   number on a row is per serving and the second per 100 g; what comes back is per 100 g. */
+function scanLabel(done){
   setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Scan label<button class="shx back" id="slBack" aria-label="Back">\u2039</button></h3>'+
-    '<div class="pgnote">Tap the box, choose <b>Scan Text</b> (the camera button above the keyboard, or tap and hold \u203a Scan Text) and point it at the nutrition panel. Or paste text copied from a photo.</div>'+
+    '<div class="pgnote">Tap the box, then <b>Scan Text</b> above the keyboard (or tap and hold \u203a Scan Text) and point it at the nutrition panel. Or in the Camera app, tap Live Text \u203a <b>Copy All</b>, then PASTE here.</div>'+
     '<textarea class="fld lbl" id="slT" rows="7" placeholder="Nutrition information"></textarea>'+
-    '<button class="btn" id="slGo" disabled>[ FILL FORM ]</button></div>',true);
+    '<div class="trio"><button class="btn ghost" id="slX" disabled>[ CLEAR ]</button><button class="btn ghost" id="slPaste">[ PASTE ]</button>'+
+      '<button class="btn" id="slGo" disabled>[ FILL IN ]</button></div></div>',true);
   lastVeil().onclick=popSheet; $('slBack').onclick=popSheet;
-  const T=$('slT'); T.oninput=()=>$('slGo').disabled=!T.value.trim();
-  setTimeout(()=>T.focus(),200);
-  $('slGo').onclick=()=>{
+  const T=$('slT');
+  T.oninput=()=>{ const has=!!T.value.trim(); $('slGo').disabled=$('slX').disabled=!has; };
+  $('slX').onclick=()=>{ T.value=''; T.oninput(); };
+  const fill=()=>{
     const f=parseLabel(T.value);
     if(!f){ sfx('nope'); return toast('NO NUTRITION ROWS FOUND \u2014 TRY AGAIN'); }
-    popSheet();
-    if(!fillForm(box,f,ready)) toast('NOTHING NEW TO FILL');
+    popSheet(); done(f);
+  };
+  $('slGo').onclick=fill;
+  $('slPaste').onclick=async()=>{   // text copied with Live Text in the Camera app
+    try{ const t=await navigator.clipboard.readText(); if(!t.trim()) return toast('NOTHING COPIED YET'); T.value=t; T.oninput(); fill(); }
+    catch(e){ toast('TAP AND HOLD THE BOX, THEN PASTE'); }
   };
 }
 const NIP=[['k',/energy/],['p',/protein/],['sf',/satur/],['tf',/trans/],['pf',/poly/],['mf',/mono/],['f',/fat/],
@@ -2015,58 +1997,21 @@ function parseLabel(txt){
     const k=hit[0], all=[...low.matchAll(/(\d+(?:\.\d+)?)\s*(kj|kcal|cal|mg|g)?/g)];
     if(k==='k'){
       const kj=all.filter(m=>m[2]==='kj'), kc=all.filter(m=>m[2]==='kcal'||m[2]==='cal');
-      const use=kj.length?kj:kc.length?kc:all;
-      if(use.length) rows.k={u:kc.length&&!kj.length?'k':'j', n:use.map(m=>+m[1])};
+      const use=kj.length?kj.map(m=>+m[1]/4.184):kc.length?kc.map(m=>+m[1]):all.map(m=>+m[1]/4.184);
+      if(use.length) rows.k=use;
       return;
     }
     const mg=k==='na'||k==='ch', n=all.map(m=>mg&&m[2]==='g'?+m[1]*1000:+m[1]);
-    if(n.length) rows[k]={n};
+    if(n.length) rows[k]=n;
   });
   if(!rows.k || Object.keys(rows).length<2) return null;
-  const sm=txt.match(/serving size[:\s]*([^\n]+)/i), sv=sm?sm[1].trim().slice(0,30):'';
-  const col=sv?0:(rows.k.n.length>1?1:0), pick=r=>r?r.n[Math.min(col,r.n.length-1)]:null;
-  const x={}; XN.forEach(([key])=>{ const v=pick(rows[key]); if(v) x[key]=r1(v); });
-  return {sv, basis:sv?'s':'h', unit:rows.k.u, k:pick(rows.k), p:pick(rows.p), c:pick(rows.c), f:pick(rows.f), x};
-}
-/* Values can be typed per serving, per 100 g or per 1 g; the food is kept per serving,
-   with the serving's weight so it can be logged by weight too. */
-function readFoodForm(box){
-  const g=id=>box.querySelector('#'+id).value.trim();
-  const bad=(id,m)=>{ sfx('nope'); toast(m); box.querySelector('#'+id).focus(); return null; };
-  const n=g('ffN').replace(/\s+/g,' ');
-  if(!n) return bad('ffN','GIVE IT A NAME');
-  let k=g('ffK')===''?null:num(g('ffK'),0,40000);
-  if(k===null) return bad('ffK','ENTER THE ENERGY');
-  if(box.querySelector('#ffU').dataset.v==='j') k/=4.184;
-  const txt=g('ffS'), w=g('ffW')===''?0:num(g('ffW'),0.1,5000);
-  if(w===null) return bad('ffW','CHECK THE WEIGHT');
-  const gw=w||(gramsOf(txt)||{}).n||0, basis=box.querySelector('#ffB').dataset.v;
-  if(basis!=='s' && txt && !gw) return bad('ffW','ENTER THE SERVING WEIGHT');
-  const sv=!txt?(gw?gw+' g':basis==='s'?'1 serving':'100 g'):w && !gramsOf(txt)?(txt+' ('+w+' g)').slice(0,30):txt;
-  const per=basis==='s'?1:(gw||100)/(basis==='h'?100:1);
-  if(k*per>9000) return bad('ffK','THAT ENERGY LOOKS TOO HIGH');
-  const f={n, sv, k:r1(k*per), x:{}, bc:g('ffBc')};
-  for(const m of ['p','c','f']){ const v=num(g('ff'+m)||0,0,1500); if(v===null) return bad('ff'+m,'CHECK THE MACROS'); f[m]=r1(v*per); }
-  for(const [x] of XN){ const v=num(g('fx'+x)||0,0,100000); if(v===null) return bad('fx'+x,'CHECK THE DETAIL VALUES'); if(v) f.x[x]=r1(v*per); }
-  return f;
-}
-/* Edit a food's name and label. A saved food is updated in place; one not saved yet (an
-   Open Food Facts result, say) is saved with the corrections. after gets the saved food. */
-function openFoodEdit(food,after,canDelete){
-  const saved=P().foods.includes(food);
-  setSheet(panel(saved?'Edit food':'Nutrition',foodForm(food),true,
-    '<button class="btn" id="feGo">[ SAVE FOOD ]</button>'+(saved && canDelete?'<button class="btn ghost" id="feDel">[ DELETE FOOD ]</button>':'')),true);
-  const box=topSheet();
-  lastVeil().onclick=box.querySelector('.shx').onclick=popSheet;
-  bindFoodForm(box,$('feGo'));
-  $('feGo').onclick=()=>{
-    const f=readFoodForm(box); if(!f) return;
-    const nf=saved?Object.assign(food,{n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x, bc:f.bc||food.bc, e:Date.now()})
-      :upsertFood(Object.assign(f,{bc:f.bc||food.bc}));
-    if(!saved) Object.assign(nf,{n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x});   // corrections win over any older copy
-    touch(); sfx('confirm'); toast('FOOD SAVED'); after(nf);
-  };
-  if($('feDel')) arm($('feDel'),()=>{ dropSaved('food',food.id); toast('FOOD DELETED'); after(); });
+  const sm=txt.match(/serving size[:\s]*([^\n]+)/i), sv=sm?sm[1].trim().slice(0,30):'', w=gramsOf(sv);
+  const h={};
+  Object.entries(rows).forEach(([k,n])=>{
+    const v=n.length>1?n[1]:(w && sv?n[0]*100/w.n:n[0]);        // one number with a serving size is that serving's
+    if(v>0) h[k]=v;
+  });
+  return {sv, h};
 }
 
 /* ---------- how much: by weight when the serving has one, otherwise servings ---------- */
@@ -2075,67 +2020,135 @@ function openFoodEdit(food,after,canDelete){
 /* Tapping a food opens its label: choose the section and the amount (servings, 100 g or
    grams when the serving has a weight), and the panel shows that amount beside per 100 g.
    EDIT NUTRITION corrects the food and redraws in place. */
+/* Tapping a food opens its label. The buttons sit at the top; below them the section and the
+   amount (servings, 100 g or grams when the serving has a weight), then the label: that
+   amount beside per 100 g. EDIT keeps the label as it is and makes its values editable,
+   per serving or per 100 g, whichever the pack shows. Only foods edited here are saved. */
+/* Tapping a food opens its label. Buttons at the top; then the section and the amount; then
+   the label: that amount beside per 100 g. Choices the food doesn't support are greyed out.
+   EDIT keeps everything where it is: the name, serving and per 100 g values become fields,
+   and the serving and the amount are worked out from per 100 g. Only foods edited are saved. */
 function openQty(food,o){
   const e=o.entry, stack=!!topSheet(), base=totals(), T=targets();
   if(e){ base.k-=e.k*e.q; base.p-=e.p*e.q; }
   setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
   const box=topSheet(), back=stack?popSheet:closeSheet;
-  lastVeil().onclick=back;
-  let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv);
-  const st={q:e?e.q:(o.q||1), m:e?mealOf(e):ADD.meal, w:g?(e?e.w:(o.w||'g')):'s'};
+  let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv), edit=!!o.create, h={}, ask=null, auto=new Set();
+  lastVeil().onclick=()=>{ if(!edit) back(); };                 // while editing only CANCEL leaves
+  /* A new food shows a worked example in every box, greyed, until it's typed over. */
+  const EX={n:'e.g. Chicken breast', sv:'e.g. 1 breast (150 g)', k:'165', kj:'690', p:'31', f:'3.6', sf:'1', tf:'0', pf:'0.8',
+    mf:'1.2', c:'0', su:'0', fi:'0', na:'74', ch:'85'};
+  const hint=k=>o.create?EX[k]:'\u2014';
+  const units=()=>{ const s=g && g.n===100;                     // a serving of exactly 100 g is no serving of its own
+    return [['s','SERVINGS',s],['h','100 '+(g?g.u:'g').toUpperCase(),!g],['g',g&&g.u==='ml'?'ML':'GRAMS',!g]]; };
+  const st={q:e?e.q:(o.q||1), m:e?mealOf(e):ADD.meal, w:e?e.w:(o.w||'g')};
+  const fix=()=>{ if(!g) st.w='s'; else if(st.w==='s' && g.n===100) st.w='g'; };
+  const cell=(v,u)=>v>0?(u==='g'?r1(v):fmt(v))+' '+u:'\u2014';
+  const rows=NP.flatMap(r=>r[0]==='k'?[r,['kj','\u2013 kilojoules','kJ',1]]:[r]);
+  const val=(src,k)=>k==='kj'?(src.k||0)*4.184:(src[k]||0);
   const draw=()=>{
-    g=gramsOf(food.sv); if(!g) st.w='s';
-    box.innerHTML='<h3>'+esc(food.n)+'<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
-      '<div class="qper">SERVING \u00b7 '+esc(food.sv.toUpperCase())+'</div>'+
-      picker('qMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
-      (g?picker('qUnit',[['s','SERVINGS'],['h','100 '+g.u.toUpperCase()],['g',g.u==='ml'?'MILLILITRES':'GRAMS']],st.w):'<div class="qunit">SERVINGS</div>')+
-      '<div class="qrow"><button id="qDn" aria-label="Less">\u2212</button>'+
-        '<input class="bignum" id="qV" type="number" inputmode="decimal" step="any"><button id="qUp" aria-label="More">+</button></div>'+
-      '<div class="qlab" id="qX"></div>'+
-      '<div class="qfoot">'+(e?'<div class="trio"><button class="btn" id="qGo">[ UPDATE ]</button><button class="btn ghost" id="qEdit">[ EDIT ]</button>'+
-          '<button class="btn ghost" id="qDel">[ REMOVE ]</button></div>'
-        :'<div class="duo"><button class="btn" id="qGo">[ LOG IT ]</button><button class="btn ghost" id="qEdit">[ EDIT NUTRITION ]</button></div>')+'</div>';
+    g=gramsOf(food.sv); fix();
+    const btns=ask?'<div class="duo"><button class="btn ghost" id="qClear">[ CLEAR ]</button><button class="btn" id="qOk">[ CONFIRM ]</button></div>'
+      :edit?'<div class="trio"><button class="btn ghost" id="qCancel">[ CANCEL ]</button><button class="btn ghost" id="qScan">[ SCAN LABEL ]</button><button class="btn" id="qSave">[ SAVE ]</button></div>'
+      :e?'<div class="trio"><button class="btn" id="qGo">[ UPDATE ]</button><button class="btn ghost" id="qEdit">[ EDIT ]</button><button class="btn ghost" id="qDel">[ REMOVE ]</button></div>'
+      :'<div class="duo"><button class="btn" id="qGo">[ LOG IT ]</button><button class="btn ghost" id="qEdit">[ EDIT NUTRITION ]</button></div>';
+    box.innerHTML='<h3 class="qt">'+(edit?'<input class="qname" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'">':'<span>'+esc(food.n)+'</span>')+
+        '<button class="shx'+(stack?' back':'')+'"'+(edit?' style="visibility:hidden"':'')+' aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
+      '<div class="qper">SERVING \u00b7 '+(edit?'<input class="qsvi" id="qS" maxlength="30" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'
+        :esc(food.sv.toUpperCase()))+'</div>'+
+      '<div class="qact">'+btns+'</div>'+
+      '<div class="qctl'+(edit?' off':'')+'">'+picker('qMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
+        '<div class="qamt"><input class="fld qin" id="qV" type="number" inputmode="decimal" step="any">'+picker('qUnit',units(),st.w)+'</div></div>'+
+      '<div class="qlab" id="qX"></div>';
     box.querySelector('.shx').onclick=back;
     const V=$('qV'), per={s:1, h:g?g.n/100:1, g:g?g.n:1};          // amount typed = servings x per[unit]
-    const paint=()=>{
-      const q=st.q, ref=g?100/g.n:1, amt=g?r1(q*g.n)+' '+g.u:(q===1?'1 serving':r1(q)+' servings');
-      const cell=(v,u)=>v>0?(u==='g'?r1(v):fmt(v))+' '+u:'\u2014';
-      $('qX').innerHTML='<div class="lrow lhead"><span></span><b>'+esc(amt.toUpperCase())+'</b><b>'+(g?'PER 100 '+g.u.toUpperCase():'PER SERVING')+'</b></div>'+
-        NP.map(([k,l,u,sub])=>{ const v=npVal(food,k)||0; if(sub && !v) return '';
-          return '<div class="lrow'+(sub?' lsub':'')+'"><span>'+l+'</span><b>'+cell(v*q,u)+'</b><b>'+cell(v*ref,u)+'</b></div>'+
-            (k==='k'?'<div class="lrow lsub"><span>\u2013 kilojoules</span><b>'+cell(v*q*4.184,'kJ')+'</b><b>'+cell(v*ref*4.184,'kJ')+'</b></div>':''); }).join('')+
-        '<div class="lrow lday"><span>Day after</span><b>'+fmt(base.k+food.k*q)+' / '+fmt(T.k)+'</b><b>P '+Math.round(base.p+food.p*q)+'</b></div>';
-    };
-    const show=()=>{ V.value=r1(st.q*per[st.w]); paint(); };
+    V.value=r1(st.q*per[st.w]);
     onPick('qMeal',v=>st.m=v);
-    if(g) onPick('qUnit',v=>{ st.w=v; show(); });
-    V.oninput=()=>{ st.q=Math.max(0,+V.value||0)/per[st.w]; paint(); };
+    onPick('qUnit',v=>{ st.w=v; V.value=r1(st.q*per[st.w]); update(); });
+    V.oninput=()=>{ st.q=Math.max(0,+V.value||0)/per[st.w]; update(); };
     V.onfocus=()=>V.select();
-    const nudge=d=>{ const v=(+V.value||0)+d*{s:1,h:0.5,g:5}[st.w]; if(v>0){ V.value=r1(v); V.oninput(); } };
-    $('qDn').onclick=()=>nudge(-1); $('qUp').onclick=()=>nudge(1);
-    show();
+    /* The label: the amount beside per 100 g (per serving when the food has no weight). In
+       editing, the per 100 g cells are fields; typing only refreshes what's worked out from them. */
+    const now=()=>{
+      const sv=edit?$('qS').value:food.sv, w=gramsOf(/^\d+(\.\d+)?$/.test(sv.trim())?sv+' g':sv), grams=g?st.q*g.n:0;
+      const q=edit?(grams && w?grams/w.n:1):st.q;
+      const src=edit?(w?Object.fromEntries(Object.entries(h).map(([k,x])=>[k,x*w.n/100])):{}):Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f});
+      return {w, q, src, amt:w?r1(q*w.n)+' '+w.u:(q===1?'1 serving':r1(q)+' servings')};
+    };
+    const update=()=>{ const c=now();
+      $('qAh').textContent=c.amt.toUpperCase(); $('qBh').textContent=c.w||edit?'PER 100 '+(c.w?c.w.u:'g').toUpperCase():'PER SERVING';
+      rows.forEach(([k,,u])=>{ $('qX').querySelector('[data-a="'+k+'"]').textContent=cell(val(c.src,k)*c.q,u); });
+      $('qD1').textContent=fmt(base.k+(c.src.k||0)*c.q)+' / '+fmt(T.k); $('qD2').textContent='P '+Math.round(base.p+(c.src.p||0)*c.q);
+    };
+    const paint=()=>{ const c=now(), ref=c.w?100/c.w.n:1;
+      $('qX').innerHTML='<div class="lrow lhead"><span></span><b id="qAh"></b><b id="qBh"></b></div>'+
+        rows.map(([k,l,u,sub])=>'<div class="lrow'+(sub?' lsub':'')+'"><span>'+l+'</span><b data-a="'+k+'"></b><b>'+
+          (edit?'<input class="lin'+(auto.has(k)?' auto':'')+'" type="number" inputmode="decimal" step="any" data-k="'+k+'" placeholder="'+hint(k)+'" value="'+(val(h,k)>0?r1(val(h,k)):'')+'">'
+            :cell(val(c.src,k)*ref,u))+'</b></div>').join('')+
+        '<div class="lrow lday"><span>Day after</span><b id="qD1"></b><b id="qD2"></b></div>';
+      update();
+      if(edit) $('qX').querySelectorAll('.lin').forEach(f=>f.oninput=()=>{
+        const n=Math.max(0,+f.value||0);
+        if(f.dataset.k==='kj'){ h.k=n/4.184; const kc=$('qX').querySelector('.lin[data-k="k"]'); kc.value=n?r1(h.k):''; }
+        else { h[f.dataset.k]=n; if(f.dataset.k==='k'){ const kj=$('qX').querySelector('.lin[data-k="kj"]'); kj.value=n?r1(n*4.184):''; } }
+        update(); });
+    };
+    paint();
+    if(ask){                                        // label values just filled in: keep them, or put things back
+      $('qOk').onclick=()=>{ ask=null; auto.clear(); sfx('confirm'); draw(); warp($('qX')); };
+      $('qClear').onclick=()=>{ h=ask.h; food=Object.assign({},food,{sv:ask.sv, n:ask.n}); ask=null; auto.clear(); toast('CLEARED'); draw(); warp($('qX')); };
+      $('qS').oninput=update;
+      return;
+    }
+    if(edit){
+      $('qS').oninput=update;
+      const keep=()=>{ food=Object.assign({},food,{n:$('qN').value, sv:$('qS').value}); };    // typed text survives a redraw
+      $('qCancel').onclick=()=>{ if(o.create) return back(); edit=false; draw(); warp(box); };
+      $('qScan').onclick=()=>{ keep(); scanLabel(f=>{
+        ask={h:Object.assign({},h), sv:food.sv, n:food.n};
+        Object.entries(f.h).forEach(([k,v])=>{ h[k]=v; auto.add(k); if(k==='k') auto.add('kj'); });
+        if(f.sv){ food=Object.assign({},food,{sv:f.sv}); }
+        sfx('confirm'); draw(); warp($('qX'));
+      }); };
+      $('qSave').onclick=()=>{
+        const n=$('qN').value.trim().replace(/\s+/g,' ');
+        let sv=$('qS').value.trim(); if(/^\d+(\.\d+)?$/.test(sv)) sv+=' g';
+        const w=gramsOf(sv);
+        if(!n){ sfx('nope'); return toast('GIVE IT A NAME'); }
+        if(!w){ sfx('nope'); return toast('ADD THE SERVING WEIGHT, E.G. 40 G'); }
+        if(!(h.k>0)){ sfx('nope'); return toast('ENTER THE ENERGY PER 100 G'); }
+        const s=x=>r1((x||0)*w.n/100), vals={n, sv, k:s(h.k), p:s(h.p), c:s(h.c), f:s(h.f), x:{}};
+        XN.forEach(([k])=>{ if(h[k]>0) vals.x[k]=s(h[k]); });
+        const grams=g?st.q*g.n:0, now=Date.now();              // the same weight is kept if the serving changes
+        saved=saved||upsertFood(Object.assign({},vals,{bc:food.bc||''}));
+        Object.assign(saved,vals,{e:now});
+        if(e){ Object.assign(e,{fid:saved.id, n:vals.n, sv:vals.sv, k:vals.k, p:vals.p, c:vals.c, f:vals.f, x:Object.assign({},vals.x), e:now}); render(); }
+        food=saved; if(grams) st.q=grams/w.n; else { st.q=1; st.w=w.n===100?'g':'s'; }
+        o.create=false;
+        touch(); sfx('confirm'); toast('FOOD SAVED');
+        edit=false; draw(); warp(box);
+      };
+      return;
+    }
     $('qGo').onclick=()=>{
       if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
-      const now=Date.now(), was=e?mealOf(e):st.m, fd=o.save?upsertFood(food):food;
+      const now=Date.now(), was=e?mealOf(e):st.m;
       if(saved){ saved.u=saved.e=now; }
       if(e) Object.assign(e,{q:st.q, w:st.w, m:st.m, e:now});
       else {
-        const en={id:uid(), fid:fd.id, n:fd.n, sv:fd.sv, k:fd.k, p:fd.p, c:fd.c, f:fd.f, x:Object.assign({},fd.x), q:st.q, w:st.w, m:st.m, t:now, e:now};
+        const en={id:uid(), fid:saved?saved.id:'', n:food.n, sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now};
         (P().days[DAY]=P().days[DAY]||[]).push(en);
         FRESH=new Set([en.id]);
       }
       const hit=checkHits();
       touch(); closeSheet(); setTimeout(()=>renderMorph(...new Set([was,st.m])),220);
-      if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(fd.k*st.q)+' KCAL'); }
+      if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(food.k*st.q)+' KCAL'); }
     };
     if(e) arm($('qDel'),()=>{ dropEntries([e.id]); closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); toast('REMOVED'); });
-    $('qEdit').onclick=()=>openFoodEdit(saved||food,nf=>{
-      const q0=g?st.q*g.n:0;                       // keep the same weight if the serving changes
-      saved=food=nf; o.save=false;
-      if(e){ Object.assign(e,{fid:nf.id, n:nf.n, sv:nf.sv, k:nf.k, p:nf.p, c:nf.c, f:nf.f, x:Object.assign({},nf.x), e:Date.now()}); touch(); render(); }
-      const g2=gramsOf(nf.sv); if(q0 && g2) st.q=q0/g2.n;
-      popSheet(); draw(); warp(box);
-    });
+    $('qEdit').onclick=()=>{                       // per 100 g is what editing works from
+      const w=gramsOf(food.sv); h={};
+      if(w) rows.forEach(([k])=>{ if(k!=='kj'){ const x=val(Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f}),k); if(x>0) h[k]=x*100/w.n; } });
+      edit=true; draw(); warp(box); };
   };
   draw();
 }
@@ -2148,11 +2161,10 @@ function openCombo(c){
   setSheet('<div class="veil"></div><div class="sheet fit full qty"><h3>'+esc(c.n)+
     '<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
     '<div class="qper">'+items(c.items.length)+' \u00b7 MEAL</div>'+
+    '<div class="qact"><button class="btn" id="cGo">[ LOG MEAL ]</button></div>'+
     picker('cMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
-    '<div class="qrow"><button id="cDn" aria-label="Less">\u2212</button><input class="bignum" id="cV" type="number" inputmode="decimal" step="any" value="1">'+
-    '<button id="cUp" aria-label="More">+</button></div><div class="qunit">SERVINGS</div>'+
-    '<div class="xled" id="cX"></div>'+
-    '<div class="qfoot"><button class="btn" id="cGo">[ LOG MEAL ]</button></div></div>',stack);
+    '<div class="qamt"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1"><div class="qunit">SERVINGS</div></div>'+
+    '<div class="xled" id="cX"></div></div>',stack);
   const box=topSheet(), back=stack?popSheet:closeSheet, V=$('cV');
   lastVeil().onclick=box.querySelector('.shx').onclick=back;
   onPick('cMeal',v=>st.m=v);
@@ -2162,8 +2174,6 @@ function openCombo(c){
       '<div class="xsum"><span>Day after</span><b>'+fmt(base.k+t.k)+' / '+fmt(T.k)+' \u00b7 P '+Math.round(base.p+t.p)+'</b></div>'; };
   V.oninput=()=>{ st.q=Math.max(0,+V.value||0); paint(); };
   V.onfocus=()=>V.select();
-  const nudge=d=>{ const v=(+V.value||0)+d; if(v>0){ V.value=r1(v); V.oninput(); } };
-  $('cDn').onclick=()=>nudge(-1); $('cUp').onclick=()=>nudge(1);
   paint();
   $('cGo').onclick=()=>{
     if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
@@ -2284,10 +2294,10 @@ async function lookupCode(code){
   scStat('LOOKING UP '+code+'\u2026');
   try{
     const f=await offLookup(code);
-    if(f){ sfx('confirm'); scStat(''); return openQty(f,{save:true}); }
+    if(f){ sfx('confirm'); scStat(''); return openQty(f,{}); }
     sfx('nope'); scStat('NO MATCH FOR '+code,true);
     sq('.scres').innerHTML='<button class="btn ghost">[ ADD IT BY HAND ]</button>';
-    sq('.scres button').onclick=()=>openNewFood({bc:code});
+    sq('.scres button').onclick=()=>openQty({id:'', n:'', sv:'', k:0, p:0, c:0, f:0, x:{}, bc:code},{create:true});
   }catch(e){ sfx('nope'); scStat('LOOKUP FAILED \u2014 CHECK THE CONNECTION',true); }
 }
 
@@ -2347,10 +2357,8 @@ function showResults(out){
 function paintResults(){
   const L=$('osList'), list=ADD.results.slice(0,40);
   L.innerHTML=(list.length?'<div class="lh">OPEN FOOD FACTS</div>':'')+list.map((f,i)=>foodRow(f,i)).join('');
-  L.querySelectorAll('.rm').forEach(b=>b.onclick=()=>{
-    const f=ADD.results[b.dataset.i], saved=f.bc && P().foods.find(x=>x.bc===f.bc);
-    openQty(saved||f,saved?{}:{save:true});
-  });
+  const pick=i=>{ const f=ADD.results[i]; return (f.bc && P().foods.find(x=>x.bc===f.bc))||f; };
+  bindRows(L,i=>openQty(pick(i),{}),i=>{ const f=pick(i); quickAdd(f,1,'',P().foods.includes(f)?f.id:''); });
 }
 /* Recent foods above the search results, narrowed by whatever has been typed. */
 function paintRecent(q){
@@ -2358,10 +2366,10 @@ function paintRecent(q){
   const L=$('rcList');
   L.innerHTML=list.length?'<div class="lh">RECENT</div>'+list.map((e,i)=>foodRow(e,i)).join('')
     :!all.length && !s?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
-  L.querySelectorAll('.rm').forEach(r=>r.onclick=()=>{
-    const e=list[r.dataset.i], saved=P().foods.find(f=>f.id===e.fid);
-    openQty(saved||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''},{q:e.q, w:e.w});
-  });
+  const food=e=>P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''};
+  bindRows(L,i=>openQty(food(list[i]),{q:list[i].q, w:list[i].w}),
+    i=>{ const e=list[i]; quickAdd(food(e),e.q,e.w,P().foods.some(f=>f.id===e.fid)?e.fid:''); },
+    i=>{ P().rh[recentKey(list[i])]=Date.now(); touch(); toast('REMOVED FROM RECENT'); paintRecent($('osQ').value); });
 }
 
 /* =====================================================================
@@ -2594,7 +2602,7 @@ function openFoods(){
   setSheet(panel('Saved foods & meals','<input class="fld" id="fdQ" type="search" enterkeyhint="search" placeholder="Filter foods and meals" autocomplete="off">'+
     '<div class="rlist" id="fdList"></div><div class="pgnote">Hold an item to rename, share or delete it. Save a meal by selecting logged foods on the dashboard.</div>',true));
   bindPanel(openSettings);
-  const paint=()=>savedList($('fdList'),$('fdQ').value,f=>openFoodEdit(f,openFoods,true),openCombo);
+  const paint=()=>savedList($('fdList'),$('fdQ').value,f=>openQty(f,{}),openCombo);
   $('fdQ').oninput=paint;
   searchKey($('fdQ'));
   paint();
