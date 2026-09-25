@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.25.15">
+<meta name="app-version" content="2026.09.25.20">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -331,14 +331,16 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .meal{padding:6px 10px 8px 12px}
 .mhl{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:2px}
 .mhl h3{flex:none}
-.mt{flex:1 0 auto;margin:0;display:block;text-align:right;letter-spacing:.03em}
+.mt{flex:1 0 auto;margin:0;display:grid;grid-template-columns:auto 4.6ch 4.6ch 4.2ch;column-gap:.7ch;justify-content:end;letter-spacing:0}
+.mt i{font-style:normal;white-space:nowrap}
+.mt i:first-child{text-align:right;min-width:10.4ch;margin-right:.9ch}
 .madd{width:32px;height:32px;font-size:26px}
 .fiw{margin-top:3px}
 .fi{padding:6px 10px;gap:8px}
 .fm{display:flex;align-items:baseline;gap:8px}
 .fnm{flex:1;min-width:0;font-size:14px;line-height:1.3}
 .fsb{flex:none;margin:0;font-size:10.5px;letter-spacing:.04em}
-.fk{font-size:14px;min-width:3ch;text-align:right}
+.fk{font-size:14px;min-width:5ch;text-align:right}
 .swipe{height:32px;margin-top:4px}
 .fi.grp .fnm::after{content:' \25b8';color:var(--dimmer);font-size:11px}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
@@ -489,12 +491,13 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .rlist .lw .rs{margin-top:1px}
 .rlist .lw .bin{border-radius:6px}
 .lw:not(.drag) .ri{transition:transform .25s ease}
-.radd{flex:none;width:32px;height:30px;margin:0 3px 0 0;display:flex;align-items:center;justify-content:center;font-size:21px;line-height:1; color:var(--champ);border:1px solid var(--bronze);border-radius:6px;background:var(--tint);box-shadow:inset 0 0 10px -5px var(--bronze)}
-.radd:active{background:var(--bronze);color:var(--on)}
-.sbox{position:relative;display:block;flex:1;min-width:0}
-.sbox .fld{width:100%;padding-right:38px}
+.qadd{flex:none;width:32px;height:30px;margin:0 3px 0 0;display:flex;align-items:center;justify-content:center;font-size:21px;line-height:1; color:var(--champ);border:1px solid var(--bronze);border-radius:6px;background:var(--tint);box-shadow:inset 0 0 10px -5px var(--bronze)}
+.qadd:active{background:var(--bronze);color:var(--on)}
+.sbox{position:relative;display:flex;align-self:stretch;flex:1;min-width:0}
+.sbox .fld{width:100%;height:auto;align-self:stretch;margin:0;padding-right:40px}
 .sbox .fld::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
-.sclr{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:32px;height:28px;font-size:20px;color:var(--dim)}
+.sclr{position:absolute;top:0;bottom:0;right:0;width:36px;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;color:var(--dim)}
+.sclr[hidden]{display:none}
 .sclr:active{color:var(--champ)}
 .trio{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .qlab{flex:1;min-height:0;overflow:auto;scrollbar-width:none;border-top:1px solid var(--cardline)}
@@ -659,7 +662,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.25.15';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.25.20';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1475,7 +1478,7 @@ function render(){
     const sum=es.reduce((a,e)=>{ a.k+=e.k*e.q; a.p+=e.p*e.q; a.c+=e.c*e.q; a.f+=e.f*e.q; return a; },{k:0,p:0,c:0,f:0});
     h+='<div class="card meal'+(shut?' shut':'')+'" data-m="'+esc(m.id)+'"><div class="mh"><div class="mhl" role="button" tabindex="0" data-fold="'+esc(m.id)+'">'+
       '<h3>'+esc(m.n)+'<span class="mfold">\u25be</span></h3>'+
-      (es.length?'<span class="mt">'+fmt(sum.k)+' KCAL \u00b7 P'+Math.round(sum.p)+' C'+Math.round(sum.c)+' F'+Math.round(sum.f)+'</span>':'')+'</div>'+
+      (es.length?'<span class="mt"><i>'+fmt(sum.k)+' KCAL</i><i>P'+Math.round(sum.p)+'</i><i>C'+Math.round(sum.c)+'</i><i>F'+Math.round(sum.f)+'</i></span>':'')+'</div>'+
       (!SEL?'<button class="madd" data-meal="'+esc(m.id)+'" aria-label="Add to '+esc(m.n)+'">+</button>'
         :es.length?'<button class="madd" data-msel="'+esc(m.id)+'" aria-label="Select all in '+esc(m.n)+'"><span class="chk"></span></button>'
         :'<span class="madd"></span>')+'</div><div class="mbody">';
@@ -1970,14 +1973,14 @@ function paintTab(){
 function listRow(i,name,sub,kcal,plus){
   return '<div class="fiw lw" data-i="'+i+'"><span class="bin">'+BIN+'</span><div class="ri" role="button" tabindex="0">'+
     '<span class="rm"><span class="rn">'+esc(name)+'</span><span class="rs">'+sub+'</span></span><span class="rk">'+fmt(kcal)+'</span>'+
-    (plus?'<button class="radd" aria-label="Add">+</button>':'')+'</div></div>';
+    (plus?'<button class="qadd" aria-label="Add">+</button>':'')+'</div></div>';
 }
 const foodRow=(f,i)=>listRow(i,f.n,esc(f.sv)+' \u00b7 P'+r1(f.p)+' C'+r1(f.c)+' F'+r1(f.f),f.k,true);
 /* Wire a list: open on tap, + to add, and optionally swipe to delete. */
 function bindRows(L,open,add,del){
   L.querySelectorAll('.lw').forEach(w=>{
-    const i=+w.dataset.i, row=w.querySelector('.ri'), plus=w.querySelector('.radd');
-    row.onclick=ev=>{ if(!ev.target.closest('.radd')) open(i,w); };
+    const i=+w.dataset.i, row=w.querySelector('.ri'), plus=w.querySelector('.qadd');
+    row.onclick=ev=>{ if(!ev.target.closest('.qadd')) open(i,w); };
     if(plus) plus.onclick=ev=>{ ev.stopPropagation(); add(i); warp(row); };
     if(del) bindSwipe(w,-1,0.5,()=>{
       w.style.setProperty('--dx',w.offsetWidth+'px'); w.style.height=w.offsetHeight+'px'; void w.offsetHeight;
@@ -2146,8 +2149,7 @@ function parseLabel(txt){
    EDIT keeps everything where it is: the name, serving and per 100 g values become fields,
    and the serving and the amount are worked out from per 100 g. Only foods edited are saved. */
 function openQty(food,o){
-  const e=o.entry, stack=!!topSheet(), base=totals(), T=targets();
-  if(e){ base.k-=e.k*e.q; base.p-=e.p*e.q; }
+  const e=o.entry, stack=!!topSheet();
   setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
   const box=topSheet(), back=stack?popSheet:closeSheet;
   let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv), edit=!!o.create, h={}, ask=null, auto=new Set();
@@ -2195,14 +2197,12 @@ function openQty(food,o){
     const update=()=>{ const c=now();
       $('qAh').textContent=c.amt.toUpperCase(); $('qBh').textContent=c.w||edit?'PER 100 '+(c.w?c.w.u:'g').toUpperCase():'PER SERVING';
       rows.forEach(([k,,u])=>{ $('qX').querySelector('[data-a="'+k+'"]').textContent=cell(val(c.src,k)*c.q,u); });
-      $('qD1').textContent=fmt(base.k+(c.src.k||0)*c.q)+' / '+fmt(T.k); $('qD2').textContent='P '+Math.round(base.p+(c.src.p||0)*c.q);
     };
     const paint=()=>{ const c=now(), ref=c.w?100/c.w.n:1;
       $('qX').innerHTML='<div class="lrow lhead"><span></span><b id="qAh"></b><b id="qBh"></b></div>'+
         rows.map(([k,l,u,sub])=>'<div class="lrow'+(sub?' lsub':'')+'"><span>'+l+'</span><b data-a="'+k+'"></b><b>'+
           (edit?'<input class="lin'+(auto.has(k)?' auto':'')+'" type="number" inputmode="decimal" step="any" data-k="'+k+'" placeholder="'+hint(k)+'" value="'+(val(h,k)>0?r1(val(h,k)):'')+'">'
-            :cell(val(c.src,k)*ref,u))+'</b></div>').join('')+
-        '<div class="lrow lday"><span>Day after</span><b id="qD1"></b><b id="qD2"></b></div>';
+            :cell(val(c.src,k)*ref,u))+'</b></div>').join('');
       update();
       if(edit) $('qX').querySelectorAll('.lin').forEach(f=>f.oninput=()=>{
         const n=Math.max(0,+f.value||0);
@@ -2279,7 +2279,6 @@ function openQty(food,o){
 function openCombo(c){
   const st={q:1, m:ADD.meal||P().meals[0].id}, stack=!!topSheet();
   const sum=q=>c.items.reduce((a,e)=>{ a.k+=e.k*e.q*q; a.p+=e.p*e.q*q; a.c+=e.c*e.q*q; a.f+=e.f*e.q*q; return a; },{k:0,p:0,c:0,f:0});
-  const base=totals(), T=targets();
   setSheet('<div class="veil"></div><div class="sheet fit full qty"><h3>'+esc(c.n)+
     '<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
     '<div class="qper">'+items(c.items.length)+' \u00b7 MEAL</div>'+
@@ -2292,8 +2291,7 @@ function openCombo(c){
   onPick('cMeal',v=>st.m=v);
   const paint=()=>{ const t=sum(st.q);
     $('cX').innerHTML=c.items.map(e=>'<div><span>'+esc(e.n)+' \u00b7 '+esc(qtyTxt(Object.assign({},e,{q:e.q*st.q})))+'</span><b>'+fmt(e.k*e.q*st.q)+' kcal</b></div>').join('')+
-      '<div class="xsum"><span>Meal</span><b>'+fmt(t.k)+' kcal \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div>'+
-      '<div class="xsum"><span>Day after</span><b>'+fmt(base.k+t.k)+' / '+fmt(T.k)+' \u00b7 P '+Math.round(base.p+t.p)+'</b></div>'; };
+      '<div class="xsum"><span>Meal</span><b>'+fmt(t.k)+' kcal \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div>'; };
   V.oninput=()=>{ st.q=Math.max(0,+V.value||0); paint(); };
   paint();
   $('cGo').onclick=()=>{
@@ -2489,11 +2487,28 @@ function queueSearch(q){
   SRT=setTimeout(()=>runSearch(q),500);             // online only when the list is thin, and after a pause
 }
 /* JSON with a time limit, so a slow service can't hold the search; typing on still cancels it. */
-async function getJSON(url,ctl,ms){
-  const t=new AbortController(), stop=()=>t.abort(), tm=setTimeout(stop,ms);
+/* A reply as JSON, or null. Anything that goes wrong is noted in why, so the search can
+   say what actually happened: timeout, network, an error code, or a reply it couldn't read. */
+async function getJSON(url,ctl,ms,why){
+  why=why||[];
+  let late=false;
+  const t=new AbortController(), stop=()=>t.abort(), tm=setTimeout(()=>{ late=true; stop(); },ms);
   ctl.signal.addEventListener('abort',stop);
-  try{ const r=await fetch(url,{signal:t.signal}); return r.ok?await r.json():null; }
+  try{
+    const r=await fetch(url,{signal:t.signal});
+    if(!r.ok){ why.push('http:'+r.status); return null; }
+    try{ return await r.json(); }catch(e){ why.push('unreadable'); return null; }
+  }catch(e){ if(!ctl.signal.aborted) why.push(late?'timeout':'network'); throw e; }
   finally{ clearTimeout(tm); ctl.signal.removeEventListener('abort',stop); }
+}
+/* What to tell someone when the online search failed, most useful reason first. */
+function whyText(why){
+  if(!navigator.onLine) return 'NO CONNECTION';
+  const code=why.find(w=>w.startsWith('http:'));
+  if(code) return 'OPEN FOOD FACTS IS HAVING PROBLEMS (ERROR '+code.slice(5)+')';
+  if(why.includes('timeout')) return 'OPEN FOOD FACTS DIDN\u2019T ANSWER IN TIME';
+  if(why.includes('unreadable')) return 'OPEN FOOD FACTS SENT A REPLY THAT COULDN\u2019T BE READ';
+  return 'COULDN\u2019T REACH OPEN FOOD FACTS';
 }
 const SAL='https://search.openfoodfacts.org/search?langs=en&boost_phrase=true&page_size=24&fields='+OFF_FIELDS+'&q=';
 async function runSearch(q){
@@ -2502,33 +2517,38 @@ async function runSearch(q){
   if(out.length) showResults(out);
   const add=list=>list.forEach(p=>{ const id=p && (p.code||p.product_name); if(!id || seen.has(id)) return; seen.add(id);
     const f=offMap(p); if(f) out.push(f); else if(p.code) bare.push(p.code); });
-  let ok=false;
+  if(!navigator.onLine) return showResults(out,'NO CONNECTION');
+  let ok=false; const why=[], dead=()=>why.includes('timeout') || why.includes('network');   // a connection problem: stop, don't wait on the rest
   // Open Food Facts' full-text search: Australian products first, the world when that's thin
   for(const scope of [' countries_tags:"en:australia"','']){
-    if(out.length>=8) break;
-    try{ const j=await getJSON(SAL+encodeURIComponent(q+scope),ctl,7000); if(j && Array.isArray(j.hits)){ ok=true; add(j.hits); } }
+    if(out.length>=8 || dead()) break;
+    try{ const j=await getJSON(SAL+encodeURIComponent(q+scope),ctl,7000,why); if(j && Array.isArray(j.hits)){ ok=true; add(j.hits); } }
     catch(e){ if(ctl.signal.aborted) return; }
   }
   // matches that came without nutrition are looked up by barcode, as the scanner does
-  if(bare.length && out.length<12)
+  if(bare.length && out.length<12 && !dead())
     (await Promise.allSettled(bare.slice(0,10).map(offLookup))).forEach(r=>{ if(r.value) out.push(r.value); });
-  // the older search, only if the new one couldn't be reached
-  if(!ok) for(const host of ['au','world']){
-    if(out.length>=8) break;
+  // the older search, only when the new one answered with an error
+  if(!ok && !dead()) for(const host of ['au','world']){
+    if(out.length>=8 || dead()) break;
     try{ const j=await getJSON('https://'+host+'.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=30&fields='+
-      OFF_FIELDS+'&search_terms='+encodeURIComponent(q),ctl,9000); if(j && j.products){ ok=true; add(j.products); } }
+      OFF_FIELDS+'&search_terms='+encodeURIComponent(q),ctl,9000,why); if(j && j.products){ ok=true; add(j.products); } }
     catch(e){ if(ctl.signal.aborted) return; }
   }
   if(ctl.signal.aborted) return;
-  if(!ok && !out.length) return showResults(null);
+  if(!ok) return showResults(out,whyText(why));      // not cached, so trying again really asks again
   SRCACHE.set(q,out);
   showResults(out);
 }
-function showResults(out){
+/* failed: why the online search couldn't answer, if it couldn't. What's on the phone shows either way. */
+function showResults(out,failed){
   const s=$('osSt'); if(!s) return;
-  ADD.results=out||[];
-  s.textContent=!out?'FOOD SEARCH NOT RESPONDING \u2014 TRY AGAIN SHORTLY':out.length?'':'NOTHING FOUND \u2014 TRY FEWER WORDS, OR TAP + TO ADD IT';
-  s.classList.toggle('err',!out || !out.length);
+  ADD.results=out;
+  const here=LOCAL.d?'':' \u00b7 AUSTRALIAN LIST NOT DOWNLOADED (SETTINGS)';
+  s.textContent=failed
+    ?(out.length?'SHOWING FOODS ON THIS PHONE ONLY \u2014 '+failed:failed+' \u2014 TRY AGAIN'+here)
+    :out.length?'':'NO MATCHING FOODS, ON THIS PHONE OR ONLINE \u2014 TRY FEWER WORDS, OR TAP + TO ADD IT';
+  s.classList.toggle('err',!out.length);
   paintResults();
 }
 function paintResults(){
