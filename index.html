@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.76">
+<meta name="app-version" content="2026.09.26.78">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -97,9 +97,14 @@ header::after{background:repeating-linear-gradient(90deg,var(--cardline) 0 6px,t
 .gletter{font-family:var(--serif);font-size:38px;line-height:1;color:var(--bronze); border:1px solid var(--bronze);border-radius:10px;padding:6px 16px 9px}
 .gtxt{font-size:12px;color:var(--dimmer);line-height:1.5}
 .xled{margin-top:4px}
+.cscr{flex:0 1 auto;min-height:0;overflow:auto;scrollbar-width:none}
+.cscr>.rlist{margin-top:0}
+.cscr .xsum{white-space:nowrap}
 .xled div{display:flex;justify-content:space-between;gap:12px;padding:7px 0; border-bottom:1px solid var(--hair);font-size:12.5px}
 .xled div:last-child{border-bottom:none}
 .xled b{color:var(--bronze);font-weight:400;font-variant-numeric:tabular-nums}
+.xled div>b{flex:none;white-space:nowrap}                  /* a value never breaks across lines */
+.xled div>span{min-width:0}
 .xled .xsum{border-top:1px solid var(--cardline);border-bottom:none;margin-top:4px; padding-top:11px;font-family:var(--serif);letter-spacing:.06em}
 .card{position:relative;transition:opacity .45s ease, border-color .45s ease, background .45s ease}
 .card[id^=cd-]{transition:opacity .38s ease,border-color .38s ease}
@@ -629,6 +634,7 @@ html.ios[data-theme=dark]{--ok:#30d158}
 .qamt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-items:stretch}
 .qamt .mpick{display:contents}
 .qamt .qin{height:30px;margin:0}
+.qamt.one .mpick button{grid-column:span 3}
 .qctl.off{opacity:.45;pointer-events:none}
 .qname::placeholder,.qsvi::placeholder,.lin::placeholder{color:var(--dimmer);opacity:.75}
 .qctl.off .mpick button,.qctl.off .mpick button.on,.qctl.off .qin{border-color:var(--cardhair);background:none;color:var(--dimmer); box-shadow:none !important;text-shadow:none !important}
@@ -745,7 +751,7 @@ html.ios .card,html.ios .srow{border:none;border-radius:12px}
 html.ios .xled b{color:var(--tx)}
 html.ios .fi{border-color:transparent;border-radius:10px}
 html.ios .btn{background:var(--fill);border:none;border-radius:12px;color:var(--bronze);font-weight:600}
-html.ios .btn.ghost{background:transparent}
+html.ios .btn.ghost{background:var(--fill);color:var(--dim)}
 html.ios .btn.armed{background:rgba(255,59,48,.12)}
 html.ios .btn:hover,html.ios .btn:active,html.ios .srow:hover,html.ios .srow:active{background:var(--tint);color:var(--bronze);border-color:transparent}
 html.ios .fld,html.ios .bignum{background:var(--fill);border:1px solid transparent;border-radius:10px;color:var(--tx)}
@@ -823,7 +829,7 @@ html .sheet.fit.full>h3 .shx,html .sheet.fit.full>h3 .shx.back{top:-8px;height:4
 html,body,*{scrollbar-width:none}
 html::-webkit-scrollbar,body::-webkit-scrollbar,*::-webkit-scrollbar{display:none;width:0;height:0}
 /* foods saved with only a name */
-.nonut .rn,.nonut .fnm{color:var(--red,#ff5a5a)}
+.nonut .rn,.nonut .fnm,.nonut .gn,.xled .nonut span,.xled .nonut b,.qty.nonut>h3.qt span{color:var(--red,#ff5a5a)}
 .nonut .rs,.nonut .fsb{color:var(--red,#ff5a5a);opacity:.75}
 /* the serving and its unit, in the edit screen */
 .qty .qper.qsed{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:6px;text-align:left}
@@ -891,7 +897,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.76';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.78';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -2154,7 +2160,7 @@ function openGroup(g){
     box.innerHTML='<h3 class="qt"><span>'+esc(es[0].gn)+'</span><button class="shx'+(stack?' back':'')+'" aria-label="Close">'+(stack?'\u00d7':'\u00d7')+'</button></h3>'+
       '<div class="qper">'+items(es.length)+' \u00b7 '+esc((m?m.n:'').toUpperCase())+'</div>'+
       '<div class="qact"><div class="trio"><button class="btn" id="gAdd">[ ADD ITEM ]</button><button class="btn ghost" id="gName">[ RENAME ]</button><button class="btn ghost" id="gSplit">[ UNCOMBINE ]</button></div></div>'+
-      '<div class="rlist qlab" id="gList">'+es.map((e,i)=>listRow(i,e.n,esc(qtyTxt(e))+' \u00b7 P'+r1(e.p*e.q)+' C'+r1(e.c*e.q)+' F'+r1(e.f*e.q),e.k*e.q,false)).join('')+
+      '<div class="rlist qlab" id="gList">'+es.map((e,i)=>nutRow(i,e)).join('')+
         '<div class="lrow lday"><span>Total</span><b>'+fmt(t.k)+' kcal</b><b>P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div></div>';
     box.querySelector('.shx').onclick=back;
     bindRows($('gList'),i=>openQty(es[i],{entry:es[i]}),null,i=>{ dropEntries([es[i].id]); render(); draw(); toast('REMOVED'); });
@@ -2178,9 +2184,10 @@ function foldSections(box,open){
 function openMealEdit(c,name,o){
   o=o||{};
   let replace=false;
+  const then=o.reopen;                                  // opened from a meal: cancel or save goes back to it
   if(document.getElementById('adBody')){                 // started from Add food: the editor swaps in its place, and back again after
-    const m=ADD.meal; replace=true; o.after=()=>openAdd(m,null,null,'saved');
-  }
+    const m=ADD.meal; replace=true; o.after=()=>{ openAdd(m,null,null,'saved'); if(then) then(); };
+  } else if(then) o.after=()=>{ popSheet(); then(); };
   const tg=c?timesOf(c):new Set(replace && mealById(ADD.meal)?[ADD.meal]:[]);
   const d={n:c?c.n:(name||''), rc:c&&c.rc||'', items:(c?c.items:[]).map(e=>Object.assign({},e,{id:uid(), x:Object.assign({},e.x)}))};
   const open={i:true, r:!!d.rc}, stack=!replace && !!topSheet();
@@ -2195,7 +2202,7 @@ function openMealEdit(c,name,o){
       '<div class="qper">ONE PORTION \u00b7 '+fmt(t.k)+' KCAL \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</div>'+
       '<div class="qact"><div class="trio"><button class="btn ghost" id="meCancel">[ CANCEL ]</button><button class="btn ghost" id="meAdd">[ ADD FOOD ]</button><button class="btn" id="meSave">[ SAVE ]</button></div></div>'+
       timesRow('meT',tg)+
-      sec('i','Ingredients \u00b7 '+d.items.length,'<div class="rlist" id="meList">'+(d.items.length?d.items.map((e,i)=>listRow(i,e.n,esc(qtyTxt(e))+' \u00b7 P'+r1(e.p*e.q)+' C'+r1(e.c*e.q)+' F'+r1(e.f*e.q),e.k*e.q,false)).join('')
+      sec('i','Ingredients \u00b7 '+d.items.length,'<div class="rlist" id="meList">'+(d.items.length?d.items.map((e,i)=>nutRow(i,e)).join('')
         :'<div class="stat">NO FOODS YET \u2014 TAP ADD FOOD</div>')+'</div>')+
       sec('r','Recipe','<textarea class="fld rcp" id="meR" rows="8" maxlength="6000" placeholder="Method, steps and notes">'+esc(d.rc)+'</textarea>');
     foldSections(box,open); timesPick('meT',tg);
@@ -2254,7 +2261,8 @@ function groceries(){
   const out={}, people=[DB.cur,...withNames()];
   people.forEach(who=>{ const pl=DB.profiles[who].plan;
     pl.items.forEach(e=>{ const g=gramsOf(e.sv), unit=g?g.u:e.sv, key=(e.n.trim().toLowerCase()+'|'+unit.toLowerCase()).slice(0,160);
-      const it=out[key]=out[key]||{key, n:e.n, unit, v:0, w:!!g, by:{}}, v=(g?e.q*g.n:e.q)*pl.portions;
+      const it=out[key]=out[key]||{key, n:e.n, unit, v:0, w:!!g, by:{}, nn:true}, v=(g?e.q*g.n:e.q)*pl.portions;
+      if(!noNut(e)) it.nn=false;
       it.v+=v; it.by[who]=(it.by[who]||0)+v; }); });
   return Object.values(out).sort((x,y)=>x.n.localeCompare(y.n));
 }
@@ -2273,7 +2281,7 @@ function groceriesCard(){
   const g=groceries(), them=withNames(), both=them.length>0;
   return '<div class="card pgcard groc" id="groc"><div class="pghead"><h4 class="pgh">GROCERIES \u00b7 '+g.length+' ITEM'+(g.length===1?'':'S')+
       (both?' \u00b7 WITH '+esc(them.join(', ').toUpperCase()):'')+'</h4></div><div id="plG">'+
-    (g.length?g.map(it=>'<button class="gi'+(ticked(it.key)?' on':'')+'" data-k="'+esc(it.key)+'"><span class="chk"></span>'+
+    (g.length?g.map(it=>'<button class="gi'+(ticked(it.key)?' on':'')+(it.nn?' nonut':'')+'" data-k="'+esc(it.key)+'"><span class="chk"></span>'+
         '<span class="gn">'+esc(it.n)+(both?'<small class="gb">'+Object.keys(it.by).map(w=>esc(w)+' '+esc(qtyOf(it,it.by[w]))).join(' \u00b7 ')+'</small>':'')+'</span>'+
         '<b>'+esc(qtyOf(it))+'</b></button>').join('')
       :'<div class="stat">LOG FOOD INTO THE PLAN TO BUILD THE LIST</div>')+
@@ -2929,6 +2937,9 @@ function listRow(i,name,sub,kcal,plus,cls){
     '<span class="rm"><span class="rn">'+esc(name)+'</span><span class="rs">'+sub+'</span></span><span class="rk">'+fmt(kcal)+'</span>'+
     (plus?'<button class="qadd" aria-label="Add">+</button>':'')+'</div></div>';
 }
+/* An ingredient or a part of a combined item, at its amount; red with no nutrition. */
+const nutRow=(i,e)=>noNut(e)?listRow(i,e.n,esc(qtyTxt(e))+' \u00b7 NO NUTRITION INFO',0,false,'nonut')
+  :listRow(i,e.n,esc(qtyTxt(e))+' \u00b7 P'+r1(e.p*e.q)+' C'+r1(e.c*e.q)+' F'+r1(e.f*e.q),e.k*e.q,false);
 const foodRow=(f,i)=>noNut(f)?listRow(i,f.n,'NO NUTRITION INFO',0,true,'nonut')
   :listRow(i,f.n,esc(f.sv)+' \u00b7 P'+r1(f.p)+' C'+r1(f.c)+' F'+r1(f.f)+(f.src==='afcd'?' \u00b7 AFCD':''),f.k,true);
 /* Wire a list: open on tap, + to add, and optionally swipe to delete. */
@@ -3199,6 +3210,7 @@ function openQty(food,o){
     const btns=edit?'<div class="trio"><button class="btn ghost" id="qCancel">[ CANCEL ]</button><button class="btn ghost" id="qBc">'+(hasBc?'[ BARCODE \u2713 ]':'[ SCAN BARCODE ]')+'</button><button class="btn" id="qSave">[ SAVE ]</button></div>'
       :e?'<div class="trio"><button class="btn" id="qGo">[ UPDATE ]</button><button class="btn ghost" id="qEdit">[ EDIT ]</button><button class="btn ghost" id="qDel">[ REMOVE ]</button></div>'
       :'<div class="duo"><button class="btn" id="qGo">[ LOG IT ]</button><button class="btn ghost" id="qEdit">[ EDIT NUTRITION ]</button></div>';
+    box.classList.toggle('nonut',!edit && noNut(food));
     box.innerHTML='<h3 class="qt">'+(edit?'<input class="qname" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'">':'<span>'+esc(food.n)+'</span>')+
         '<button class="shx'+(stack?' back':'')+'"'+(edit?' style="visibility:hidden"':'')+' aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u00d7':'\u00d7')+'</button></h3>'+
       (edit?'<div class="qper qsed"><span>SERVING \u00b7</span><span class="qsvw"><input class="qsvi" id="qS" maxlength="40" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'+
@@ -3319,17 +3331,17 @@ function openCombo(c){
     '<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u00d7':'\u00d7')+'</button></h3>'+
     '<div class="qper">'+items(c.items.length)+' \u00b7 MEAL</div>'+
     '<div class="qact"><div class="duo"><button class="btn" id="cGo">[ LOG MEAL ]</button><button class="btn ghost" id="cEd">[ EDIT MEAL ]</button></div></div>'+
-    '<div class="qamt"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1"><div class="qunit">SERVINGS</div></div>'+
-    '<div class="qlh">Nutritional information</div><div class="xled" id="cX"></div>'+
-    (c.rc?'<div class="msec shut"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><div class="rcv">'+esc(c.rc)+'</div></div></div>':'')+'</div>',stack);
+    '<div class="qamt one"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1">'+picker('cUnit',[['s','SERVINGS']],'s')+'</div>'+
+    '<div class="qlh">Ingredients \u00b7 '+c.items.length+'</div><div class="cscr"><div class="rlist" id="cX"></div><div class="xled"><div class="xsum" id="cS"></div></div></div>'+
+    (c.rc?'<div class="msec"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><div class="rcv">'+esc(c.rc)+'</div></div></div>':'')+'</div>',stack);
   const box=topSheet(), back=stack?popSheet:closeSheet, V=$('cV');
   lastVeil().onclick=box.querySelector('.shx').onclick=back;
   foldSections(box);
-  $('cEd').onclick=()=>{ popSheet(); openMealEdit(c); };          // in the same moment, so what's beneath never shows
+  $('cEd').onclick=()=>{ popSheet(); openMealEdit(c,null,{reopen:()=>openCombo(c)}); };   // in the same moment, so what's beneath never shows
   const paint=()=>{ const t=sum(st.q);
     box._pv=ADD.into?null:t; ibSync();
-    $('cX').innerHTML=c.items.map(e=>'<div><span>'+esc(e.n)+' \u00b7 '+esc(qtyTxt(Object.assign({},e,{q:e.q*st.q})))+'</span><b>'+fmt(e.k*e.q*st.q)+' kcal</b></div>').join('')+
-      '<div class="xsum"><span>Meal</span><b>'+fmt(t.k)+' kcal \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div>'; };
+    $('cX').innerHTML=c.items.map((e,i)=>nutRow(i,Object.assign({},e,{q:e.q*st.q}))).join('');
+    $('cS').innerHTML='<span>Meal</span><b>'+fmt(t.k)+' kcal \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b>'; };
   V.oninput=()=>{ st.q=Math.max(0,+V.value||0); paint(); };
   paint();
   $('cGo').onclick=()=>{
