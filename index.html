@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.25.25">
+<meta name="app-version" content="2026.09.26.6">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -65,6 +65,7 @@ header .sub{color:var(--dim);font-size:13.5px;margin-top:7px}
 .srow .srsub{font-family:var(--serif);font-size:10px;letter-spacing:.2em;color:var(--bronze); overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .srow span{color:var(--bronze);font-size:18px;line-height:1}
 .srow:active{border-color:var(--bronze)}
+.hist{margin-top:10px}
 html.booting header,html.booting #main,html.booting .roll{visibility:hidden}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:200; background:repeating-linear-gradient(180deg,rgba(0,0,0,.26) 0 1px,transparent 1px 3px); mix-blend-mode:multiply;opacity:.62}
 body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:201; background: radial-gradient(130% 100% at 50% 50%,transparent 66%,rgba(0,0,0,.14) 90%,rgba(0,0,0,.26) 100%), linear-gradient(180deg,rgba(95,224,138,.02) 0,transparent 7%,transparent 93%,rgba(95,224,138,.016) 100%); animation:crtflick 9s steps(60,end) infinite}
@@ -213,8 +214,8 @@ html.booted #main{animation:crtwake .9s .2s ease-out both}
 #main{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
 html,body,.pgbody,.qlab,.lbl{overscroll-behavior:none}
 .hnav{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;margin:28px -10px 0}
-.harr,.madd,.ri .rx,.qrow button,.pct button{display:flex;align-items:center;justify-content:center;font-family:var(--serif); line-height:1;color:var(--bronze);touch-action:manipulation;transition:color .15s ease,text-shadow .15s ease}
-.harr:active,.madd:active,.ri .rx:active,.qrow button:active,.pct button:active{color:var(--champ);text-shadow:0 0 12px var(--bronze)}
+.harr,.ri .rx,.qrow button,.pct button{display:flex;align-items:center;justify-content:center;font-family:var(--serif); line-height:1;color:var(--bronze);touch-action:manipulation;transition:color .15s ease,text-shadow .15s ease}
+.harr:active,.ri .rx:active,.qrow button:active,.pct button:active{color:var(--champ);text-shadow:0 0 12px var(--bronze)}
 .harr{width:60px;height:60px;font-size:30px}
 .bolt{position:absolute;left:42px;transform:translateX(-50%);top:calc(46px + env(safe-area-inset-top));height:20px; display:flex;align-items:center;gap:2px; color:var(--bronze);pointer-events:none}
 .bolt svg{width:17px;height:17px;fill:currentColor;filter:drop-shadow(0 0 4px var(--bronze));animation:boltflick 3.1s steps(1,end) infinite}
@@ -281,15 +282,13 @@ html,body,.pgbody,.qlab,.lbl{overscroll-behavior:none}
 .swt{font-family:var(--serif);font-size:9.5px;letter-spacing:.14em;color:var(--dimmer);pointer-events:none}
 .swipe.ready{border-style:solid;border-color:var(--bronze)}
 .swipe.ready .swt{color:var(--champ)}
-.mt{display:block;margin-top:4px;font-family:var(--serif);font-size:10px;letter-spacing:.1em;color:var(--dimmer); font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.madd{flex:none;width:40px;height:40px;font-size:30px}
 .fiw{position:relative;margin-top:8px;border-radius:5px;overflow:hidden;touch-action:pan-y; user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .meal.morph{overflow:hidden;transition:height .32s ease}
 .meal.hit>*{filter:url(#uiwarp)}
 .chk{flex:none;width:20px;height:20px;display:flex;align-items:center;justify-content:center; border:1.5px solid var(--cardline);border-radius:4px;transition:background .15s ease,border-color .15s ease}
 .chk::after{content:'\2713';font-size:13px;line-height:1;color:var(--on);opacity:0}
-.fiw.on .chk,.madd.on .chk{border-color:var(--bronze);background:var(--bronze)}
-.fiw.on .chk::after,.madd.on .chk::after{opacity:1}
+.fiw.on .chk,.msel.on .chk{border-color:var(--bronze);background:var(--bronze)}
+.fiw.on .chk::after,.msel.on .chk::after{opacity:1}
 .fiw.on .fi{border-color:var(--bronze);background:var(--tint)}
 .selbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:8px; padding:12px 22px calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
 .selbar .btn{margin:0;height:38px;padding:0 6px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
@@ -330,12 +329,6 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 #main .wa b{margin:0;line-height:1.25}
 #main .wg.mini{height:30px}
 .meal{padding:6px 10px 8px 12px}
-.mhl{display:flex;flex-wrap:wrap;align-items:baseline;column-gap:10px;row-gap:2px}
-.mhl h3{flex:none}
-.mt{flex:1 0 auto;margin:0;display:grid;grid-template-columns:auto 4.6ch 4.6ch 4.2ch;column-gap:.7ch;justify-content:end;letter-spacing:0}
-.mt i{font-style:normal;white-space:nowrap}
-.mt i:first-child{text-align:right;min-width:10.4ch;margin-right:.9ch}
-.madd{width:32px;height:32px;font-size:26px}
 .fiw{margin-top:3px}
 .fi{padding:6px 10px;gap:8px}
 .fm{display:flex;align-items:baseline;gap:8px}
@@ -349,6 +342,27 @@ body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .fiw.lifted{position:fixed;z-index:90;margin:0;pointer-events:none;transform:scale(1.03);filter:drop-shadow(0 6px 14px rgba(0,0,0,.55))}
 .fiw.lifted .fi{border-color:var(--bronze);background:var(--card)}
 .dropline{position:fixed;z-index:89;height:3px;border-radius:2px;background:var(--bronze);box-shadow:0 0 10px var(--bronze);pointer-events:none}
+:root{--tint2:rgba(0,255,102,.04)}
+html[data-theme=light]{--tint2:rgba(0,122,255,.05)}
+html[data-theme=dark]{--tint2:rgba(76,158,245,.08)}
+html .mpick button.on{background:var(--tint2);box-shadow:inset 0 0 8px -6px var(--bronze)}
+html .fld:focus{box-shadow:0 0 9px -5px var(--bronze)}
+html .cal button.has{background:var(--tint2);text-shadow:0 0 4px rgba(0,255,102,.3)}
+html .cal button.now{box-shadow:0 0 10px -4px var(--bronze)}
+.qty>h3 .shx{top:-8px;height:30px;line-height:30px}
+.qty>h3 .shx.back{line-height:28px}
+.qty .qlh{margin-top:12px;margin-bottom:-4px;font-family:var(--serif);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-align:left}
+.mh{min-height:34px}
+.mhl{display:flex;align-items:baseline;gap:14px;min-width:0}
+.mhl h3{flex:none}
+.mt{font-family:var(--serif);font-size:10px;letter-spacing:.06em;color:var(--dimmer);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.mk{flex:none;margin-left:auto;padding-right:11px;min-width:5ch;text-align:right;font-family:var(--serif);font-size:14px;color:var(--champ);font-variant-numeric:tabular-nums}
+.msel{flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.logrow{display:flex;align-items:center;width:100%;height:32px;margin-top:4px;padding:0 3px 0 12px; border:1px dashed var(--cardline);border-radius:5px;background:transparent;font-family:var(--serif)}
+.logrow span{flex:1;text-align:left;font-size:9.5px;letter-spacing:.14em;color:var(--dimmer)}
+.logrow b{flex:none;width:32px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:400;font-size:21px;line-height:1;color:var(--bronze)}
+.logrow:active{border-style:solid;border-color:var(--bronze)}
+.logrow:active span{color:var(--champ)}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
 .whobtn svg{width:27px;height:27px;stroke-width:1.1}
 .crton{position:fixed;inset:0;z-index:300;pointer-events:none}
@@ -470,10 +484,11 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .qty .mpick{margin:0}
 .qact .duo,.qact .trio{margin:0}
 .qin{height:30px;padding:0 8px;text-align:center;font-family:var(--serif);color:var(--champ)}
+.qty>h3{text-transform:none;letter-spacing:.03em}
 .qname,.qsvi,.lin{border:none;border-bottom:1px dashed var(--cardline);border-radius:0;background:transparent; -webkit-appearance:none;appearance:none;font-size:16px;color:inherit;padding:0}
 .qname:focus,.qsvi:focus,.lin:focus{outline:none;border-bottom:1px solid var(--bronze)}
-.qname{width:100%;font-family:inherit;letter-spacing:inherit;text-transform:uppercase;text-align:center;line-height:inherit}
-.qsvi{width:88%;font-family:var(--serif);letter-spacing:.14em;text-transform:uppercase;text-align:center; transform:scale(.72);transform-origin:left center;margin-right:-25%;vertical-align:middle}
+.qname{width:100%;font-family:inherit;letter-spacing:inherit;text-align:center;line-height:inherit}
+.qsvi{width:88%;font-family:var(--serif);letter-spacing:.08em;text-align:center; transform:scale(.72);transform-origin:left center;margin-right:-25%;vertical-align:middle}
 .lin{width:128%;margin-left:-28%;height:18px;font-family:var(--serif);color:var(--champ);text-align:right; transform:scale(.78);transform-origin:right center;font-variant-numeric:tabular-nums}
 .qact .duo,.qact .trio{gap:8px}
 .qctl{display:grid;gap:8px}
@@ -499,7 +514,7 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .rlist .lw .rs{margin-top:1px}
 .rlist .lw .bin{border-radius:6px}
 .lw:not(.drag) .ri{transition:transform .25s ease}
-.qadd{flex:none;width:32px;height:30px;margin:0 3px 0 0;display:flex;align-items:center;justify-content:center;font-size:21px;line-height:1; color:var(--champ);border:1px solid var(--bronze);border-radius:6px;background:var(--tint);box-shadow:inset 0 0 10px -5px var(--bronze)}
+.qadd{flex:none;width:32px;height:30px;margin:0 3px 0 0;display:flex;align-items:center;justify-content:center;font-size:21px;line-height:1; color:var(--champ);border:1px solid var(--bronze);border-radius:6px;background:var(--tint2);box-shadow:inset 0 0 7px -5px var(--bronze)}
 .qadd:active{background:var(--bronze);color:var(--on)}
 .sbox{position:relative;display:flex;align-self:stretch;flex:1;min-width:0}
 .sbox .fld{width:100%;height:auto;align-self:stretch;margin:0;padding-right:40px}
@@ -670,7 +685,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.25.25';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.6';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -856,9 +871,11 @@ function gramsOf(sv){
   const n=m?parseFloat(m[1].replace(',','.')):0;
   return n>0?{n,u:m[2].toLowerCase()}:null;
 }
+/* The amount as a total weight whenever the serving has one (1.5 x 75 g shows as 112.5 g);
+   otherwise the servings. */
 function qtyTxt(e){
   const g=gramsOf(e.sv);
-  return g && e.w!=='s' ? r1(e.q*g.n)+' '+g.u : (e.q===1?'':r1(e.q)+' \u00d7 ')+e.sv;
+  return g ? r1(e.q*g.n)+' '+g.u : (e.q===1?'':r1(e.q)+' \u00d7 ')+e.sv;
 }
 
 /* ---------- merging ----------
@@ -1486,12 +1503,12 @@ function render(){
   P().meals.forEach(m=>{
     const es=all.filter(e=>mealOf(e)===m.id), shut=!!DB.fold[m.id];
     const sum=es.reduce((a,e)=>{ a.k+=e.k*e.q; a.p+=e.p*e.q; a.c+=e.c*e.q; a.f+=e.f*e.q; return a; },{k:0,p:0,c:0,f:0});
-    h+='<div class="card meal'+(shut?' shut':'')+'" data-m="'+esc(m.id)+'"><div class="mh"><div class="mhl" role="button" tabindex="0" data-fold="'+esc(m.id)+'">'+
+    h+='<div class="card meal'+(shut?' shut':'')+'" data-m="'+esc(m.id)+'"><div class="mh">'+
+      (SEL && es.length?'<button class="msel" data-msel="'+esc(m.id)+'" aria-label="Select all in '+esc(m.n)+'"><span class="chk"></span></button>':'')+
+      '<div class="mhl" role="button" tabindex="0" data-fold="'+esc(m.id)+'">'+
       '<h3>'+esc(m.n)+'<span class="mfold">\u25be</span></h3>'+
-      (es.length?'<span class="mt"><i>'+fmt(sum.k)+' KCAL</i><i>P'+Math.round(sum.p)+'</i><i>C'+Math.round(sum.c)+'</i><i>F'+Math.round(sum.f)+'</i></span>':'')+'</div>'+
-      (!SEL?'<button class="madd" data-meal="'+esc(m.id)+'" aria-label="Add to '+esc(m.n)+'">+</button>'
-        :es.length?'<button class="madd" data-msel="'+esc(m.id)+'" aria-label="Select all in '+esc(m.n)+'"><span class="chk"></span></button>'
-        :'<span class="madd"></span>')+'</div><div class="mbody">';
+      (es.length?'<span class="mt">P'+Math.round(sum.p)+' C'+Math.round(sum.c)+' F'+Math.round(sum.f)+'</span>':'')+'</div>'+
+      (es.length?'<span class="mk">'+fmt(sum.k)+'</span>':'')+'</div><div class="mbody">';
     h+=rowsOf(es).map(r=>'<div class="fiw" data-ids="'+esc(r.ids.join(','))+'"><span class="bin">'+BIN+'</span>'+
       '<button class="fi'+(r.g?' grp':'')+(r.ids.some(id=>FRESH.has(id))?' fresh':'')+'">'+(SEL?'<span class="chk"></span>':'')+'<span class="fm">'+
       '<span class="fnm">'+esc(r.n)+'</span><span class="fsb">'+esc(r.sub)+'</span></span>'+
@@ -1502,6 +1519,7 @@ function render(){
       h+='<div class="swipe" data-meal="'+esc(m.id)+'"><span class="swk">\u00bb</span>'+
         '<span class="swt">SWIPE TO COPY '+(c.d===shift(today(),-1)?'YESTERDAY':shortDay(c.d))+' \u00b7 '+c.es.length+' ITEM'+(c.es.length===1?'':'S')+'</span></div>';
     }
+    if(!SEL) h+='<button class="logrow" data-meal="'+esc(m.id)+'" aria-label="Log food in '+esc(m.n)+'"><span>LOG FOOD</span><b>+</b></button>';   // always last
     h+='</div></div>';
   });
   const v=$('main');
@@ -1523,7 +1541,7 @@ function render(){
     v.querySelectorAll('[data-msel]').forEach(b=>b.onclick=()=>pickEntries(all.filter(e=>mealOf(e)===b.dataset.msel).map(e=>e.id)));
     paintSel();
   } else {
-    v.querySelectorAll('.madd').forEach(b=>b.onclick=()=>openAdd(b.dataset.meal));
+    v.querySelectorAll('.logrow').forEach(b=>b.onclick=()=>openAdd(b.dataset.meal));
     v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>{ const ids=idsOf(b), e=all.find(x=>x.id===ids[0]); if(!e) return;
       ids.length>1 || e.g ? openGroup(e.g) : openQty(e,{entry:e}); });
     v.querySelectorAll('.swipe').forEach(el=>bindSwipe(el,1,0.45,()=>copyMeal(el.dataset.meal,src[el.dataset.meal])));
@@ -2012,13 +2030,11 @@ function openAdd(meal,group){
   ADD.tab='search';
   ADD.q=ADD.sq=''; ADD.results=[];
   sfx('open');
-  setSheet(panel(ADD.group?'Add to '+ADD.group.gn:'Add food',
-    picker('adMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),ADD.meal)+
+  setSheet(panel('Add to '+(ADD.group?ADD.group.gn:(P().meals.find(m=>m.id===ADD.meal)||{n:'food'}).n),
     picker('adTabs',[['search','SEARCH'],['saved','SAVED'],['scan','SCAN']],ADD.tab)+
     '<div id="adBody"></div>'));
   bindPanel();
   topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
-  onPick('adMeal',v=>ADD.meal=v);
   onPick('adTabs',v=>{ stopScan(); ADD.tab=v; paintTab(); warp($('adBody')); });
   paintTab();
 }
@@ -2030,7 +2046,7 @@ function paintTab(){
       '<div class="rlist" id="rcList"></div><div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
       '<div class="src">DATA: OPEN FOOD FACTS \u00b7 FOOD STANDARDS AUSTRALIA NEW ZEALAND (AFCD)</div>';
     $('osQ').oninput=e=>{ paintRecent(e.target.value); queueSearch(e.target.value); };
-    searchKey($('osQ'),v=>{ const q=v.trim().toLowerCase(); if(q.length>=3 && !SRCACHE.has(q)){ clearTimeout(SRT); runSearch(q); } });
+    searchKey($('osQ'));
     $('nfAdd').onclick=()=>openQty({id:'', n:$('osQ').value.trim(), sv:'', k:0, p:0, c:0, f:0, x:{}, bc:''},{create:true});
     paintRecent(ADD.sq);
     paintResults();
@@ -2251,15 +2267,14 @@ function openQty(food,o){
     box.innerHTML='<h3 class="qt">'+(edit?'<input class="qname" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'">':'<span>'+esc(food.n)+'</span>')+
         '<button class="shx'+(stack?' back':'')+'"'+(edit?' style="visibility:hidden"':'')+' aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
       '<div class="qper">SERVING \u00b7 '+(edit?'<input class="qsvi" id="qS" maxlength="40" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'
-        :esc(food.sv.toUpperCase()))+'</div>'+
+        :esc(food.sv))+'</div>'+
       '<div class="qact">'+btns+'</div>'+
-      '<div class="qctl'+(edit?' off':'')+'">'+picker('qMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
+      '<div class="qctl'+(edit?' off':'')+'">'+
         '<div class="qamt"><input class="fld qin" id="qV" type="number" inputmode="decimal" step="any">'+picker('qUnit',units(),st.w)+'</div></div>'+
-      '<div class="qlab" id="qX"></div>';
+      '<div class="qlh">Nutritional information</div><div class="qlab" id="qX"></div>';
     box.querySelector('.shx').onclick=back;
     const V=$('qV'), per={s:1, h:g?g.n/100:1, g:g?g.n:1};          // amount typed = servings x per[unit]
     V.value=r1(st.q*per[st.w]);
-    onPick('qMeal',v=>st.m=v);
     onPick('qUnit',v=>{ st.w=v; if(v!=='g') st.q=1/per[v];             // 1 serving, or 1 x 100 g; type 0.5 for 50 g
       V.value=r1(st.q*per[st.w]); update(); });
     V.oninput=()=>{ st.q=Math.max(0,+V.value||0)/per[st.w]; update(); };
@@ -2360,12 +2375,10 @@ function openCombo(c){
     '<button class="shx'+(stack?' back':'')+'" aria-label="'+(stack?'Back':'Close')+'">'+(stack?'\u2039':'\u00d7')+'</button></h3>'+
     '<div class="qper">'+items(c.items.length)+' \u00b7 MEAL</div>'+
     '<div class="qact"><button class="btn" id="cGo">[ LOG MEAL ]</button></div>'+
-    picker('cMeal',P().meals.map(m=>[m.id,m.n.toUpperCase()]),st.m)+
     '<div class="qamt"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1"><div class="qunit">SERVINGS</div></div>'+
-    '<div class="xled" id="cX"></div></div>',stack);
+    '<div class="qlh">Nutritional information</div><div class="xled" id="cX"></div></div>',stack);
   const box=topSheet(), back=stack?popSheet:closeSheet, V=$('cV');
   lastVeil().onclick=box.querySelector('.shx').onclick=back;
-  onPick('cMeal',v=>st.m=v);
   const paint=()=>{ const t=sum(st.q);
     $('cX').innerHTML=c.items.map(e=>'<div><span>'+esc(e.n)+' \u00b7 '+esc(qtyTxt(Object.assign({},e,{q:e.q*st.q})))+'</span><b>'+fmt(e.k*e.q*st.q)+' kcal</b></div>').join('')+
       '<div class="xsum"><span>Meal</span><b>'+fmt(t.k)+' kcal \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div>'; };
@@ -2559,84 +2572,35 @@ async function lookupCode(code){
   }catch(e){ sfx('nope'); scStat('LOOKUP FAILED \u2014 CHECK THE CONNECTION',true); }
 }
 
-/* ---------- search: runs as you type; Australian products first, world fills in ---------- */
-let SRT=0, SRC=null;
-const SRCACHE=new Map();
+/* ---------- search: everything on the phone, as you type ----------
+   Your own foods come first: everything logged in the last 30 days (including foods hidden
+   from Recent), then your saved foods, then the Australian list, updated monthly. Every word
+   typed must appear in the name. Nothing is searched online. */
+const HISTORY_DAYS=30;
+const wordsOf=q=>q.toLowerCase().split(/\s+/).filter(Boolean);
+const hasWords=(s,ws)=>{ s=s.toLowerCase(); return ws.every(w=>s.includes(w)); };
+const sameFood=f=>(f.n+'|'+f.sv).toLowerCase();
+function historyFoods(){                              // newest first, one per food
+  const from=shift(today(),-HISTORY_DAYS), seen=new Set(), out=[];
+  Object.keys(P().days).filter(d=>d>=from && d<=today()).forEach(d=>P().days[d].forEach(e=>out.push(e)));
+  return out.sort((x,y)=>y.t-x.t).filter(e=>{ const k=recentKey(e); if(seen.has(k)) return false; seen.add(k); return true; });
+}
+/* Your own foods that match: history, then saved foods not already in it. */
+function yourFoods(q){
+  const ws=wordsOf(q), hist=historyFoods().filter(e=>hasWords(e.n,ws)), have=new Set(hist.map(sameFood));
+  const saved=P().foods.filter(f=>hasWords(f.n,ws) && !have.has(sameFood(f)));
+  return {hist, saved};
+}
 function queueSearch(q){
-  ADD.sq=q; q=q.trim().toLowerCase();
-  clearTimeout(SRT);
-  if(SRC) SRC.abort();
-  if(q.length<3){ ADD.results=[]; paintResults(); $('osSt').textContent=''; return; }
-  if(SRCACHE.has(q)) return showResults(SRCACHE.get(q));
-  const here=localSearch(q);                        // the phone's list answers as you type
-  if(here.length>=8){ SRCACHE.set(q,here); return showResults(here); }
-  if(here.length) showResults(here);
-  $('osSt').textContent='SEARCHING\u2026'; $('osSt').classList.remove('err');
-  SRT=setTimeout(()=>runSearch(q),500);             // online only when the list is thin, and after a pause
-}
-/* JSON with a time limit, so a slow service can't hold the search; typing on still cancels it. */
-/* A reply as JSON, or null. Anything that goes wrong is noted in why, so the search can
-   say what actually happened: timeout, network, an error code, or a reply it couldn't read. */
-async function getJSON(url,ctl,ms,why){
-  why=why||[];
-  let late=false;
-  const t=new AbortController(), stop=()=>t.abort(), tm=setTimeout(()=>{ late=true; stop(); },ms);
-  ctl.signal.addEventListener('abort',stop);
-  try{
-    const r=await fetch(url,{signal:t.signal});
-    if(!r.ok){ why.push('http:'+r.status); return null; }
-    try{ return await r.json(); }catch(e){ why.push('unreadable'); return null; }
-  }catch(e){ if(!ctl.signal.aborted) why.push(late?'timeout':'network'); throw e; }
-  finally{ clearTimeout(tm); ctl.signal.removeEventListener('abort',stop); }
-}
-/* What to tell someone when the online search failed, most useful reason first. */
-function whyText(why){
-  if(!navigator.onLine) return 'NO CONNECTION';
-  const code=why.find(w=>w.startsWith('http:'));
-  if(code) return 'OPEN FOOD FACTS IS HAVING PROBLEMS (ERROR '+code.slice(5)+')';
-  if(why.includes('timeout')) return 'OPEN FOOD FACTS DIDN\u2019T ANSWER IN TIME';
-  if(why.includes('unreadable')) return 'OPEN FOOD FACTS SENT A REPLY THAT COULDN\u2019T BE READ';
-  return 'COULDN\u2019T REACH OPEN FOOD FACTS';
-}
-const SAL='https://search.openfoodfacts.org/search?langs=en&boost_phrase=true&page_size=24&fields='+OFF_FIELDS+'&q=';
-async function runSearch(q){
-  const ctl=SRC=new AbortController(), out=localSearch(q), seen=new Set(out.map(f=>f.bc)), bare=[];
-  if(out.length>=8){ SRCACHE.set(q,out); return showResults(out); }     // the phone's list had plenty: no need to go online
-  if(out.length) showResults(out);
-  const add=list=>list.forEach(p=>{ const id=p && (p.code||p.product_name); if(!id || seen.has(id)) return; seen.add(id);
-    const f=offMap(p); if(f) out.push(f); else if(p.code) bare.push(p.code); });
-  if(!navigator.onLine) return showResults(out,'NO CONNECTION');
-  let ok=false; const why=[], dead=()=>why.includes('timeout') || why.includes('network');   // a connection problem: stop, don't wait on the rest
-  // Open Food Facts' full-text search: Australian products first, the world when that's thin
-  for(const scope of [' countries_tags:"en:australia"','']){
-    if(out.length>=8 || dead()) break;
-    try{ const j=await getJSON(SAL+encodeURIComponent(q+scope),ctl,7000,why); if(j && Array.isArray(j.hits)){ ok=true; add(j.hits); } }
-    catch(e){ if(ctl.signal.aborted) return; }
-  }
-  // matches that came without nutrition are looked up by barcode, as the scanner does
-  if(bare.length && out.length<12 && !dead())
-    (await Promise.allSettled(bare.slice(0,10).map(offLookup))).forEach(r=>{ if(r.value) out.push(r.value); });
-  // the older search, only when the new one answered with an error
-  if(!ok && !dead()) for(const host of ['au','world']){
-    if(out.length>=8 || dead()) break;
-    try{ const j=await getJSON('https://'+host+'.openfoodfacts.org/cgi/search.pl?search_simple=1&action=process&json=1&page_size=30&fields='+
-      OFF_FIELDS+'&search_terms='+encodeURIComponent(q),ctl,9000,why); if(j && j.products){ ok=true; add(j.products); } }
-    catch(e){ if(ctl.signal.aborted) return; }
-  }
-  if(ctl.signal.aborted) return;
-  if(!ok) return showResults(out,whyText(why));      // not cached, so trying again really asks again
-  SRCACHE.set(q,out);
-  showResults(out);
-}
-/* failed: why the online search couldn't answer, if it couldn't. What's on the phone shows either way. */
-function showResults(out,failed){
+  ADD.sq=q; q=q.trim();
   const s=$('osSt'); if(!s) return;
-  ADD.results=out;
-  const here=LOCAL.d?'':' \u00b7 AUSTRALIAN LIST NOT DOWNLOADED (SETTINGS)';
-  s.textContent=failed
-    ?(out.length?'SHOWING FOODS ON THIS PHONE ONLY \u2014 '+failed:failed+' \u2014 TRY AGAIN'+here)
-    :out.length?'':'NO MATCHING FOODS, ON THIS PHONE OR ONLINE \u2014 TRY FEWER WORDS, OR TAP + TO ADD IT';
-  s.classList.toggle('err',!out.length);
+  if(q.length<2){ ADD.results=[]; s.textContent=''; return paintResults(); }
+  const mine=yourFoods(q), have=new Set([...mine.hist,...mine.saved].map(sameFood));
+  ADD.results=localSearch(q).filter(f=>!have.has(sameFood(f)));
+  const none=!mine.hist.length && !mine.saved.length && !ADD.results.length;
+  s.textContent=!LOCAL.d?'AUSTRALIAN LIST NOT ON THIS PHONE YET \u2014 SETTINGS \u203a AUSTRALIAN FOOD LIST'
+    :none?'NO MATCHING FOODS \u2014 TRY FEWER WORDS, OR TAP + TO ADD IT':'';
+  s.classList.toggle('err',none || !LOCAL.d);
   paintResults();
 }
 function paintResults(){
@@ -2646,15 +2610,18 @@ function paintResults(){
   bindRows(L,i=>openQty(pick(i),{}),i=>{ const f=pick(i); quickAdd(f,1,'',P().foods.includes(f)?f.id:''); });
 }
 /* Recent foods above the search results, narrowed by whatever has been typed. */
+/* Nothing typed: Recent, the last 11 foods. Searching: every food of yours that matches,
+   from the last 30 days first, then saved foods, each at the amount you last had it. */
 function paintRecent(q){
-  const s=q.trim().toLowerCase(), all=recentFoods(), list=all.filter(e=>!s || e.n.toLowerCase().includes(s));
-  const L=$('rcList');
-  L.innerHTML=list.length?'<div class="lh">RECENT</div>'+list.map((e,i)=>foodRow(e,i)).join('')
-    :!all.length && !s?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
-  const food=e=>P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''};
-  bindRows(L,i=>openQty(food(list[i]),{q:list[i].q, w:list[i].w}),
-    i=>{ const e=list[i]; quickAdd(food(e),e.q,e.w,P().foods.some(f=>f.id===e.fid)?e.fid:''); },
-    i=>{ P().rh[recentKey(list[i])]=Date.now(); touch(); toast('REMOVED FROM RECENT'); paintRecent($('osQ').value); });
+  const s=q.trim(), L=$('rcList');
+  const mine=s.length>=2?yourFoods(s):null, list=mine?[...mine.hist,...mine.saved]:recentFoods();
+  L.innerHTML=list.length?'<div class="lh">'+(mine?'YOUR FOODS':'RECENT')+'</div>'+list.map((e,i)=>foodRow(e,i)).join('')
+    :!s && !historyFoods().length?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
+  const logged=e=>e.m!==undefined;                   // a diary entry, rather than a saved food
+  const food=e=>logged(e)?(P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''}):e;
+  bindRows(L,i=>openQty(food(list[i]),logged(list[i])?{q:list[i].q, w:list[i].w}:{}),
+    i=>{ const e=list[i], f=food(e); logged(e)?quickAdd(f,e.q,e.w,P().foods.includes(f)?f.id:''):quickAdd(f,1,'',f.id); },
+    mine?null:i=>{ P().rh[recentKey(list[i])]=Date.now(); touch(); toast('REMOVED FROM RECENT'); paintRecent($('osQ').value); });
 }
 
 /* =====================================================================
