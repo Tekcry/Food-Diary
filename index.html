@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.37">
+<meta name="app-version" content="2026.09.26.41">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -400,7 +400,7 @@ body.planning .harr{visibility:hidden;pointer-events:none}
 .plancard .btn{height:32px;margin:0;padding:0 4px;font-size:10px;letter-spacing:.1em;display:flex;align-items:center;justify-content:center}
 .groc #plTick{margin-top:12px}
 .ri.shr{padding:6px 0}
-.shbtn{flex:none;width:auto;margin:0;padding:8px 14px}
+.shbtn{flex:none;width:auto;min-width:108px;margin:0;padding:8px 14px}
 .shx.back{font-size:26px;line-height:40px}
 .qh .shx{top:50%;height:32px;margin-top:-16px;line-height:30px}
 .sheet>h3.qh{margin-bottom:12px}
@@ -720,7 +720,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.37';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.41';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1372,6 +1372,13 @@ function setSheet(html,stack){
   if(had){ nv.classList.add('noanim'); ns.classList.add('swapin'); }
 }
 /* Close the top layer only, back to what it was opened from. */
+/* Close sheet el and everything stacked above it, in one go. */
+function popTo(el){
+  const wrap=document.getElementById('sheetWrap'), layers=[...wrap.querySelectorAll('.layer')], i=layers.findIndex(l=>l.contains(el));
+  if(i<0) return closeSheet();
+  sfx('close');
+  layers.slice(i).forEach(l=>{ l.querySelectorAll('.sheet,.veil').forEach(x=>{ x.classList.remove('cut'); x.classList.add('out'); }); setTimeout(()=>l.remove(),380); });
+}
 function popSheet(){
   const wrap=document.getElementById('sheetWrap');
   const layers=wrap.querySelectorAll('.layer');
@@ -1565,7 +1572,7 @@ function render(){
   $('hdrK').textContent=DB.cur;
   const pl=P().plan;
   $('hdrT').textContent=PLAN?'Week Planner':dayName(DAY);
-  $('hdrS').textContent=PLAN?(pl.n||'Unsaved plan')+(pl.n && planEdited()?' \u00b7 edited':'')+' \u00b7 '+pl.portions+' portions':longDate(DAY)+' \u00b7 '+sinceStart();
+  $('hdrS').textContent=PLAN?pl.n||'Unsaved plan':longDate(DAY)+' \u00b7 '+sinceStart();
   tune($('rtt'),!PLAN && DAY!==today());
   document.body.classList.toggle('planning',PLAN);
   paintBolt();
@@ -1788,8 +1795,6 @@ function togglePlan(){
   $('plan').classList.toggle('on',PLAN);
   sfx(PLAN?'open':'close'); render(); panelHit($('main'),$('hdrT'),$('hdrS'));
 }
-const planKey=x=>JSON.stringify([x.portions, x.items.map(e=>[e.n,e.sv,e.q,e.w,mealOf(e),e.g||''])]);
-function planEdited(){ const pl=P().plan, s=P().plans.find(x=>x.id===pl.sid); return !!s && planKey(s)!==planKey(pl); }
 function planCard(){
   const pl=P().plan;
   return '<div class="card plancard" id="plcard">'+                  // one line: portions, then save, load and clear
@@ -1826,29 +1831,40 @@ function bindPlanCard(){
 /* A change to the portions redraws the groceries and banner, not the box being typed in. */
 function repaintPlan(){
   const g=$('groc'); if(g){ const d=document.createElement('div'); d.innerHTML=groceriesCard(); g.replaceWith(d.firstChild); }
-  $('hdrS').textContent=(P().plan.n||'Unsaved plan')+(P().plan.n && planEdited()?' \u00b7 edited':'')+' \u00b7 '+P().plan.portions+' portions';
   bindPlanCard();
 }
 /* Save the plan under a name: the saved plan it came from if the name is kept, one of the
    same name if there is one, otherwise a new one. */
+/* Save the plan. A plan opened from a saved one can OVERWRITE it (taking the name in the box)
+   or SAVE AS NEW beside it; a new plan just saves. A new name that's already used gets (2). */
 function savePlan(){
   const pl=P().plan;
   if(!pl.items.length){ sfx('nope'); return toast('LOG SOME FOOD INTO THE PLAN FIRST'); }
-  promptSheet('Save plan',pl.n||'',n=>{
-    const now=Date.now(), same=P().plans.find(x=>x.id===pl.sid && x.n===n)||P().plans.find(x=>x.n.toLowerCase()===n.toLowerCase());
-    const sp=cleanSavedPlan({id:same?same.id:uid(), n, portions:pl.portions, items:JSON.parse(JSON.stringify(pl.items)), u:now, e:now});
-    if(same) Object.assign(same,sp); else P().plans.unshift(sp);
-    pl.n=n; pl.sid=sp.id; touch(); popSheet(); render(); sfx('confirm'); toast((same?'PLAN UPDATED \u00b7 ':'PLAN SAVED \u00b7 ')+n.toUpperCase());
-  },true);
+  const from=P().plans.find(x=>x.id===pl.sid);
+  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Save plan<button class="shx back" id="svpX" aria-label="Close">\u00d7</button></h3>'+
+    '<input class="fld" id="psV" maxlength="80" autocomplete="off" placeholder="Plan name" value="'+esc(pl.n||'')+'">'+
+    (from?'<div class="pgnote">OVERWRITE replaces \u201c'+esc(from.n)+'\u201d. SAVE AS NEW keeps it and saves this as another plan.</div>'+
+      '<div class="duo"><button class="btn ghost" id="svpNew">[ SAVE AS NEW ]</button><button class="btn" id="svpOver">[ OVERWRITE ]</button></div>'
+      :'<button class="btn" id="svpNew">[ SAVE ]</button>')+'</div>',true);
+  lastVeil().onclick=popSheet; $('svpX').onclick=popSheet;
+  const name=()=>{ const n=cleanLabel($('psV').value); if(!n){ sfx('nope'); toast('GIVE THE PLAN A NAME'); } return n; };
+  const done=(sp,msg)=>{ pl.n=sp.n; pl.sid=sp.id; touch(); popSheet(); render(); sfx('confirm'); toast(msg+' \u00b7 '+sp.n.toUpperCase()); };
+  const body=(id,n,u)=>cleanSavedPlan({id, n, portions:pl.portions, items:JSON.parse(JSON.stringify(pl.items)), u, e:Date.now()});
+  $('svpNew').onclick=()=>{ const n=name(); if(!n) return;
+    let m=n, k=2; while(P().plans.some(x=>normS(x.n)===normS(m))) m=(n+' ('+(k++)+')').slice(0,80);
+    const sp=body(uid(),m,Date.now()); P().plans.unshift(sp); done(sp,'PLAN SAVED'); };
+  if(from) $('svpOver').onclick=()=>{ const n=name(); if(!n) return; Object.assign(from,body(from.id,n,from.u)); done(from,'PLAN OVERWRITTEN'); };
+  setTimeout(()=>$('psV') && $('psV').focus(),150);
 }
 /* The saved plans: tap one to open it on the planner; hold one to rename, share or delete it. */
 function openPlans(ed){
   const ps=P().plans, others=Object.keys(DB.profiles).filter(n=>n!==DB.cur), kc=x=>x.items.reduce((s,e)=>s+e.k*e.q,0);
+  const mac=x=>{ const t=x.items.reduce((s,e)=>{ s.p+=e.p*e.q; s.c+=e.c*e.q; s.f+=e.f*e.q; return s; },{p:0,c:0,f:0}); return 'P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f); };
   const stack=!!topSheet() && !topSheet().classList.contains('plans');
   const body=(ps.length?'<div class="rlist" id="spList">'+ps.map((x,i)=>x.id===ed
       ?'<div class="ri edit"><input class="fld" id="spE" maxlength="80" autocomplete="off" value="'+esc(x.n)+'"><button class="rx" id="spX" aria-label="Close">\u00d7</button></div>'+
         '<div class="trio">'+(others.length?'<button class="btn ghost" id="spShare">[ SHARE ]</button>':'<span></span>')+'<button class="btn ghost" id="spDel">[ DELETE ]</button><button class="btn" id="spOk">[ ACCEPT ]</button></div>'
-      :listRow(i,x.n,items(x.items.length).toLowerCase()+' \u00b7 '+x.portions+' portions',kc(x),false)).join('')+'</div>'
+      :listRow(i,x.n,mac(x),kc(x),false)).join('')+'</div>'
     :'<div class="stat">NO SAVED PLANS YET \u2014 SAVE THE ONE ON SCREEN</div>')+
     (P().plan.items.length?'<div class="pgnote">Opening a saved plan replaces the one on screen. Save it first to keep it.</div>':'')+
     '<div class="pgnote">Hold a plan to rename, share or delete it.</div>';
@@ -1919,6 +1935,25 @@ function deleteSel(){
   $('main').querySelectorAll('.fiw.on').forEach(w=>{ w.style.height=w.offsetHeight+'px'; void w.offsetHeight; w.classList.add('gone'); });
   dropSelect(); sfx('close');
   setTimeout(()=>{ dropEntries(ids); renderMorph(...mids); toast('DELETED '+items(ids.length)); },300);
+}
+/* From the Week Planner, selected foods copy into another profile's planner: a plan has no
+   dates, so there's only the profile to choose. Sections and combined items carry over. */
+function copyPlanTo(){
+  const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur).sort((x,y)=>x.localeCompare(y));
+  if(!others.length){ sfx('nope'); return toast('NO OTHER PROFILE TO COPY TO'); }
+  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Copy '+items(SEL.size).toLowerCase()+' to\u2026'+
+    '<button class="shx back" id="cpBack" aria-label="Close">\u00d7</button></h3><div class="pgnote">Into their Week Planner.</div><div class="rlist">'+
+    others.map((n,i)=>'<div class="ri shr" data-i="'+i+'"><span class="rm"><span class="rn">'+esc(n)+'</span></span><button class="btn shbtn">[ COPY ]</button></div>').join('')+
+    '</div></div>',true);
+  lastVeil().onclick=popSheet; $('cpBack').onclick=popSheet;
+  topSheet().querySelectorAll('.ri[data-i]').forEach(el=>el.querySelector('.shbtn').onclick=()=>{
+    const who=others[el.dataset.i], p=DB.profiles[who], now=Date.now(), gs={}, has=id=>p.meals.some(x=>x.id===id);
+    const es=entries().filter(e=>SEL.has(e.id));
+    p.plan.items.push(...es.map((e,i)=>Object.assign({},e,{id:uid()+i, m:has(e.m)?e.m:p.meals[0].id, x:Object.assign({},e.x), t:now+i, e:now+i, o:0},
+      e.g?{g:gs[e.g]=gs[e.g]||uid()}:{})));
+    p.pe=p.at=now; save(); if(ghOn()) ghSync(who);
+    closeSheet(); endSelect(); sfx('confirm'); toast('COPIED '+items(es.length)+' TO '+who.toUpperCase()+'\u2019S PLANNER');
+  });
 }
 function copyTo(d){
   const who=CAL.who, p=DB.profiles[who], es=entries().filter(e=>SEL.has(e.id));
@@ -2429,18 +2464,58 @@ function savedList(L,q,onFood,onMeal,ed,plus){
   arm($('svDel'),()=>{ dropSaved(r.t,r.o.id); toast(r.t==='meal'?'MEAL DELETED':'FOOD DELETED'); again(); });
 }
 /* Copy a saved food or meal into another profile's list. */
+/* Sharing a food, meal or plan checks what the other person already has:
+   the same thing under the same name: nothing to send (HAS IT);
+   the same nutrition under another name: keep theirs, or share anyway;
+   the same name with different nutrition: replace theirs, or add it as a new one.
+   Nutrition is compared on the serving and every nutrient, rounded; names as search sees them. */
+const shareList=(p,t)=>t==='meal'?p.combos:t==='plan'?p.plans:p.foods;
+const s1=v=>Math.round((+v||0)*10)/10;
+const foodSig=f=>JSON.stringify([normS(f.sv),s1(f.k),s1(f.p),s1(f.c),s1(f.f),Object.keys(f.x||{}).filter(k=>f.x[k]).sort().map(k=>[k,s1(f.x[k])])]);
+const itemsSig=es=>JSON.stringify(es.map(e=>[normS(e.n),foodSig(e),s1(e.q)]));
+const shareSig=(t,o)=>t==='food'?foodSig(o):t==='meal'?itemsSig(o.items):JSON.stringify([o.portions,itemsSig(o.items)]);
+function shareMatch(r,p){
+  const list=shareList(p,r.t), sig=shareSig(r.t,r.o), nk=normS(r.o.n);
+  const same=list.find(x=>normS(x.n)===nk && shareSig(r.t,x)===sig);
+  if(same) return {kind:'same', x:same};
+  const twin=list.find(x=>shareSig(r.t,x)===sig); if(twin) return {kind:'twin', x:twin};
+  const named=list.find(x=>normS(x.n)===nk); if(named) return {kind:'named', x:named};
+  return {kind:'new'};
+}
 function shareSheet(r,after){
   const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur).sort((a,b)=>a.localeCompare(b));
+  const st=others.map(n=>shareMatch(r,DB.profiles[n]));
   setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Share '+esc(r.o.n)+
     '<button class="shx back" id="shBack" aria-label="Close">\u00d7</button></h3><div class="pgnote">A copy goes to the profile you choose.</div><div class="rlist">'+
-    others.map((n,i)=>'<div class="ri shr" data-i="'+i+'"><span class="rm"><span class="rn">'+esc(n)+'</span></span><button class="btn shbtn">[ SHARE ]</button></div>').join('')+
+    others.map((n,i)=>'<div class="ri shr" data-i="'+i+'"><span class="rm"><span class="rn">'+esc(n)+'</span></span>'+
+      (st[i].kind==='same'?'<button class="btn shbtn" disabled>HAS IT</button>':'<button class="btn shbtn">[ SHARE ]</button>')+'</div>').join('')+
     '</div></div>',true);
   lastVeil().onclick=popSheet; $('shBack').onclick=popSheet;
-  topSheet().querySelectorAll('.ri[data-i]').forEach(el=>el.querySelector('.shbtn').onclick=()=>{
-    const who=others[el.dataset.i], p=DB.profiles[who], now=Date.now(), copy=Object.assign(JSON.parse(JSON.stringify(r.o)),{id:uid(),u:now,e:now});
-    (r.t==='meal'?p.combos:r.t==='plan'?p.plans:p.foods).unshift(copy);
-    p.at=now; save(); if(ghOn()) ghSync(who);
-    popSheet(); sfx('confirm'); toast('SHARED WITH '+who.toUpperCase()); after();
+  const me=topSheet(), close=()=>popTo(me);              // the share screen and anything above it
+  const finish=(who,msg)=>{ const p=DB.profiles[who]; p.at=Date.now(); save(); if(ghOn()) ghSync(who);
+    close(); sfx('confirm'); toast(msg); after(); };
+  const copyOf=(n)=>{ const now=Date.now(); return Object.assign(JSON.parse(JSON.stringify(r.o)),{id:uid(), u:now, e:now},n?{n}:{}); };
+  const add=(who,n)=>{ shareList(DB.profiles[who],r.t).unshift(copyOf(n)); finish(who,'SHARED WITH '+who.toUpperCase()); };
+  const replace=(who,x)=>{                                // theirs takes these values, keeping its place; a food's entries follow
+    const oldN=x.n, oldSv=x.sv, now=Date.now(), c=copyOf();
+    delete c.id; delete c.u; Object.assign(x,c,{e:now});
+    if(r.t==='food'){ const cur=DB.cur; DB.cur=who; try{ spreadFood(x,oldN,oldSv); }finally{ DB.cur=cur; } }
+    finish(who,'REPLACED '+who.toUpperCase()+'\u2019S '+x.n.toUpperCase());
+  };
+  const ask=(msg,a1,f1,a2,f2)=>{
+    setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Already there<button class="shx back" id="saX" aria-label="Close">\u00d7</button></h3>'+
+      '<div class="pgnote">'+msg+'</div><div class="duo"><button class="btn ghost" id="saA">'+a1+'</button><button class="btn" id="saB">'+a2+'</button></div></div>',true);
+    lastVeil().onclick=popSheet; $('saX').onclick=popSheet; $('saA').onclick=f1; $('saB').onclick=f2;
+  };
+  topSheet().querySelectorAll('.ri[data-i]').forEach(el=>{ const i=+el.dataset.i, who=others[i], m=st[i], b=el.querySelector('.shbtn');
+    if(m.kind==='same') return;
+    b.onclick=()=>{
+      if(m.kind==='new') return add(who);
+      if(m.kind==='twin') return ask(esc(who)+' already has this as \u201c'+esc(m.x.n)+'\u201d, with the same nutrition.',
+        '[ KEEP THEIRS ]',()=>{ close(); toast('LEFT AS IT WAS'); after(); },'[ SHARE ANYWAY ]',()=>add(who));
+      ask(esc(who)+' has a different \u201c'+esc(m.x.n)+'\u201d. Replace it with yours, or add yours as a new one?',
+        '[ ADD AS NEW ]',()=>add(who,(r.o.n+' (from '+DB.cur+')').slice(0,80)),'[ REPLACE THEIRS ]',()=>replace(who,m.x));
+    };
   });
 }
 function upsertFood(f){
@@ -3302,7 +3377,7 @@ $('selX').onclick=endSelect;
 $('selMeal').onclick=saveMeal;
 $('selComb').onclick=combineSel;
 arm($('selDel'),deleteSel);
-$('selGo').onclick=()=>openCalendar(copyTo,'COPY '+items(SEL.size)+' TO\u2026',true);
+$('selGo').onclick=()=>PLAN?copyPlanTo():openCalendar(copyTo,'COPY '+items(SEL.size)+' TO\u2026',true);
 $('rtt').onclick=()=>goDay(today());
 /* The swap button: tap moves to the next profile, hold opens Profiles. */
 $('who').onclick=()=>{
