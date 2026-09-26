@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.69">
+<meta name="app-version" content="2026.09.26.71">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -147,7 +147,9 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 #ib.on{visibility:visible}
 #ib.slide{transition:transform .42s cubic-bezier(.4,0,.2,1)}
 .ibskin{position:absolute;top:0;left:0;width:100%;height:100%;box-sizing:border-box;overflow:hidden;background-color:var(--bg);
-  border:1px solid transparent;border-bottom-color:var(--line);border-radius:0}
+  border:1px solid transparent;border-radius:0}
+#ib::after{content:'';position:absolute;left:22px;right:22px;bottom:0;height:1px;background:var(--line);opacity:0;transition:opacity .3s ease}
+#ib.set::after{opacity:1}                              /* the same line, and length, as under the headings */
 #ib.anim .ibskin{transition:top .45s cubic-bezier(.4,0,.2,1),left .45s cubic-bezier(.4,0,.2,1),width .45s cubic-bezier(.4,0,.2,1),height .45s cubic-bezier(.4,0,.2,1),
   border-radius .45s cubic-bezier(.4,0,.2,1),background-color .45s ease,border-color .45s ease}
 .ibold{position:absolute;top:-1px;left:-1px;margin:0;background:none !important;border-color:transparent !important;box-shadow:none !important;opacity:1}
@@ -157,7 +159,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 #ib.anim .ibold{transition:opacity .3s ease .15s}
 #ib.anim.set .ibold{transition:opacity .2s ease}
 /* the card's layout, tighter: calories and their bar, then the three macros stacked */
-.ibrow{position:relative;padding:calc(env(safe-area-inset-top) + 6px) 22px 6px;font-family:var(--serif);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ibrow{position:relative;padding:calc(env(safe-area-inset-top) + 6px) 22px 11px;font-family:var(--serif);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ibf{display:inline-block;transform-origin:0 0}
 #ib.anim .ibf{transition:transform .45s cubic-bezier(.4,0,.2,1)}
 .ibkl{display:flex;align-items:baseline;gap:6px;height:15px;line-height:15px}
@@ -180,16 +182,20 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .ibrow{transition:opacity .3s ease,filter .3s ease}
 #ib.dim .ibrow{opacity:.38;filter:grayscale(1)}
 .ibms{margin-top:5px}
-.ibm{display:grid;grid-template-columns:52px 1fr 104px;align-items:center;gap:10px;height:12px;line-height:12px}
+.ibm{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;height:12px;line-height:12px}
 .ibm+.ibm{margin-top:1px}
 .ibm .ibl{font-size:8.5px;letter-spacing:.16em;color:var(--dim)}
-.ibmv{display:flex;justify-content:flex-end;align-items:baseline;gap:5px}
-.ibmn b{font-weight:400;font-size:11px;color:var(--champ)}
-.ibmn s{text-decoration:none;font-size:9px;color:var(--dimmer);margin-left:3px}
+.ibmv{display:flex;justify-content:flex-end;align-items:baseline;gap:4px}
+.ibm .ibd{display:inline-block;width:4.5ch;text-align:right}
+.ibmn{display:grid;grid-template-columns:3ch 1.8ch 3ch 1.6ch;font-size:11px;color:var(--champ)}
+.ibmn b{font-weight:400;text-align:right}
+.ibmn i{font-style:normal;color:var(--dimmer);text-align:right}
+.ibmn i:first-of-type{text-align:center}
+.ibmn i:last-child{text-align:left;padding-left:3px}
 .ibm.over .ibmn b{color:var(--alert)}
 .sheet.full{transition:padding-top .42s cubic-bezier(.4,0,.2,1),gap .42s cubic-bezier(.4,0,.2,1)}
 .sheet.fit.full>h3{transition:padding-bottom .42s cubic-bezier(.4,0,.2,1)}
-body.ibon .sheet.full,body.ibon .sheet.fit.full{padding-top:calc(var(--ibh,0px) + 14px);gap:8px}
+body.ibon .sheet.full,body.ibon .sheet.fit.full{padding-top:calc(var(--ibh,0px) + 7px);gap:8px}
 body.ibon .sheet.fit.full.scroll{gap:0}
 body.ibon .sheet.fit.full>h3{padding-bottom:8px}
 body.ibfly #intake{visibility:hidden}
@@ -304,7 +310,6 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .intake{padding:14px 14px 10px;cursor:pointer;transition:border-color .2s ease}
 .intake:active{border-color:var(--bronze)}
 .intake h3{display:flex;align-items:center;gap:8px}
-.chev{margin-left:auto;color:var(--bronze);font-size:18px;line-height:1}
 .tick{font-family:var(--serif);font-size:9px;letter-spacing:.16em;color:var(--on);background:var(--bronze); border-radius:3px;padding:3px 6px;text-shadow:none;box-shadow:0 0 12px -2px var(--bronze)}
 .kline{display:flex;align-items:flex-end;gap:10px;margin-top:10px}
 .kc{font-family:var(--serif);font-size:46px;line-height:.9;color:var(--champ);letter-spacing:-.03em; font-variant-numeric:tabular-nums;text-shadow:0 0 12px rgba(0,255,102,.45);position:relative}
@@ -782,6 +787,9 @@ html :is(#dfix,#ib) .ws{margin-top:2px;font-size:8.5px}
 html :is(#dfix,#ib) .wa span{font-size:8.5px;line-height:1.2}
 html :is(#dfix,#ib) .wa b{font-size:13px;line-height:1.2}
 html :is(#dfix,#ib) .wg.mini{height:26px}
+html #main>.dfix .wcard,html #main>.dfix .plancard{box-sizing:border-box;height:66px}
+html #main>.dfix .plancard{padding:0 12px}
+html #main>.dfix .plancard .fld.pn,html #main>.dfix .plancard .btn{height:40px}
 /* Add food and every screen reached from it share one heading box, clear of the intake banner */
 html .sheet.fit.full>h3,html .qty>h3.qt{box-sizing:border-box;height:37px;line-height:28px;padding-top:0;padding-bottom:9px}
 html body.ibon .sheet.fit.full>h3,html body.ibon .qty>h3.qt{padding-bottom:9px}
@@ -854,7 +862,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.69';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.71';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1793,7 +1801,7 @@ function render(){
   const mac=(l,v,g,met,over)=>'<div class="mac'+(met?' met':'')+'"><span class="ml">'+l+'</span>'+segs(v,g,16,over)+
     '<span class="mv"><b>'+Math.round(v)+'</b><i>/</i><i>'+g+'</i><i>G</i></span></div>';
   let h='<div class="dfix" id="dfix"><div class="card intake" id="intake" role="button" tabindex="0">'+
-      '<h3>Intake'+(s.kHit&&s.pHit?'<span class="tick">TARGET MET</span>':'')+'<span class="chev">\u203a</span></h3>'+
+      '<h3>Intake</h3>'+
       '<div class="kline"><span class="kc'+(s.over?' over':'')+'" id="kc">'+fmt(t.k)+'</span><span class="kof">/ '+fmt(T.k)+' KCAL</span>'+
       '<span class="krem'+(rem<0?' over':'')+'"><span class="rv">'+(rem<0?'+':'')+fmt(Math.abs(rem))+'</span>'+
       '<span class="rl">'+(rem<0?'OVER':'REMAINING')+'</span></span></div>'+
@@ -1899,7 +1907,7 @@ function ibEl(){
   b.innerHTML='<div class="ibskin"></div><div class="ibrow"><div class="ibk" data-k="k"><div class="ibkl"><b class="ibv ibf"></b><span class="ibof ibf"></span><i class="ibd"></i>'+
     '<span class="ibr"><b class="ibf"></b><span class="ibrl"></span></span></div>'+ibSegs(24)+'</div><div class="ibms">'+
     IBM.map(([k,l])=>'<div class="ibm" data-k="'+k+'"><span class="ibl ibf">'+l+'</span>'+ibSegs(16)+
-      '<span class="ibmv"><i class="ibd"></i><span class="ibmn ibf"><b></b><s></s></span></span></div>').join('')+'</div></div>';
+      '<span class="ibmv"><i class="ibd"></i><span class="ibmn ibf"><b></b><i>/</i><i></i><i>G</i></span></span></div>').join('')+'</div></div>';
   document.body.appendChild(b); return b;
 }
 /* Light the bar's segments: what's eaten, then what the open food would add. */
@@ -1921,7 +1929,7 @@ function ibFill(){
   IBM.forEach(([k])=>{
     const m=b.querySelector('.ibm[data-k="'+k+'"]'), d=dd(k), v=t[k]+d, g=T[k]||0, lim=k==='p'?Infinity:g*1.1;
     m.querySelector('.ibmn b').textContent=Math.round(v);
-    m.querySelector('.ibmn s').textContent='/ '+g+' G';
+    m.querySelector('.ibmn i:nth-of-type(2)').textContent=g;
     m.querySelector('.ibd').textContent=d>=0.5?'+'+Math.round(d):'';
     m.classList.toggle('pv',d>=0.5); m.classList.toggle('over',v>lim);
     ibBar(m.querySelector('.mseg'),t[k],d,g,t[k]>lim);
@@ -2565,7 +2573,7 @@ const ymShift=(ym,n)=>{ const d=new Date(+ym.slice(0,4),+ym.slice(5,7)-1+n,1); r
 const months=end=>[...Array(6)].map((_,i)=>{ const k=ymShift(end,i-5), m=mAvg(k); return {k, lab:MON[+k.slice(5,7)-1].slice(0,3).toUpperCase(), v:m?r1(m.a):null}; });
 function weightCard(){
   const t=today(), d=wLast(t), avg=wAvg(t,14);
-  return '<div class="card wcard" id="wcard" role="button" tabindex="0"><h3>Weight<span class="chev">\u203a</span></h3>'+
+  return '<div class="card wcard" id="wcard" role="button" tabindex="0"><h3>Weight</h3>'+
     '<div class="wline"><div><span class="wv">'+(d?wOf(d).toFixed(1)+'<i> KG</i>':'\u2014')+'</span>'+
       '<span class="ws">'+(!d?'TAP TO LOG':d===t?'TODAY':d===shift(t,-1)?'YESTERDAY':shortDay(d))+'</span></div>'+
     plot(fortnight(t),'',150,40,true)+
