@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.78">
+<meta name="app-version" content="2026.09.26.79">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -148,9 +148,9 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .sheet.fit .tiny{text-align:center;opacity:.8}
 .veil.panel{background:var(--bg);z-index:69}
 /* intake banner over Add food: the card itself rises into it as the header slides away */
-#ib{position:fixed;left:0;right:0;top:0;z-index:150;pointer-events:none;visibility:hidden}
+#ib{position:fixed;left:0;right:0;top:var(--ibt,0px);z-index:150;pointer-events:none;visibility:hidden}
 #ib.on{visibility:visible}
-#ib.slide{transition:transform .42s cubic-bezier(.4,0,.2,1)}
+#ib.slide{transition:clip-path .42s cubic-bezier(.4,0,.2,1)}
 .ibskin{position:absolute;top:0;left:0;width:100%;height:100%;box-sizing:border-box;overflow:hidden;background-color:var(--bg);
   border:1px solid transparent;border-radius:0}
 #ib::after{content:'';position:absolute;left:22px;right:22px;bottom:0;height:1px;background:var(--line);opacity:0;transition:opacity .3s ease}
@@ -164,7 +164,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 #ib.anim .ibold{transition:opacity .3s ease .15s}
 #ib.anim.set .ibold{transition:opacity .2s ease}
 /* the card's layout, tighter: calories and their bar, then the three macros stacked */
-.ibrow{position:relative;padding:calc(env(safe-area-inset-top) + 6px) 22px 11px;font-family:var(--serif);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ibrow{position:relative;padding:8px 22px 11px;font-family:var(--serif);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ibf{display:inline-block;transform-origin:0 0}
 #ib.anim .ibf{transition:transform .45s cubic-bezier(.4,0,.2,1)}
 .ibkl{display:flex;align-items:baseline;gap:6px;height:15px;line-height:15px}
@@ -198,14 +198,12 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .ibmn i:first-of-type{text-align:center}
 .ibmn i:last-child{text-align:left;padding-left:3px}
 .sheet.full{transition:padding-top .42s cubic-bezier(.4,0,.2,1),gap .42s cubic-bezier(.4,0,.2,1)}
-.sheet.fit.full>h3{transition:padding-bottom .42s cubic-bezier(.4,0,.2,1)}
-body.ibon .sheet.full,body.ibon .sheet.fit.full{padding-top:calc(var(--ibh,0px) + 7px);gap:8px}
-body.ibon .sheet.fit.full.scroll{gap:0}
-body.ibon .sheet.fit.full>h3{padding-bottom:8px}
+.sheet.fit.full>h3{transition:padding-bottom .42s cubic-bezier(.4,0,.2,1),margin-bottom .42s cubic-bezier(.4,0,.2,1)}
+html body.ibon .sheet.full>h3{margin-bottom:var(--ibh,0px)}      /* room under the heading for the banner */
 body.ibfly #intake{visibility:hidden}
 header{transition:transform .45s cubic-bezier(.4,0,.2,1)}
 body.ibhd header{transform:translateY(-100%)}
-body.ibhz header{z-index:72}
+body.ibhz header{z-index:70}                          /* over the dashboard's veil, under the screen coming in */
 .sheet.ibin::before{display:none}
 @media (prefers-reduced-motion: no-preference){
   html .sheet.sheet.ibin:not(.out){animation:ibin .4s .1s cubic-bezier(.4,0,.2,1) both}
@@ -897,7 +895,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.78';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.79';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1097,7 +1095,7 @@ function shares(g){ g=g||P().goal;
 const KBAND=0.05;                      // calories count as on target within 5% either side
 /* The calories' colour, the same on the card and the banner: green once on target, orange from
    50 kcal over. The macros never change colour. */
-const kState=(v,g)=>v>=g+50?'over':v>=g*(1-KBAND)?'hit':'';
+const kState=(v,g)=>v>=g+50?'over':v>=g?'hit':'';
 function status(t,g){
   return {kHit:t.k>=g.k*(1-KBAND) && t.k<=g.k*(1+KBAND), pHit:g.p>0 && t.p>=g.p, over:t.k>g.k*(1+KBAND)};
 }
@@ -2025,27 +2023,34 @@ function ibAt(el,src,text){
 }
 /* The skin takes the card's outline and look; the copy of the card inside it carries the labels. */
 function ibCard(b,card){
-  const sk=b.querySelector('.ibskin'), r=card.getBoundingClientRect(), cs=getComputedStyle(card);
+  const sk=b.querySelector('.ibskin'), r0=card.getBoundingClientRect(), o=b.getBoundingClientRect(), cs=getComputedStyle(card);
+  const r={top:r0.top-o.top, left:r0.left-o.left, width:r0.width, height:r0.height};      // in the banner's own frame
   sk.innerHTML='<div class="card intake ibold" style="width:'+r.width+'px">'+card.innerHTML.replace(/ id="[^"]*"/g,'')+'</div>';
   Object.assign(sk.style,{top:r.top+'px', left:r.left+'px', width:r.width+'px', height:r.height+'px', borderRadius:cs.borderTopLeftRadius,
     backgroundColor:cs.backgroundColor, borderColor:cs.borderTopStyle!=='none' && parseFloat(cs.borderTopWidth)>0?cs.borderTopColor:'transparent'});   // a card without a border reports its text colour
 }
+/* Under the heading: every screen's heading is the same box at the same place. */
+function ibPlace(){
+  const t=topSheet(), h=t && t.querySelector(':scope>h3');
+  if(h) document.documentElement.style.setProperty('--ibt',(h.offsetTop+h.offsetHeight+t.clientTop)+'px');
+}
+const IBHID='inset(0 0 100% 0)';                         // rolled up into the heading
 function ibRest(b){
-  b.classList.remove('anim','slide'); b.style.transform='';
+  b.classList.remove('anim','slide'); b.style.transform=''; b.style.clipPath='';
   const sk=b.querySelector('.ibskin'); sk.removeAttribute('style'); sk.innerHTML='';
   b.querySelectorAll('.ibf').forEach(x=>x.style.transform='');
 }
 function ibShow(fromCard){
   const b=ibEl(), tok=++IB.tok, card=$('intake'), B=document.body;
   IB.busy=false; ibRest(b); b.classList.add('set','snap'); ibFill(); void b.offsetWidth; b.classList.remove('snap');   // bars start where they are, not where they were
-  b.classList.add('on');
+  ibPlace(); b.classList.add('on');
   document.documentElement.style.setProperty('--ibh',b.offsetHeight+'px');
   B.classList.add('ibon');
   if(calm() || !fromCard || !card){
     B.classList.add('ibfly','ibhd');
     if(calm()) return;
-    b.style.transform='translateY(-100%)'; void b.offsetWidth;
-    b.classList.add('slide'); b.style.transform='';
+    b.style.clipPath=IBHID; void b.offsetWidth;
+    b.classList.add('slide'); b.style.clipPath='';
     setTimeout(()=>{ if(tok===IB.tok) b.classList.remove('slide'); },440);
     return;
   }
@@ -2069,7 +2074,7 @@ function ibHide(toCard){
     /* A screen that has just opened is first drawn below the banner, then rises with it as it
        slides away, on the same curve, so the banner never covers it. */
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ if(tok!==IB.tok) return;
-      B.classList.remove('ibon'); ibRest(b); void b.offsetWidth; b.classList.add('slide'); b.style.transform='translateY(-100%)';
+      B.classList.remove('ibon'); ibRest(b); void b.offsetWidth; b.classList.add('slide'); b.style.clipPath=IBHID;
       setTimeout(done,440); }));
     return;
   }
@@ -2097,7 +2102,7 @@ function ibSync(){
   if(want && !IB.on) IB.base=sheets.filter(x=>!x.contains(ad));
   if(want!==IB.on){ IB.on=want; want?ibShow(!had):ibHide(!IB.had); }
   else if(!want && !IB.had && !IB.busy) document.body.classList.remove('ibfly','ibhd');   // closed from a screen without the banner
-  if(IB.on){ ibFill(); $('ib').classList.toggle('dim',!(top && (top._pv || live && top.contains(ad)))); }
+  if(IB.on){ ibPlace(); ibFill(); $('ib').classList.toggle('dim',!(top && (top._pv || live && top.contains(ad)))); }
 }
 
 /* Collapse or open a section by animating its contents between their height and none. */
