@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.45">
+<meta name="app-version" content="2026.09.26.50">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -408,6 +408,12 @@ body.planning .harr{visibility:hidden;pointer-events:none}
 .shx.back{font-size:26px;line-height:40px}
 .qh .shx{top:50%;height:32px;margin-top:-16px;line-height:30px}
 .sheet>h3.qh{margin-bottom:12px}
+#main>.fillrow{margin:0 0 6px;max-height:40px;overflow:hidden;opacity:1; transition:max-height .35s ease,opacity .25s ease,margin .35s ease,border-width .35s ease}
+#main>.fillrow.gone{max-height:0;opacity:0;margin-bottom:0;border-width:0;pointer-events:none}
+.fillrow b{font-size:19px}
+.cal.multi button.picked{background:var(--bronze);color:var(--on);border-color:var(--bronze)}
+.cal.multi button.past{opacity:.3}
+html .cal.multi button.now:not(.picked){background:none;color:var(--champ);box-shadow:none;border:1px solid var(--bronze)}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
 .whobtn svg{width:27px;height:27px;stroke-width:1.1}
 .crton{position:fixed;inset:0;z-index:300;pointer-events:none}
@@ -724,7 +730,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.45';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.50';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -748,7 +754,7 @@ const cleanLabel=n=>String(n||'').replace(/\s+/g,' ').trim().slice(0,80);
 
 function blankProfile(){
   return {goal:Object.assign({},DEF_GOAL), meals:DEF_MEALS.map(m=>Object.assign({},m)),
-          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, plan:blankPlan(), plans:[], gt:{}, at:0, ge:0, me:0, pe:0, pid:''};
+          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, plan:blankPlan(), plans:[], gt:{}, gw:{p:[], t:0}, at:0, ge:0, me:0, pe:0, pid:''};
 }
 function cleanX(x){
   const o={};
@@ -791,7 +797,7 @@ function cleanGoal(g){
 }
 /* The week plan: a day of eating laid out like the dashboard, made up to 'portions' times (10 by
    default: 5 each), with its groceries' ticks. n and sid: the saved plan it was loaded as. */
-const blankPlan=()=>({n:'', sid:'', portions:10, items:[], with:[]});   // with: profiles (by pid) whose groceries combine with these
+const blankPlan=()=>({n:'', sid:'', portions:10, items:[]});
 function cleanPlan(x,combos){
   x=x&&typeof x==='object'?x:{};
   const o=blankPlan();
@@ -804,7 +810,6 @@ function cleanPlan(x,combos){
       o.portions=orD(num(Math.round(r.n),1,200),o.portions); });
     o.items=o.items.filter(Boolean);
   }
-  o.with=(Array.isArray(x.with)?x.with:[]).map(s=>String(s||'').slice(0,24)).filter(Boolean).slice(0,6);
   return o;
 }
 /* A saved plan, kept to reuse: merged like saved meals, the later edit wins. */
@@ -842,15 +847,26 @@ function cleanProfile(p){
      item, so ticking on one phone never overwrites a plan being changed on another. */
   const old=Date.now()-120*864e5;
   Object.keys(p.gt||{}).forEach(k=>{ const v=p.gt[k], t=Array.isArray(v)&&num(v[1],1,1e13); if(k.length<=160 && t && t>old) o.gt[k]=[v[0]?1:0,t]; });
+  /* Whose groceries combine with this profile's: their pids, and when that last changed. Kept apart
+     from the plan (like the ticks) so linking two people never overwrites either one's plan. */
+  const gw=p.gw && Array.isArray(p.gw.p)?p.gw:{p:(p.plan && Array.isArray(p.plan.with))?p.plan.with:[], t:1};   // earlier builds kept it in the plan
+  o.gw={p:gw.p.map(s=>String(s||'').slice(0,24)).filter(Boolean).slice(0,6), t:orD(num(gw.t,0,1e13),0)};
   if(!p.gt && p.plan && p.plan.tick) Object.keys(p.plan.tick).forEach(k=>{ if(k.length<=160 && p.plan.tick[k]) o.gt[k]=[1,Date.now()]; });   // from the earlier planner
   o.pid=String(p.pid||'').slice(0,24);
   return o;
+}
+/* The last time planned food was put into the diary, kept on this phone so it can be undone:
+   which profile, when, and the entries it added on each day. Up to 7 days. */
+function cleanFill(f){
+  if(!f || typeof f!=='object' || !(num(f.t,1,1e13)>Date.now()-7*864e5)) return null;
+  const days={}; Object.keys(f.days||{}).forEach(d=>{ if(DATE_RE.test(d) && Array.isArray(f.days[d])) days[d]=f.days[d].map(String).slice(0,200); });
+  return Object.keys(days).length?{who:String(f.who||''), t:f.t, days}:null;
 }
 function cleanDB(d){
   d=d&&typeof d==='object'?d:{};
   const obj=v=>v&&typeof v==='object'?v:{};
   const out={profiles:{}, cur:String(d.cur||''), gh:obj(d.gh), fold:obj(d.fold), sfx:d.sfx!==false, idx:cleanIdx(d.idx),
-    theme:['crt','light','dark','auto'].includes(d.theme)?d.theme:'crt'};
+    theme:['crt','light','dark','auto'].includes(d.theme)?d.theme:'crt', fill:cleanFill(d.fill)};
   Object.keys(d.profiles||{}).forEach(n=>{ const nm=cleanName(n); if(nm) out.profiles[nm]=cleanProfile(d.profiles[n]); });
   if(!Object.keys(out.profiles).length) out.profiles.Me=blankProfile();
   Object.values(out.profiles).forEach(p=>{ if(!p.pid) p.pid=uid(); });     // a profile's identity, whatever it is called
@@ -960,6 +976,7 @@ function mergeProfile(a,b){
   o.meals=by('me').meals.map(m=>Object.assign({},m));
   o.plan=cleanPlan(by('pe').plan);                    // the plan on screen follows whichever phone changed it last
   o.ge=Math.max(a.ge,b.ge); o.me=Math.max(a.me,b.me); o.pe=Math.max(a.pe,b.pe);
+  o.gw=(b.gw.t>a.gw.t?b:a).gw;                          // who's combined: the later change
   Object.keys(Object.assign({},a.gt,b.gt)).forEach(k=>{ const x=a.gt[k], y=b.gt[k]; o.gt[k]=!x?y:!y?x:(y[1]>x[1]?y:x); });   // each tick: the later change
   o.pid=a.pid&&b.pid?(a.pid<b.pid?a.pid:b.pid):a.pid||b.pid;         // copies of one profile settle on one identity
   const cut=Date.now()-120*864e5;
@@ -1596,7 +1613,7 @@ function render(){
       '<span class="rl">'+(rem<0?'OVER':'REMAINING')+'</span></span></div>'+
       segs(t.k,T.k,24,s.over)+
       '<div class="macros">'+mac('PROTEIN',t.p,T.p,s.pHit,false)+mac('CARBS',t.c,T.c,false,t.c>T.c*1.1)+mac('FAT',t.f,T.f,false,t.f>T.f*1.1)+'</div></div>'+
-      (PLAN?planCard():weightCard());
+      (PLAN?planCard():weightCard())+fillRow();
   const all=entries(), src={};
   P().meals.forEach(m=>{
     const es=all.filter(e=>mealOf(e)===m.id), shut=!!DB.fold[m.id];
@@ -1625,6 +1642,7 @@ function render(){
   v.innerHTML=h;
   $('intake').onclick=openBreakdown;
   if(PLAN) bindPlanCard(); else $('wcard').onclick=openWeight;
+  bindFillRow();
   v.querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.fold, shut=!DB.fold[id];
     if(shut) DB.fold[id]=true; else delete DB.fold[id];
@@ -1640,7 +1658,7 @@ function render(){
     v.querySelectorAll('[data-msel]').forEach(b=>b.onclick=()=>pickEntries(all.filter(e=>mealOf(e)===b.dataset.msel).map(e=>e.id)));
     paintSel();
   } else {
-    v.querySelectorAll('.logrow').forEach(b=>b.onclick=()=>openAdd(b.dataset.meal));
+    v.querySelectorAll('.logrow[data-meal]').forEach(b=>b.onclick=()=>openAdd(b.dataset.meal));
     v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>{ const ids=idsOf(b), e=all.find(x=>x.id===ids[0]); if(!e) return;
       ids.length>1 || e.g ? openGroup(e.g) : openQty(e,{entry:e}); });
     v.querySelectorAll('.swipe').forEach(el=>bindSwipe(el,1,0.45,()=>copyMeal(el.dataset.meal,src[el.dataset.meal])));
@@ -1804,7 +1822,7 @@ function openMealEdit(c,name,o){
    plan card saves it under a name, loads a saved one, or clears it; the groceries card adds up
    what to buy. Plans belong to each profile, and a saved plan can be shared with another. */
 function togglePlan(){
-  PLAN=!PLAN; dropSelect(); closeSheet(); document.body.scrollTop=0;
+  PLAN=!PLAN; FILLROW.was=null; dropSelect(); closeSheet(); document.body.scrollTop=0;
   $('plan').classList.toggle('on',PLAN);
   sfx(PLAN?'open':'close'); render(); panelHit($('main'),$('hdrT'),$('hdrS'));
 }
@@ -1819,7 +1837,19 @@ function planCard(){
 /* The groceries: every food in the plan, times the portions, added up by name, as a weight
    where the serving has one and a count where it doesn't. Combined with other profiles, their
    current plans (each at their own portions) are added in, and each item keeps who needs what. */
-const withNames=()=>(P().plan.with||[]).map(pid=>Object.keys(DB.profiles).find(n=>n!==DB.cur && DB.profiles[n].pid===pid)).filter(Boolean);
+const withNames=()=>(P().gw.p||[]).map(pid=>Object.keys(DB.profiles).find(n=>n!==DB.cur && DB.profiles[n].pid===pid)).filter(Boolean);
+/* Combining is mutual: everyone in the group lists everyone else, so each planner shows the
+   same combined groceries. Each changed profile syncs. */
+function setGroup(pids){
+  const now=Date.now();
+  Object.keys(DB.profiles).forEach(n=>{ const p=DB.profiles[n]; if(!p.pid) p.pid=uid();
+    const inIt=pids.includes(p.pid), next=inIt?pids.filter(x=>x!==p.pid):[], was=p.gw.p;
+    if(!inIt && !was.some(x=>pids.includes(x)) && !pids.some(x=>was.includes(x))) return;   // not part of this group, before or after
+    if(JSON.stringify(next.slice().sort())===JSON.stringify(was.slice().sort())) return;
+    p.gw={p:next, t:now}; p.at=now;
+    if(n!==DB.cur && ghOn()) ghSync(n); });
+  touch();
+}
 function groceries(){
   const out={}, people=[DB.cur,...withNames()];
   people.forEach(who=>{ const pl=DB.profiles[who].plan;
@@ -1855,29 +1885,91 @@ function bindPlanCard(){
   N.oninput=()=>{ const n=Math.round(+N.value); if(n>=1 && n<=200 && n!==pl.portions){ pl.portions=n; touch(); repaintPlan(); } };
   $('plSave').onclick=savePlan;
   $('plLoad').onclick=()=>openPlans();
-  arm($('plClr'),()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions, with:pl.with}); touch(); render(); warp($('main')); toast('PLAN CLEARED'); });
+  arm($('plClr'),()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions}); touch(); render(); warp($('main')); toast('PLAN CLEARED'); });
   document.querySelectorAll('#plG .gi').forEach(x=>x.onclick=()=>{ const k=x.dataset.k, on=!ticked(k); setTicks([k],on?1:0); x.classList.toggle('on',on); sfx('tap'); });
   if($('plTick')) $('plTick').onclick=()=>{ setTicks(groceries().map(it=>it.key).filter(ticked),0);
     document.querySelectorAll('#plG .gi.on').forEach(x=>x.classList.remove('on')); toast('TICKS CLEARED'); };
   $('plWith').onclick=pickCombine;
 }
+/* ---------- putting planned food into the diary ----------
+   The dashboard offers LOAD PLANNED DAY while a day has nothing logged; the planner offers ADD
+   PLAN TO DIARY DAYS for several upcoming days at once. Either can be undone from the same place,
+   which takes out exactly what it added. The row folds in and out rather than jumping. */
+const FILLROW={was:null};
+function fillMine(){ const f=DB.fill; return f && f.who===DB.cur?f:null; }
+function fillRow(){
+  const f=fillMine(), pl=P().plan, days=f?Object.keys(f.days):[];
+  let kind='', html='';
+  if(PLAN){
+    if(f) kind='undo', html='<span>UNDO \u00b7 ADDED TO '+days.length+' DAY'+(days.length===1?'':'S')+'</span><b>\u21b6</b>';
+    else if(pl.items.length) kind='fill', html='<span>ADD PLAN TO DIARY DAYS</span><b>+</b>';
+  } else if(!SEL){
+    if(f && f.days[DAY] && entries().some(e=>f.days[DAY].includes(e.id))) kind='undo', html='<span>UNDO PLANNED DAY</span><b>\u21b6</b>';
+    else if(!entries().length && (pl.items.length || P().plans.length)) kind='load', html='<span>LOAD PLANNED DAY</span><b>+</b>';
+  }
+  const was=FILLROW.was; FILLROW.was=kind;
+  const start=was===null?!kind:(!was);                    // drawn as it was, then eased to how it is
+  return '<button class="logrow fillrow'+(start?' gone':'')+'" id="fillRow" data-k="'+kind+'"'+(kind?'':' tabindex="-1" aria-hidden="true"')+'>'+(html||'<span></span>')+'</button>';
+}
+function bindFillRow(){
+  const r=$('fillRow'); if(!r) return;
+  const kind=r.dataset.k;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>r.classList.toggle('gone',!kind)));
+  r.onclick=kind==='load'?pickDayPlan:kind==='fill'?pickFillDays:kind==='undo'?undoFill:null;
+}
+/* Copy plan foods into days; answers the new entries on each day. */
+function fillInto(dates,es){
+  const days={};
+  dates.forEach(d=>{ const had=new Set(entries(d).map(e=>e.id)); cloneTo(d,es,null,P()); days[d]=entries(d).filter(e=>!had.has(e.id)).map(e=>e.id); });
+  DB.fill={who:DB.cur, t:Date.now(), days};
+  touch();
+  return days;
+}
+function undoFill(){
+  const f=fillMine(); if(!f) return;
+  const now=Date.now(); let n=0;
+  Object.keys(f.days).forEach(d=>{ const ids=f.days[d], es=P().days[d]||[], keep=es.filter(e=>!ids.includes(e.id)); n+=es.length-keep.length;
+    ids.forEach(id=>P().del[id]=now); if(keep.length) P().days[d]=keep; else delete P().days[d]; });
+  DB.fill=null; touch(); render(); sfx('close'); toast('UNDONE \u00b7 '+items(n)+' REMOVED');
+}
+/* The dashboard: fill the empty day from the Week Planner, or from a saved plan. */
+function pickDayPlan(){
+  const cur=P().plan, ps=P().plans;
+  const load=(es,name)=>{ if(!es.length){ sfx('nope'); return toast('THAT PLAN HAS NO FOOD'); }
+    const days=fillInto([DAY],es); FRESH=new Set(days[DAY]); closeSheet(); render(); sfx('confirm'); toast('LOADED \u00b7 '+name.toUpperCase()); };
+  if(!ps.length) return load(cur.items,cur.n||'Week Planner');
+  const rows=(cur.items.length?[{n:'Week Planner'+(cur.n?' \u00b7 '+cur.n:''), items:cur.items}]:[]).concat(ps);
+  const mac=x=>{ const t=x.items.reduce((s,e)=>{ s.p+=e.p*e.q; s.c+=e.c*e.q; s.f+=e.f*e.q; return s; },{p:0,c:0,f:0}); return 'P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f); };
+  setSheet(panel('Load planned day','<div class="rlist" id="ldList">'+rows.map((x,i)=>listRow(i,x.n,mac(x),x.items.reduce((s,e)=>s+e.k*e.q,0),false)).join('')+'</div>'));
+  bindPanel();
+  bindRows($('ldList'),i=>load(rows[i].items,rows[i].n.replace(/^Week Planner \u00b7 /,'')),null);
+}
+/* The planner: choose upcoming days on the calendar, and the plan goes into each of them. */
+function pickFillDays(){
+  openCalendar(ds=>{ const pl=P().plan, days=fillInto(ds,pl.items);
+      closeSheet(); render(); sfx('confirm'); toast('ADDED TO '+ds.length+' DAY'+(ds.length===1?'':'S')); },
+    'ADD '+(P().plan.n||'THE PLAN').toUpperCase()+' TO\u2026',false,true);
+}
 /* A change to the portions redraws the groceries and banner, not the box being typed in. */
 /* Choose whose current plans the groceries list combines with. */
 function pickCombine(){
-  const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur).sort((x,y)=>x.localeCompare(y)), pl=P().plan;
+  const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur).sort((x,y)=>x.localeCompare(y));
   if(!others.length){ sfx('nope'); return toast('NO OTHER PROFILE TO COMBINE WITH'); }
   setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Combine groceries<button class="shx back" id="pcX" aria-label="Close">\u00d7</button></h3>'+
-    '<div class="pgnote">Add the plans on their Week Planner to your groceries list, each at their own portions. Ticks are shared.</div><div class="rlist">'+
+    '<div class="pgnote">Add the plans on their Week Planner to your groceries list, each at their own portions. You\u2019ll both see the same list, and ticks are shared.</div><div class="rlist">'+
     others.map((n,i)=>{ const p=DB.profiles[n], k=p.plan.items.length;
-      return '<button class="gi pc'+(pl.with.includes(p.pid)?' on':'')+'" data-i="'+i+'"><span class="chk"></span><span class="gn">'+esc(n)+
+      return '<button class="gi pc'+(P().gw.p.includes(p.pid)?' on':'')+'" data-i="'+i+'"><span class="chk"></span><span class="gn">'+esc(n)+
         '<small class="gb">'+(k?items(k).toLowerCase()+' \u00b7 '+p.plan.portions+' portions'+(p.plan.n?' \u00b7 '+esc(p.plan.n):''):'nothing planned yet')+'</small></span></button>'; }).join('')+
     '</div><button class="btn" id="pcOk">[ DONE ]</button></div>',true);
   const done=()=>{ popSheet(); render(); };
   lastVeil().onclick=done; $('pcX').onclick=done; $('pcOk').onclick=done;
-  topSheet().querySelectorAll('.pc').forEach(x=>x.onclick=()=>{ const p=DB.profiles[others[x.dataset.i]];
-    if(!p.pid) p.pid=uid();
-    pl.with=pl.with.includes(p.pid)?pl.with.filter(q=>q!==p.pid):pl.with.concat(p.pid);
-    x.classList.toggle('on',pl.with.includes(p.pid)); sfx('tap'); touch(); });
+  topSheet().querySelectorAll('.pc').forEach(x=>x.onclick=()=>{ const p=DB.profiles[others[x.dataset.i]], me=P();
+    if(!p.pid) p.pid=uid(); if(!me.pid) me.pid=uid();
+    const group=[me.pid,...me.gw.p];
+    if(group.includes(p.pid)){                           // take them out: they're on their own; the rest stay together
+      setGroup(group.filter(q=>q!==p.pid)); p.gw={p:[], t:Date.now()}; p.at=p.gw.t; if(ghOn()) ghSync(others[x.dataset.i]);
+    } else setGroup([...new Set([...group, p.pid, ...p.gw.p])]);   // bring them in, with anyone they're already combined with
+    topSheet().querySelectorAll('.pc').forEach(y=>y.classList.toggle('on',P().gw.p.includes(DB.profiles[others[y.dataset.i]].pid))); sfx('tap'); });
 }
 function repaintPlan(){
   const g=$('groc'); if(g){ const d=document.createElement('div'); d.innerHTML=groceriesCard(); g.replaceWith(d.firstChild); }
@@ -2120,7 +2212,7 @@ function tune(el,on){
 }
 /* Arrows and Return to Today warp the day; a pick from the calendar brings the full static. */
 function goDay(d,wash){
-  DAY=d; FOLLOW=d===today(); DB.fold={};             // a new day starts with every section open
+  DAY=d; FOLLOW=d===today(); DB.fold={}; FILLROW.was=null;             // a new day starts with every section open
   dropSelect(); closeSheet(); render();
   (wash?panelHit:warp)($('main'),$('rtt'),$('dCal'));
 }
@@ -2273,21 +2365,23 @@ function paintBreakdown(){
 const CAL={y:0,m:0,pick:null,who:''};
 /* The day picker: jumps to a day by default, or hands the chosen day to pick. With who,
    it also offers the other profiles, and shows the chosen profile's logged days. */
-function openCalendar(pick,note,who){
+function openCalendar(pick,note,who,multi){
   sfx('open');
-  CAL.pick=pick||(d=>goDay(d,true)); CAL.who=DB.cur;
-  const d=dObj(DAY); CAL.y=d.getFullYear(); CAL.m=d.getMonth();
+  CAL.pick=pick||(d=>goDay(d,true)); CAL.who=DB.cur; CAL.multi=multi?new Set():null;
+  const d=dObj(multi?today():DAY); CAL.y=d.getFullYear(); CAL.m=d.getMonth();
   const names=Object.keys(DB.profiles).sort((a,b)=>a.localeCompare(b));
   setSheet('<div class="veil" id="veil"></div><div class="sheet">'+(note?'<div class="stat cnote">'+esc(note)+'</div>':'')+
     (who && names.length>1?picker('cWho',names.map(n=>[n,n.toUpperCase()]),DB.cur):'')+
     '<div class="calh"><button id="cPrev" aria-label="Previous month">\u2039</button><h3 id="cTitle"></h3>'+
-    '<button id="cNext" aria-label="Next month">\u203a</button></div><div class="cal" id="cGrid"></div>'+
-    (pick?'<div class="duo"><button class="btn ghost" id="cX">[ CANCEL ]</button><button class="btn" id="cToday">[ TODAY ]</button></div>'
+    '<button id="cNext" aria-label="Next month">\u203a</button></div><div class="cal'+(multi?' multi':'')+'" id="cGrid"></div>'+
+    (multi?'<div class="duo"><button class="btn ghost" id="cX">[ CANCEL ]</button><button class="btn" id="cGo" disabled>[ CHOOSE DAYS ]</button></div>'
+      :pick?'<div class="duo"><button class="btn ghost" id="cX">[ CANCEL ]</button><button class="btn" id="cToday">[ TODAY ]</button></div>'
          :'<button class="btn" id="cToday">[ TODAY ]</button>')+'</div>');
   $('veil').onclick=closeSheet;
   $('cPrev').onclick=()=>calMove(-1);
   $('cNext').onclick=()=>calMove(1);
-  $('cToday').onclick=()=>CAL.pick(today());
+  if($('cToday')) $('cToday').onclick=()=>CAL.pick(today());
+  if(multi) $('cGo').onclick=()=>{ if(CAL.multi.size) CAL.pick([...CAL.multi].sort()); };
   if(pick) $('cX').onclick=closeSheet;
   if($('cWho')) onPick('cWho',v=>{ CAL.who=v; paintCal(); });
   paintCal();
@@ -2299,10 +2393,14 @@ function paintCal(){
   let h='MTWTFSS'.split('').map(x=>'<span class="cw">'+x+'</span>').join('')+'<span></span>'.repeat(lead);
   for(let i=1;i<=n;i++){
     const d=ymd(new Date(CAL.y,CAL.m,i));
-    h+='<button data-d="'+d+'" class="'+(d===t?'now':d===DAY?'chosen':'')+(DB.profiles[CAL.who].days[d]?' has':'')+'">'+i+'</button>';
+    const m=CAL.multi, cls=m?(d===t?'now':'')+(m.has(d)?' picked':'')+(d<t?' past':''):(d===t?'now':d===DAY?'chosen':'');
+    h+='<button data-d="'+d+'" class="'+cls+(DB.profiles[CAL.who].days[d]?' has':'')+'"'+(m && d<t?' disabled':'')+'>'+i+'</button>';
   }
   $('cGrid').innerHTML=h;
-  $('cGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>CAL.pick(b.dataset.d));
+  $('cGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    if(!CAL.multi) return CAL.pick(b.dataset.d);
+    const d=b.dataset.d; CAL.multi.has(d)?CAL.multi.delete(d):CAL.multi.add(d); b.classList.toggle('picked'); sfx('tap');
+    const n=CAL.multi.size; $('cGo').disabled=!n; $('cGo').textContent=n?'[ ADD TO '+n+' DAY'+(n===1?'':'S')+' ]':'[ CHOOSE DAYS ]'; });
 }
 
 /* ---------- targets reached: each once a day; both together takes the screen ---------- */
@@ -3300,7 +3398,7 @@ function switchProfile(n,quick){
   ghFlush();
   const changed=n!==DB.cur;
   DB.cur=n; save();
-  ADD.q=''; ADD.results=[];                        // same day as before: switching compares like with like
+  ADD.q=''; ADD.results=[]; FILLROW.was=null;       // same day as before: switching compares like with like
   dropSelect(); closeSheet(); render(); document.body.scrollTop=0;
   if(changed){ sfx('start'); (quick?warp:panelHit)($('main'),$('hdrK'),$('bolt'),$('dCal')); }
   if(ghOn()) ghSync(n);
