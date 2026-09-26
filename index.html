@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.42">
+<meta name="app-version" content="2026.09.26.45">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -398,7 +398,11 @@ body.planning .harr{visibility:hidden;pointer-events:none}
 .plk{font-family:var(--serif);font-size:10px;letter-spacing:.14em;color:var(--dim)}
 .plancard .fld.pn{width:52px;height:32px}
 .plancard .btn{height:32px;margin:0;padding:0 4px;font-size:10px;letter-spacing:.1em;display:flex;align-items:center;justify-content:center}
-.groc #plTick{margin-top:12px}
+.groc .duo{margin-top:12px}
+.groc .duo .btn{padding:12px 4px;font-size:10.5px;letter-spacing:.08em;min-width:0}
+.gi .gn small.gb{display:block;margin-top:2px;font-family:var(--serif);font-size:10px;letter-spacing:.04em;color:var(--dimmer)}
+.gi.on .gn small.gb{text-decoration:line-through}
+.gi.pc{padding:10px 2px}
 .ri.shr{padding:6px 0}
 .shbtn{flex:none;width:auto;min-width:108px;margin:0;padding:8px 14px}
 .shx.back{font-size:26px;line-height:40px}
@@ -720,7 +724,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.42';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.45';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -744,7 +748,7 @@ const cleanLabel=n=>String(n||'').replace(/\s+/g,' ').trim().slice(0,80);
 
 function blankProfile(){
   return {goal:Object.assign({},DEF_GOAL), meals:DEF_MEALS.map(m=>Object.assign({},m)),
-          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, plan:blankPlan(), plans:[], at:0, ge:0, me:0, pe:0, pid:''};
+          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, plan:blankPlan(), plans:[], gt:{}, at:0, ge:0, me:0, pe:0, pid:''};
 }
 function cleanX(x){
   const o={};
@@ -787,7 +791,7 @@ function cleanGoal(g){
 }
 /* The week plan: a day of eating laid out like the dashboard, made up to 'portions' times (10 by
    default: 5 each), with its groceries' ticks. n and sid: the saved plan it was loaded as. */
-const blankPlan=()=>({n:'', sid:'', portions:10, items:[], tick:{}});
+const blankPlan=()=>({n:'', sid:'', portions:10, items:[], with:[]});   // with: profiles (by pid) whose groceries combine with these
 function cleanPlan(x,combos){
   x=x&&typeof x==='object'?x:{};
   const o=blankPlan();
@@ -800,7 +804,7 @@ function cleanPlan(x,combos){
       o.portions=orD(num(Math.round(r.n),1,200),o.portions); });
     o.items=o.items.filter(Boolean);
   }
-  Object.keys(x.tick||{}).forEach(k=>{ if(k.length<=160 && x.tick[k]) o.tick[k]=1; });
+  o.with=(Array.isArray(x.with)?x.with:[]).map(s=>String(s||'').slice(0,24)).filter(Boolean).slice(0,6);
   return o;
 }
 /* A saved plan, kept to reuse: merged like saved meals, the later edit wins. */
@@ -834,6 +838,11 @@ function cleanProfile(p){
   Object.keys(p.del||{}).sort().forEach(id=>{ const t=num(p.del[id],1,1e13); if(t) o.del[id]=t; });
   ['at','ge','me','pe'].forEach(k=>{ o[k]=orD(num(p[k],0,1e13),0); });
   o.plans=(Array.isArray(p.plans)?p.plans:[]).map(cleanSavedPlan).filter(Boolean).slice(0,60);
+  /* Grocery ticks: item key -> [ticked 1 or 0, when]. Kept apart from the plan and merged item by
+     item, so ticking on one phone never overwrites a plan being changed on another. */
+  const old=Date.now()-120*864e5;
+  Object.keys(p.gt||{}).forEach(k=>{ const v=p.gt[k], t=Array.isArray(v)&&num(v[1],1,1e13); if(k.length<=160 && t && t>old) o.gt[k]=[v[0]?1:0,t]; });
+  if(!p.gt && p.plan && p.plan.tick) Object.keys(p.plan.tick).forEach(k=>{ if(k.length<=160 && p.plan.tick[k]) o.gt[k]=[1,Date.now()]; });   // from the earlier planner
   o.pid=String(p.pid||'').slice(0,24);
   return o;
 }
@@ -951,6 +960,7 @@ function mergeProfile(a,b){
   o.meals=by('me').meals.map(m=>Object.assign({},m));
   o.plan=cleanPlan(by('pe').plan);                    // the plan on screen follows whichever phone changed it last
   o.ge=Math.max(a.ge,b.ge); o.me=Math.max(a.me,b.me); o.pe=Math.max(a.pe,b.pe);
+  Object.keys(Object.assign({},a.gt,b.gt)).forEach(k=>{ const x=a.gt[k], y=b.gt[k]; o.gt[k]=!x?y:!y?x:(y[1]>x[1]?y:x); });   // each tick: the later change
   o.pid=a.pid&&b.pid?(a.pid<b.pid?a.pid:b.pid):a.pid||b.pid;         // copies of one profile settle on one identity
   const cut=Date.now()-120*864e5;
   [a.del,b.del].forEach(d=>Object.keys(d).forEach(id=>{ if(d[id]>cut) o.del[id]=Math.max(o.del[id]||0,d[id]); }));
@@ -1727,12 +1737,15 @@ function openGroup(g){
     const t=es.reduce((a,e)=>{ a.k+=e.k*e.q; a.p+=e.p*e.q; a.c+=e.c*e.q; a.f+=e.f*e.q; return a; },{k:0,p:0,c:0,f:0}), m=P().meals.find(x=>x.id===mealOf(es[0]));
     box.innerHTML='<h3 class="qt"><span>'+esc(es[0].gn)+'</span><button class="shx'+(stack?' back':'')+'" aria-label="Close">'+(stack?'\u00d7':'\u00d7')+'</button></h3>'+
       '<div class="qper">'+items(es.length)+' \u00b7 '+esc((m?m.n:'').toUpperCase())+'</div>'+
-      '<div class="qact"><div class="duo"><button class="btn" id="gAdd">[ ADD ITEM ]</button><button class="btn ghost" id="gSplit">[ UNCOMBINE ]</button></div></div>'+
+      '<div class="qact"><div class="trio"><button class="btn" id="gAdd">[ ADD ITEM ]</button><button class="btn ghost" id="gName">[ RENAME ]</button><button class="btn ghost" id="gSplit">[ UNCOMBINE ]</button></div></div>'+
       '<div class="rlist qlab" id="gList">'+es.map((e,i)=>listRow(i,e.n,esc(qtyTxt(e))+' \u00b7 P'+r1(e.p*e.q)+' C'+r1(e.c*e.q)+' F'+r1(e.f*e.q),e.k*e.q,false)).join('')+
         '<div class="lrow lday"><span>Total</span><b>'+fmt(t.k)+' kcal</b><b>P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div></div>';
     box.querySelector('.shx').onclick=back;
     bindRows($('gList'),i=>openQty(es[i],{entry:es[i]}),null,i=>{ dropEntries([es[i].id]); render(); draw(); toast('REMOVED'); });
     $('gAdd').onclick=()=>openAdd(mealOf(es[0]),{g, gn:es[0].gn},null,null,true);   // over this screen, and back to it
+    $('gName').onclick=()=>promptSheet('Rename',es[0].gn,n=>{      // every food in it takes the new name, so it syncs
+      const now=Date.now(); list().forEach(e=>Object.assign(e,{gn:n, e:now})); touch(); render(); popSheet(); draw(); warp(box.querySelector('h3')); sfx('confirm'); toast('RENAMED \u00b7 '+n.toUpperCase());
+    },true);
     $('gSplit').onclick=()=>{ const now=Date.now(); es.forEach(e=>{ delete e.g; delete e.gn; e.e=now; }); touch(); closeSheet();
       setTimeout(()=>renderMorph(mealOf(es[0])),220); toast('UNCOMBINED'); };
   };
@@ -1803,32 +1816,69 @@ function planCard(){
 }
 /* The groceries: every food in the plan, times the portions, added up by name, as a weight
    where the serving has one and a count where it doesn't. */
+/* The groceries: every food in the plan, times the portions, added up by name, as a weight
+   where the serving has one and a count where it doesn't. Combined with other profiles, their
+   current plans (each at their own portions) are added in, and each item keeps who needs what. */
+const withNames=()=>(P().plan.with||[]).map(pid=>Object.keys(DB.profiles).find(n=>n!==DB.cur && DB.profiles[n].pid===pid)).filter(Boolean);
 function groceries(){
-  const pl=P().plan, out={};
-  pl.items.forEach(e=>{ const g=gramsOf(e.sv), unit=g?g.u:e.sv, key=(e.n.trim().toLowerCase()+'|'+unit.toLowerCase()).slice(0,160);
-    const it=out[key]=out[key]||{key, n:e.n, unit, v:0, w:!!g};
-    it.v+=(g?e.q*g.n:e.q)*pl.portions; });
+  const out={}, people=[DB.cur,...withNames()];
+  people.forEach(who=>{ const pl=DB.profiles[who].plan;
+    pl.items.forEach(e=>{ const g=gramsOf(e.sv), unit=g?g.u:e.sv, key=(e.n.trim().toLowerCase()+'|'+unit.toLowerCase()).slice(0,160);
+      const it=out[key]=out[key]||{key, n:e.n, unit, v:0, w:!!g, by:{}}, v=(g?e.q*g.n:e.q)*pl.portions;
+      it.v+=v; it.by[who]=(it.by[who]||0)+v; }); });
   return Object.values(out).sort((x,y)=>x.n.localeCompare(y.n));
 }
-const qtyOf=it=>!it.w?r1(it.v)+' \u00d7 '+it.unit
-  :it.v>=1000?Math.round(it.v/10)/100+' '+(it.unit==='ml'?'L':'kg'):Math.round(it.v)+' '+it.unit;
+const qtyOf=(it,v)=>{ v=v===undefined?it.v:v; return !it.w?r1(v)+' \u00d7 '+it.unit
+  :v>=1000?Math.round(v/10)/100+' '+(it.unit==='ml'?'L':'kg'):Math.round(v)+' '+it.unit; };
+/* Ticks are shared by everyone the list is combined with: ticking writes to each of them. */
+const ticked=k=>!!(P().gt[k] && P().gt[k][0]);
+function setTicks(keys,v){
+  if(!keys.length) return;
+  const now=Date.now();
+  [DB.cur,...withNames()].forEach(who=>{ const p=DB.profiles[who]; keys.forEach(k=>p.gt[k]=[v,now]); p.at=now;
+    if(who!==DB.cur && ghOn()) ghSync(who); });
+  touch();
+}
 function groceriesCard(){
-  const g=groceries(), tick=P().plan.tick;
-  return '<div class="card pgcard groc" id="groc"><div class="pghead"><h4 class="pgh">GROCERIES \u00b7 '+g.length+' ITEM'+(g.length===1?'':'S')+'</h4></div><div id="plG">'+
-    (g.length?g.map(it=>'<button class="gi'+(tick[it.key]?' on':'')+'" data-k="'+esc(it.key)+'"><span class="chk"></span><span class="gn">'+esc(it.n)+'</span><b>'+esc(qtyOf(it))+'</b></button>').join('')
+  const g=groceries(), them=withNames(), both=them.length>0;
+  return '<div class="card pgcard groc" id="groc"><div class="pghead"><h4 class="pgh">GROCERIES \u00b7 '+g.length+' ITEM'+(g.length===1?'':'S')+
+      (both?' \u00b7 WITH '+esc(them.join(', ').toUpperCase()):'')+'</h4></div><div id="plG">'+
+    (g.length?g.map(it=>'<button class="gi'+(ticked(it.key)?' on':'')+'" data-k="'+esc(it.key)+'"><span class="chk"></span>'+
+        '<span class="gn">'+esc(it.n)+(both?'<small class="gb">'+Object.keys(it.by).map(w=>esc(w)+' '+esc(qtyOf(it,it.by[w]))).join(' \u00b7 ')+'</small>':'')+'</span>'+
+        '<b>'+esc(qtyOf(it))+'</b></button>').join('')
       :'<div class="stat">LOG FOOD INTO THE PLAN TO BUILD THE LIST</div>')+
-    '</div>'+(g.length?'<button class="btn ghost" id="plTick">[ CLEAR TICKS ]</button>':'')+'</div>';
+    '</div><div class="duo"><button class="btn ghost" id="plWith">[ COMBINE ]</button>'+
+      (g.length?'<button class="btn ghost" id="plTick">[ CLEAR TICKS ]</button>':'<span></span>')+'</div></div>';
 }
 function bindPlanCard(){
   const pl=P().plan, N=$('plN');
   N.oninput=()=>{ const n=Math.round(+N.value); if(n>=1 && n<=200 && n!==pl.portions){ pl.portions=n; touch(); repaintPlan(); } };
   $('plSave').onclick=savePlan;
   $('plLoad').onclick=()=>openPlans();
-  arm($('plClr'),()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions}); touch(); render(); warp($('main')); toast('PLAN CLEARED'); });
-  document.querySelectorAll('#plG .gi').forEach(x=>x.onclick=()=>{ const k=x.dataset.k; if(pl.tick[k]) delete pl.tick[k]; else pl.tick[k]=1; x.classList.toggle('on'); sfx('tap'); touch(); });
-  if($('plTick')) $('plTick').onclick=()=>{ pl.tick={}; touch(); document.querySelectorAll('#plG .gi.on').forEach(x=>x.classList.remove('on')); toast('TICKS CLEARED'); };
+  arm($('plClr'),()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions, with:pl.with}); touch(); render(); warp($('main')); toast('PLAN CLEARED'); });
+  document.querySelectorAll('#plG .gi').forEach(x=>x.onclick=()=>{ const k=x.dataset.k, on=!ticked(k); setTicks([k],on?1:0); x.classList.toggle('on',on); sfx('tap'); });
+  if($('plTick')) $('plTick').onclick=()=>{ setTicks(groceries().map(it=>it.key).filter(ticked),0);
+    document.querySelectorAll('#plG .gi.on').forEach(x=>x.classList.remove('on')); toast('TICKS CLEARED'); };
+  $('plWith').onclick=pickCombine;
 }
 /* A change to the portions redraws the groceries and banner, not the box being typed in. */
+/* Choose whose current plans the groceries list combines with. */
+function pickCombine(){
+  const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur).sort((x,y)=>x.localeCompare(y)), pl=P().plan;
+  if(!others.length){ sfx('nope'); return toast('NO OTHER PROFILE TO COMBINE WITH'); }
+  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Combine groceries<button class="shx back" id="pcX" aria-label="Close">\u00d7</button></h3>'+
+    '<div class="pgnote">Add the plans on their Week Planner to your groceries list, each at their own portions. Ticks are shared.</div><div class="rlist">'+
+    others.map((n,i)=>{ const p=DB.profiles[n], k=p.plan.items.length;
+      return '<button class="gi pc'+(pl.with.includes(p.pid)?' on':'')+'" data-i="'+i+'"><span class="chk"></span><span class="gn">'+esc(n)+
+        '<small class="gb">'+(k?items(k).toLowerCase()+' \u00b7 '+p.plan.portions+' portions'+(p.plan.n?' \u00b7 '+esc(p.plan.n):''):'nothing planned yet')+'</small></span></button>'; }).join('')+
+    '</div><button class="btn" id="pcOk">[ DONE ]</button></div>',true);
+  const done=()=>{ popSheet(); render(); };
+  lastVeil().onclick=done; $('pcX').onclick=done; $('pcOk').onclick=done;
+  topSheet().querySelectorAll('.pc').forEach(x=>x.onclick=()=>{ const p=DB.profiles[others[x.dataset.i]];
+    if(!p.pid) p.pid=uid();
+    pl.with=pl.with.includes(p.pid)?pl.with.filter(q=>q!==p.pid):pl.with.concat(p.pid);
+    x.classList.toggle('on',pl.with.includes(p.pid)); sfx('tap'); touch(); });
+}
 function repaintPlan(){
   const g=$('groc'); if(g){ const d=document.createElement('div'); d.innerHTML=groceriesCard(); g.replaceWith(d.firstChild); }
   bindPlanCard();
@@ -1880,7 +1930,8 @@ function openPlans(ed){
     if($('spShare')) $('spShare').onclick=()=>shareSheet({t:'plan',o:x},()=>openPlans());
     return;
   }
-  bindRows(L,i=>{ const x=ps[i]; Object.assign(P().plan,{n:x.n, sid:x.id, portions:x.portions, items:JSON.parse(JSON.stringify(x.items)), tick:{}});
+  bindRows(L,i=>{ const x=ps[i]; setTicks(groceries().map(it=>it.key).filter(ticked),0);
+    Object.assign(P().plan,{n:x.n, sid:x.id, portions:x.portions, items:JSON.parse(JSON.stringify(x.items))});
     touch(); closeSheet(); render(); warp($('main')); sfx('confirm'); toast('OPENED \u00b7 '+x.n.toUpperCase()); },null);
   L.querySelectorAll('.lw').forEach(w=>bindHold(w,()=>openPlans(ps[w.dataset.i].id)));
 }
@@ -3404,12 +3455,15 @@ async function liveTick(){
   if(document.querySelector('#sheetWrap .sheet:not(.out)') || SEL || document.querySelector('.fiw.held,.fiw.lifting')) return;
   LIVE.busy=true;
   try{
-    const name=DB.cur, tag=await ghPeek(name);
-    if(tag===null) return;
-    const before=new Set(entries().map(e=>e.id));
-    if(await ghSync(name)!=='ok') return;
-    if(tag) LIVE.etag[name]=tag;
-    if(name===DB.cur){ const came=entries().filter(e=>!before.has(e.id)).map(e=>e.id); if(came.length){ FRESH=new Set(came); render(); } }
+    for(const name of [DB.cur,...(PLAN?withNames():[])]){         // planning combined: their plans count too
+      const tag=await ghPeek(name);
+      if(tag===null) continue;
+      const before=new Set(entries().map(e=>e.id));
+      if(await ghSync(name)!=='ok') continue;
+      if(tag) LIVE.etag[name]=tag;
+      if(name===DB.cur){ const came=entries().filter(e=>!before.has(e.id)).map(e=>e.id); if(came.length) FRESH=new Set(came); }
+      render();
+    }
   } finally { LIVE.busy=false; }
 }
 document.addEventListener('visibilitychange',()=>{
