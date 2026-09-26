@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.29">
+<meta name="app-version" content="2026.09.26.37">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -394,10 +394,10 @@ html[data-theme=light] .fld.sysel,html[data-theme=dark] .fld.sysel{background-im
 .gi.on .gn,.gi.on b{color:var(--dimmer);text-decoration:line-through}
 body.planning .harr{visibility:hidden;pointer-events:none}
 .planbtn.on{color:var(--bronze)}
-.plancard h3{margin-bottom:8px}
-.plrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+#main .plancard{display:grid;grid-template-columns:auto 52px repeat(3,minmax(0,1fr));align-items:center;gap:8px;padding:8px 10px 8px 12px}
 .plk{font-family:var(--serif);font-size:10px;letter-spacing:.14em;color:var(--dim)}
-.plancard .trio,.groc #plTick{margin-top:0}
+.plancard .fld.pn{width:52px;height:32px}
+.plancard .btn{height:32px;margin:0;padding:0 4px;font-size:10px;letter-spacing:.1em;display:flex;align-items:center;justify-content:center}
 .groc #plTick{margin-top:12px}
 .ri.shr{padding:6px 0}
 .shbtn{flex:none;width:auto;margin:0;padding:8px 14px}
@@ -720,7 +720,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.29';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.37';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1525,7 +1525,7 @@ function arm(btn,fn){
   btn.disarm=()=>{ clearTimeout(btn.at); btn.classList.remove('armed'); btn.innerHTML=was; };
   btn.onclick=()=>{
     if(btn.classList.contains('armed')){ btn.disarm(); return fn(); }
-    btn.classList.add('armed'); btn.innerHTML=btn.classList.contains('btn')?'[ CONFIRM ]':'CONFIRM';
+    btn.classList.add('armed'); btn.innerHTML=/^\s*\[/.test(btn.textContent)?'[ CONFIRM ]':'CONFIRM';   // in the button's own style
     btn.at=setTimeout(btn.disarm,2600);
   };
 }
@@ -1741,14 +1741,14 @@ function foldSections(box,open){
    kept until SAVE. */
 function openMealEdit(c,name,o){
   o=o||{};
-  if(document.getElementById('adBody')){                 // started from Add food: it closes, and comes back on SAVED afterwards
-    const m=ADD.meal; closeSheet();
-    return setTimeout(()=>openMealEdit(c,name,{after:()=>openAdd(m,null,null,'saved')}),240);
+  let replace=false;
+  if(document.getElementById('adBody')){                 // started from Add food: the editor swaps in its place, and back again after
+    const m=ADD.meal; replace=true; o.after=()=>openAdd(m,null,null,'saved');
   }
   const d={n:c?c.n:(name||''), rc:c&&c.rc||'', items:(c?c.items:[]).map(e=>Object.assign({},e,{id:uid(), x:Object.assign({},e.x)}))};
-  const open={i:true, r:!!d.rc}, stack=!!topSheet();
+  const open={i:true, r:!!d.rc}, stack=!replace && !!topSheet();
   setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
-  const box=topSheet(), back=()=>{ if(o.after){ closeSheet(); return setTimeout(o.after,240); }
+  const box=topSheet(), back=()=>{ if(o.after) return o.after();
     stack?popSheet():closeSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); };
   const keep=()=>{ if($('meN')) d.n=$('meN').value; if($('meR')) d.rc=$('meR').value; };
   const sec=(k,title,inner)=>'<div class="msec'+(open[k]?'':' shut')+'"><button class="msh" data-sec="'+k+'">'+title+'<span class="mfold">\u25be</span></button><div class="msb">'+inner+'</div></div>';
@@ -1792,9 +1792,9 @@ const planKey=x=>JSON.stringify([x.portions, x.items.map(e=>[e.n,e.sv,e.q,e.w,me
 function planEdited(){ const pl=P().plan, s=P().plans.find(x=>x.id===pl.sid); return !!s && planKey(s)!==planKey(pl); }
 function planCard(){
   const pl=P().plan;
-  return '<div class="card plancard" id="plcard"><h3>Plan</h3>'+
-    '<div class="plrow"><span class="plk">PORTIONS OF EACH MEAL</span><input class="fld pn" id="plN" type="number" inputmode="numeric" min="1" max="200" value="'+pl.portions+'" aria-label="Portions"></div>'+
-    '<div class="trio"><button class="btn" id="plSave">[ SAVE ]</button><button class="btn ghost" id="plLoad">[ LOAD ]</button><button class="btn ghost" id="plClr">[ CLEAR ]</button></div></div>';
+  return '<div class="card plancard" id="plcard">'+                  // one line: portions, then save, load and clear
+    '<span class="plk">PORTIONS</span><input class="fld pn" id="plN" type="number" inputmode="numeric" min="1" max="200" value="'+pl.portions+'" aria-label="Portions of each meal">'+
+    '<button class="btn" id="plSave">SAVE</button><button class="btn ghost" id="plLoad">LOAD</button><button class="btn ghost" id="plClr">CLEAR</button></div>';
 }
 /* The groceries: every food in the plan, times the portions, added up by name, as a weight
    where the serving has one and a count where it doesn't. */
@@ -2348,10 +2348,19 @@ function spreadFood(f,oldN,oldSv){
   return n;
 }
 /* Log a food straight from a list: the amount given, into the section chosen at the top. */
+/* Ready for the next food: the search box is emptied and focused. Called within the tap, so the
+   iPhone keeps the keyboard up. */
+function nextFood(){
+  const Q=$('osQ'); if(!Q) return;
+  if(ADD.tab==='search') ADD.sq=''; else ADD.q='';
+  paintTab();
+  try{ Q.focus({preventScroll:true}); }catch(e){ Q.focus(); }
+}
 /* Something chosen while building a meal becomes one of its ingredients. */
 function intoMeal(es){
   ADD.into.items.push(...es.map(e=>({id:uid(), fid:e.fid||'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:Object.assign({},e.x), q:e.q, w:e.w})));
   sfx('confirm'); toast('ADDED TO '+(ADD.into.n||'THE MEAL').toUpperCase());
+  nextFood();
 }
 function quickAdd(f,q,w,fid){
   const now=Date.now(), g=gramsOf(f.sv), en={id:uid(), fid:fid||'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:Object.assign({},f.x),
@@ -2362,6 +2371,7 @@ function quickAdd(f,q,w,fid){
   FRESH=new Set([en.id]);
   const hit=checkHits(); touch(); render();
   if(!hit){ sfx('confirm'); toast('ADDED \u00b7 '+fmt(f.k*en.q)+' KCAL'); }
+  nextFood();
 }
 function quickMeal(c){
   if(ADD.into) return intoMeal(c.items);
@@ -2371,6 +2381,7 @@ function quickMeal(c){
   FRESH=new Set(es.map(e=>e.id));
   const hit=checkHits(); touch(); render();
   if(!hit){ sfx('confirm'); toast('ADDED '+c.n.toUpperCase()); }
+  nextFood();
 }
 /* Foods most recently logged, newest first, drawn from the log itself: anything added and
    then removed was never really eaten, so it never appears here. */
@@ -2383,8 +2394,8 @@ function recentFoods(){
 /* Saved meals and foods as one list. Tap opens one; hold opens its editor in place: rename,
    share with another profile, or delete with a second tap. */
 function savedList(L,q,onFood,onMeal,ed,plus){
-  const s=q.trim().toLowerCase(), has=x=>!s || x.n.toLowerCase().includes(s), az=(x,y)=>x.n.localeCompare(y.n);
-  const meals=P().combos.filter(has).sort(az), foods=P().foods.filter(has).sort(az);
+  const ws=wordsOf(q), az=(x,y)=>x.n.localeCompare(y.n), pick=list=>ws.length?byMatch(list.slice().sort(az),ws):list.slice().sort(az);
+  const meals=pick(P().combos), foods=pick(P().foods);
   const rows=meals.map(o=>({t:'meal',o})).concat(foods.map(o=>({t:'food',o})));
   const tot=o=>o.items.reduce((a,e)=>{ a.k+=e.k*e.q; a.p+=e.p*e.q; a.c+=e.c*e.q; a.f+=e.f*e.q; return a; },{k:0,p:0,c:0,f:0});
   const others=Object.keys(DB.profiles).filter(n=>n!==DB.cur);
@@ -2592,7 +2603,7 @@ function openQty(food,o){
     }
     $('qGo').onclick=()=>{
       if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
-      const up=()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); };
+      const up=()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); nextFood(); };
       if(o.item){ Object.assign(e,{q:st.q, w:st.w}); sfx('confirm'); toast('UPDATED'); return up(); }    // an ingredient of a meal being built
       if(ADD.into && !e){ intoMeal([Object.assign({},food,{fid:saved?saved.id:'', q:st.q, w:st.w})]); return up(); }
       const now=Date.now(), was=e?mealOf(e):st.m;
@@ -2606,7 +2617,7 @@ function openQty(food,o){
       }
       const hit=checkHits();
       touch();
-      if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }   // back to the list for the next food
+      if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); if(!e) nextFood(); }   // back to the list for the next food
       else { closeSheet(); setTimeout(()=>renderMorph(...new Set([was,st.m])),220); }
       if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(food.k*st.q)+' KCAL'); }
     };
@@ -2644,7 +2655,7 @@ function openCombo(c){
   paint();
   $('cGo').onclick=()=>{
     if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
-    if(ADD.into){ intoMeal(c.items.map(e=>Object.assign({},e,{q:e.q*st.q}))); popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); return; }
+    if(ADD.into){ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); intoMeal(c.items.map(e=>Object.assign({},e,{q:e.q*st.q}))); return; }
     const now=Date.now(), grp=ADD.group||{g:uid(), gn:c.n};
     const es=c.items.map((e,i)=>Object.assign({},e,{id:uid()+i, x:Object.assign({},e.x), q:e.q*st.q, m:st.m, t:now+i, e:now+i, o:0, g:grp.g, gn:grp.gn}));
     dayPush(...es);
@@ -2652,17 +2663,20 @@ function openCombo(c){
     c.u=c.e=now;
     const hit=checkHits();
     touch();
-    if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
+    if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); nextFood(); }
     else { closeSheet(); setTimeout(()=>renderMorph(st.m),220); }
     if(!hit){ sfx('confirm'); toast('LOGGED '+c.n.toUpperCase()+' \u00b7 '+fmt(sum(st.q).k)+' KCAL'); }
   };
 }
+/* Select mode: the chosen foods are saved as a meal, and, when there are several, combined on
+   the dashboard as that meal, in the first one's section. */
 function saveMeal(){
   const es=entries().filter(e=>SEL.has(e.id));
   promptSheet('Save as meal','',n=>{
     const now=Date.now();
     P().combos.unshift(cleanCombo({id:uid(), n, items:es, u:now, e:now}));
-    touch(); closeSheet(); endSelect(); sfx('confirm'); toast('MEAL SAVED \u00b7 '+n.toUpperCase());
+    if(es.length>1){ const g=uid(), m=mealOf(es[0]); es.forEach(e=>Object.assign(e,{g, gn:n, m, e:now})); }
+    touch(); closeSheet(); endSelect(); sfx('confirm'); toast((es.length>1?'MEAL SAVED AND COMBINED \u00b7 ':'MEAL SAVED \u00b7 ')+n.toUpperCase());
   },true);
 }
 /* ---------- barcodes: the browser's detector where there is one, ZXing on iPhone ---------- */
@@ -2759,13 +2773,13 @@ const OFF_FIELDS='code,product_name,generic_name,brands,serving_size,nutrition_d
    au-foods.json sits beside the app, rebuilt monthly from Open Food Facts by a GitHub Action.
    Each phone downloads it once into IndexedDB (too big for localStorage), checks the tiny
    au-foods.v.json now and then for a newer month, and searches it instantly, offline too. */
-const LOCAL={v:'', d:null, idx:null, codes:null, busy:false};
+const LOCAL={v:'', d:null, idx:null, cmp:null, voc:null, codes:null, busy:false};
 function idb(){ return new Promise((ok,no)=>{ const r=indexedDB.open('food_diary',1);
   r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error); }); }
 async function idbDo(mode,fn){ const db=await idb(); return new Promise((ok,no)=>{ const t=db.transaction('kv',mode), q=fn(t.objectStore('kv'));
   t.oncomplete=()=>ok(q.result); t.onerror=()=>no(t.error); }); }
 async function localLoad(){
-  try{ const x=await idbDo('readonly',s=>s.get('au')); if(x && Array.isArray(x.d)){ LOCAL.v=x.v; LOCAL.d=x.d; LOCAL.idx=LOCAL.codes=null; } }catch(e){}
+  try{ const x=await idbDo('readonly',s=>s.get('au')); if(x && Array.isArray(x.d)){ LOCAL.v=x.v; LOCAL.d=x.d; LOCAL.idx=LOCAL.codes=LOCAL.voc=null; } }catch(e){}
 }
 async function localRefresh(force){
   if(location.protocol==='file:' || LOCAL.busy || !navigator.onLine) return 'offline';
@@ -2777,7 +2791,7 @@ async function localRefresh(force){
     if(!Array.isArray(j.d) || !j.d.length) return 'missing';
     await idbDo('readwrite',s=>s.put({v:j.v, d:j.d},'au'));
     try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
-    LOCAL.v=j.v; LOCAL.d=j.d; LOCAL.idx=LOCAL.codes=null;
+    LOCAL.v=j.v; LOCAL.d=j.d; LOCAL.idx=LOCAL.codes=LOCAL.voc=null;
     return 'updated';
   }catch(e){ return 'failed'; }
   finally{ LOCAL.busy=false; }
@@ -2796,10 +2810,20 @@ function localFood(r){
 /* Every word typed has to appear in the brand or name; closer and shorter matches first. */
 function localSearch(q){
   if(!LOCAL.d) return [];
-  if(!LOCAL.idx) LOCAL.idx=LOCAL.d.map(r=>((r[2]||'')+' '+r[1]).toLowerCase());
-  const words=q.toLowerCase().split(/\s+/).filter(Boolean), hits=[];
-  for(let i=0;i<LOCAL.idx.length;i++){ const s=LOCAL.idx[i];                  // generic foods ahead of brands for plain searches
-    if(words.every(w=>s.includes(w))) hits.push([s.indexOf(words[0])+s.length/40-(isAfcd(LOCAL.d[i])?1.5:0),i]); }
+  if(!LOCAL.idx){ LOCAL.idx=LOCAL.d.map(r=>normS((r[2]||'')+' '+r[1])); LOCAL.cmp=LOCAL.idx.map(s=>s.replace(/ /g,'')); LOCAL.voc=null; }
+  const ws=wordsOf(q); if(!ws.length) return [];
+  const hits=[], rank=(i,near)=>{ const s=LOCAL.idx[i], at=s.indexOf(ws[0]);    // generic foods ahead of brands for plain searches
+    return (at<0?20:at)+s.length/40-(isAfcd(LOCAL.d[i])?1.5:0)+(near?100:0); };
+  for(let i=0;i<LOCAL.idx.length;i++){ const s=LOCAL.idx[i], c=LOCAL.cmp[i];
+    if(ws.every(w=>s.includes(w)||c.includes(w))) hits.push([rank(i,false),i]); }
+  if(hits.length<8){                                  // few exact matches: look for close spellings too
+    if(!LOCAL.voc){ LOCAL.voc=new Map(); LOCAL.idx.forEach((s,i)=>s.split(' ').forEach(t=>{ if(t.length>2){ let l=LOCAL.voc.get(t); if(!l) LOCAL.voc.set(t,l=[]); if(l[l.length-1]!==i) l.push(i); } })); }
+    const sets=ws.map(w=>{ const rows=new Set();
+      LOCAL.voc.forEach((l,t)=>{ if(t.includes(w) || nearWord(w,t)) l.forEach(i=>rows.add(i)); });
+      return rows; });
+    const have=new Set(hits.map(([,i])=>i));
+    sets.sort((x,y)=>x.size-y.size)[0].forEach(i=>{ if(!have.has(i) && sets.every(s=>s.has(i))) hits.push([rank(i,true),i]); });
+  }
   return hits.sort((x,y)=>x[0]-y[0]).slice(0,40).map(([,i])=>localFood(LOCAL.d[i])).filter(Boolean);
 }
 function localSummary(){
@@ -2837,8 +2861,46 @@ async function lookupCode(code){
    from Recent), then your saved foods, then the Australian list, updated monthly. Every word
    typed must appear in the name. Nothing is searched online. */
 const HISTORY_DAYS=30;
-const wordsOf=q=>q.toLowerCase().split(/\s+/).filter(Boolean);
-const hasWords=(s,ws)=>{ s=s.toLowerCase(); return ws.every(w=>s.includes(w)); };
+/* ---------- matching: forgiving of punctuation, spacing, accents and small spelling slips ----------
+   Names and searches are both reduced to plain words: lower case, no accents, hyphens and
+   apostrophes dropped (Weet-Bix is weetbix, Arnott's is arnotts), other punctuation a space.
+   A word matches when it appears in the name, in the name with its spaces taken out (weetbix
+   finds Weet Bix), or, failing that, a word of the name within 1 letter of it (2 for words of 8
+   letters or more), counting two letters swapped as one slip, and allowing for a word still
+   being typed. Exact matches always come before near ones. */
+const normS=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/&/g,' and ')
+  .replace(/['\u2019.\-]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+const wordsOf=q=>normS(q).split(' ').filter(Boolean);
+function slips(a,b,k){                               // edits from a to b (swaps count once), or k+1 once past k
+  if(Math.abs(a.length-b.length)>k) return k+1;
+  let p2=null, p=Array.from({length:b.length+1},(_,j)=>j);
+  for(let i=1;i<=a.length;i++){
+    const c=[i]; let low=i;
+    for(let j=1;j<=b.length;j++){
+      let v=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));
+      if(p2 && i>1 && j>1 && a[i-1]===b[j-2] && a[i-2]===b[j-1]) v=Math.min(v,p2[j-2]+1);
+      c.push(v); if(v<low) low=v;
+    }
+    if(low>k) return k+1;
+    p2=p; p=c;
+  }
+  return p[b.length];
+}
+function nearWord(w,t){
+  if(w.length<4) return false;
+  const k=w.length>=8?2:1;
+  return slips(w,t,k)<=k || (t.length>w.length && slips(w,t.slice(0,w.length),k)<=k);   // or the start of a longer word
+}
+/* 2: every word found as typed; 1: some only within a slip; 0: not a match. */
+function matchScore(text,ws){
+  const s=normS(text), c=s.replace(/ /g,''); let near=false;
+  for(const w of ws){
+    if(s.includes(w) || c.includes(w)) continue;
+    if(s.split(' ').some(t=>nearWord(w,t))){ near=true; continue; }
+    return 0;
+  }
+  return near?1:2;
+}
 const sameFood=f=>(f.n+'|'+f.sv).toLowerCase();
 function historyFoods(){                              // newest first, one per food
   const from=shift(today(),-HISTORY_DAYS), seen=new Set(), out=[];
@@ -2846,9 +2908,12 @@ function historyFoods(){                              // newest first, one per f
   return out.sort((x,y)=>y.t-x.t).filter(e=>{ const k=recentKey(e); if(seen.has(k)) return false; seen.add(k); return true; });
 }
 /* Your own foods that match: history, then saved foods not already in it. */
+/* Exact matches in their own order; close spellings after them, only when exact ones are few. */
+const byMatch=(list,ws)=>{ const s=list.map(x=>[matchScore(x.n,ws),x]).filter(([m])=>m), ex=s.filter(([m])=>m===2);
+  return ex.concat(ex.length<3?s.filter(([m])=>m===1):[]).map(([,x])=>x); };
 function yourFoods(q){
-  const ws=wordsOf(q), hist=historyFoods().filter(e=>hasWords(e.n,ws)), have=new Set(hist.map(sameFood));
-  const saved=P().foods.filter(f=>hasWords(f.n,ws) && !have.has(sameFood(f)));
+  const ws=wordsOf(q), hist=byMatch(historyFoods(),ws), have=new Set(hist.map(sameFood));
+  const saved=byMatch(P().foods.filter(f=>!have.has(sameFood(f))),ws);
   return {hist, saved};
 }
 function queueSearch(q){
@@ -3116,12 +3181,15 @@ function switchProfile(n,quick){
 }
 function openFoods(){
   sfx('open');
-  setSheet(panel('Saved foods & meals','<div class="srch one"><input class="fld" id="fdQ" type="search" enterkeyhint="search" placeholder="Search saved foods" autocomplete="off"></div>'+
-    '<div class="rlist" id="fdList"></div><div class="pgnote">Hold an item to rename, share or delete it. Save a meal by selecting logged foods on the dashboard.</div>',true));
+  setSheet(panel('Saved foods & meals','<div class="srch bar"><input class="fld" id="fdQ" type="search" enterkeyhint="search" placeholder="Search saved" autocomplete="off">'+
+      '<button class="btn plus" id="fdAdd" aria-label="New meal">+</button></div>'+
+    '<div class="rlist" id="fdList"></div><div class="pgnote">Tap + to make a meal. Hold an item to rename, share or delete it.</div>',true));
   bindPanel(openSettings);
   const paint=()=>savedList($('fdList'),$('fdQ').value,f=>openQty(f,{}),openCombo);
   $('fdQ').oninput=paint;
   searchKey($('fdQ'));
+  $('fdAdd').onclick=()=>openMealEdit(null,$('fdQ').value.trim());
+  topSheet().refresh=paint;                           // back from making or changing a meal
   paint();
 }
 function openSync(){
@@ -3283,7 +3351,9 @@ boot('load',load);
 boot('open sections',()=>{ DB.fold={}; });        // opening the app starts with every section open
 boot('render',render);
 boot('sheets',watchSheets);
-boot('local list',()=>{ localLoad().then(()=>setTimeout(()=>localRefresh(),4000)); });
+boot('local list',()=>{ localLoad().then(()=>{
+  setTimeout(()=>{ if(LOCAL.d && !LOCAL.idx) localSearch('warm'); },2500);   // ready the names in the background, so the first search is quick
+  setTimeout(()=>localRefresh(),4000); }); });
 boot('show',()=>{ booted(); setTimeout(()=>{ const c=document.querySelector('.crton'); if(c) c.remove(); },1200); });
 boot('interference',()=>{ zapLoop(); setTimeout(rollPass,RND(1500,9000)); drawStatic(); fuzzLoop(); });
 boot('sync',()=>{ refreshCog(); if(ghOn()) ghSyncAll().then(()=>{ render(); refreshCog(); }); });
