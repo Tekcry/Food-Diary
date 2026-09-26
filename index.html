@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.41">
+<meta name="app-version" content="2026.09.26.42">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -720,7 +720,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.41';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.42';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1732,7 +1732,7 @@ function openGroup(g){
         '<div class="lrow lday"><span>Total</span><b>'+fmt(t.k)+' kcal</b><b>P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</b></div></div>';
     box.querySelector('.shx').onclick=back;
     bindRows($('gList'),i=>openQty(es[i],{entry:es[i]}),null,i=>{ dropEntries([es[i].id]); render(); draw(); toast('REMOVED'); });
-    $('gAdd').onclick=()=>{ closeSheet(); setTimeout(()=>openAdd(mealOf(es[0]),{g, gn:es[0].gn}),200); };
+    $('gAdd').onclick=()=>openAdd(mealOf(es[0]),{g, gn:es[0].gn},null,null,true);   // over this screen, and back to it
     $('gSplit').onclick=()=>{ const now=Date.now(); es.forEach(e=>{ delete e.g; delete e.gn; e.e=now; }); touch(); closeSheet();
       setTimeout(()=>renderMorph(mealOf(es[0])),220); toast('UNCOMBINED'); };
   };
@@ -2290,7 +2290,7 @@ const ADD={meal:'', tab:'', q:'', sq:'', results:[], group:null};
 /* Add food: SEARCH and SAVED share one search bar that stays where it is. On SAVED the barcode
    button folds away and + makes a meal instead of a food. into: a meal being built, in which
    case what's chosen goes into that meal, not the diary. */
-function openAdd(meal,group,into,tab){
+function openAdd(meal,group,into,tab,over){
   ADD.meal=meal; ADD.group=group||null; ADD.into=into||null;
   ADD.tab=tab||'search';
   ADD.q=ADD.sq=''; ADD.results=[];
@@ -2300,9 +2300,9 @@ function openAdd(meal,group,into,tab){
     picker('adTabs',[['search','SEARCH'],['saved','SAVED']],ADD.tab)+
     '<div class="srch bar" id="adBar"><input class="fld" id="osQ" type="search" enterkeyhint="search" placeholder="Search foods" autocomplete="off">'+
       '<button class="btn plus" id="nfAdd" aria-label="New food">+</button><button class="btn plus scanb" id="adScan" aria-label="Scan a barcode">'+BARCODE+'</button></div>'+
-    '<div id="adBody"></div>',!!into),!!into);
-  const back=into?()=>{ ADD.into=null; popSheet(); const up=topSheet(); if(up && up.refresh) up.refresh(); }:closeSheet;
-  if(into){ lastVeil().onclick=back; topSheet().querySelector('#pnX').onclick=back; } else bindPanel(back);   // stacked: its own back button, not one beneath
+    '<div id="adBody"></div>',!!(into||over)),!!(into||over));      // over a meal being built or a combined item: back returns to it
+  const back=into||over?()=>{ ADD.into=null; ADD.group=null; popSheet(); const up=topSheet(); if(up && up.refresh) up.refresh(); }:closeSheet;
+  if(into||over){ lastVeil().onclick=back; topSheet().querySelector('#pnX').onclick=back; } else bindPanel(back);   // stacked: its own back button, not one beneath
   topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
   const Q=$('osQ');
   Q.oninput=()=>{ if(ADD.tab==='search'){ ADD.sq=Q.value; paintRecent(Q.value); queueSearch(Q.value); } else { ADD.q=Q.value; paintSaved(); } };
