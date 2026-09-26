@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.50">
+<meta name="app-version" content="2026.09.26.51">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -412,7 +412,7 @@ body.planning .harr{visibility:hidden;pointer-events:none}
 #main>.fillrow.gone{max-height:0;opacity:0;margin-bottom:0;border-width:0;pointer-events:none}
 .fillrow b{font-size:19px}
 .cal.multi button.picked{background:var(--bronze);color:var(--on);border-color:var(--bronze)}
-.cal.multi button.past{opacity:.3}
+.cal.multi button.past,.cal button.out{opacity:.3}
 html .cal.multi button.now:not(.picked){background:none;color:var(--champ);box-shadow:none;border:1px solid var(--bronze)}
 .whobtn{top:calc(14px + env(safe-area-inset-top))}
 .whobtn svg{width:27px;height:27px;stroke-width:1.1}
@@ -730,7 +730,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.50';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.51';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -2388,19 +2388,24 @@ function openCalendar(pick,note,who,multi){
 }
 function calMove(n){ const d=new Date(CAL.y,CAL.m+n,1); CAL.y=d.getFullYear(); CAL.m=d.getMonth(); paintCal(); }
 function paintCal(){
-  const t=today(), lead=(new Date(CAL.y,CAL.m,1).getDay()+6)%7, n=new Date(CAL.y,CAL.m+1,0).getDate();
+  const t=today(), m=CAL.multi, lead=(new Date(CAL.y,CAL.m,1).getDay()+6)%7, n=new Date(CAL.y,CAL.m+1,0).getDate();
   $('cTitle').textContent=MON[CAL.m]+' '+CAL.y;
-  let h='MTWTFSS'.split('').map(x=>'<span class="cw">'+x+'</span>').join('')+'<span></span>'.repeat(lead);
-  for(let i=1;i<=n;i++){
-    const d=ymd(new Date(CAL.y,CAL.m,i));
-    const m=CAL.multi, cls=m?(d===t?'now':'')+(m.has(d)?' picked':'')+(d<t?' past':''):(d===t?'now':d===DAY?'chosen':'');
-    h+='<button data-d="'+d+'" class="'+cls+(DB.profiles[CAL.who].days[d]?' has':'')+'"'+(m && d<t?' disabled':'')+'>'+i+'</button>';
+  let h='MTWTFSS'.split('').map(x=>'<span class="cw">'+x+'</span>').join('');
+  // whole weeks: the days either side belong to the neighbouring months, greyed, and tapping one moves there
+  for(let i=1-lead, end=Math.ceil((lead+n)/7)*7-lead;i<=end;i++){
+    const x=new Date(CAL.y,CAL.m,i), d=ymd(x), o=i<1?-1:i>n?1:0;
+    const cls=o?'out'+(m&&m.has(d)?' picked':'')+(m&&d<t?' past':'')
+      :(m?(d===t?'now':'')+(m.has(d)?' picked':'')+(d<t?' past':''):(d===t?'now':d===DAY?'chosen':''))+(DB.profiles[CAL.who].days[d]?' has':'');
+    h+='<button data-d="'+d+'"'+(o?' data-o="'+o+'"':'')+' class="'+cls+'"'+(m && d<t?' disabled':'')+'>'+x.getDate()+'</button>';
   }
   $('cGrid').innerHTML=h;
   $('cGrid').querySelectorAll('button').forEach(b=>b.onclick=()=>{
-    if(!CAL.multi) return CAL.pick(b.dataset.d);
-    const d=b.dataset.d; CAL.multi.has(d)?CAL.multi.delete(d):CAL.multi.add(d); b.classList.toggle('picked'); sfx('tap');
-    const n=CAL.multi.size; $('cGo').disabled=!n; $('cGo').textContent=n?'[ ADD TO '+n+' DAY'+(n===1?'':'S')+' ]':'[ CHOOSE DAYS ]'; });
+    const d=b.dataset.d, o=+b.dataset.o||0;
+    if(!m && !o) return CAL.pick(d);
+    sfx('tap');
+    if(m){ m.has(d)?m.delete(d):m.add(d);
+      const k=m.size; $('cGo').disabled=!k; $('cGo').textContent=k?'[ ADD TO '+k+' DAY'+(k===1?'':'S')+' ]':'[ CHOOSE DAYS ]'; }
+    o?calMove(o):b.classList.toggle('picked'); });
 }
 
 /* ---------- targets reached: each once a day; both together takes the screen ---------- */
