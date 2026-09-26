@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.71">
+<meta name="app-version" content="2026.09.26.73">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -479,7 +479,6 @@ body.planning .harr{visibility:hidden;pointer-events:none}
 .sheet>h3.qh{margin-bottom:12px}
 #main>.fillrow{margin:0 0 6px;max-height:40px;overflow:hidden;opacity:1; transition:max-height .35s ease,opacity .25s ease,margin .35s ease,border-width .35s ease}
 #main>.fillrow.gone{max-height:0;opacity:0;margin-bottom:0;border-width:0;pointer-events:none}
-.fillrow b{font-size:19px}
 .cal.multi button.picked{background:var(--bronze);color:var(--on);border-color:var(--bronze)}
 .cal.multi button.past,.cal button.out{opacity:.3}
 html .cal.multi button.now:not(.picked){background:none;color:var(--champ);box-shadow:none;border:1px solid var(--bronze)}
@@ -581,6 +580,23 @@ html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
 .ri.lift{position:relative;z-index:2;background:var(--card);box-shadow:0 0 20px -6px var(--bronze)}
 .armed{color:var(--red) !important;border-color:var(--red) !important}
 .rx.armed{width:auto;padding:0 8px;font-size:9px;letter-spacing:.14em}
+/* the plan rows: swiped like a food, a bin revealed on the right to undo, a tick on the left to add */
+:root{--ok:var(--bronze)}
+html.ios{--ok:#34c759}
+html.ios[data-theme=dark]{--ok:#30d158}
+#main>.fillrow{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.fillrow>span{transform:translateX(calc(var(--dx,0px)*var(--dir,1)))}
+.fillrow:not(.drag)>span,.fillrow:not(.drag) .fsw{transition:transform .25s ease,width .25s ease}
+.fsw{position:absolute;top:0;bottom:0;width:var(--dx,0px);display:flex;align-items:center;justify-content:center;overflow:hidden;font-style:normal;opacity:0}
+.fillrow.drag .fsw{opacity:1}
+.fillrow[data-k=undo] .fsw{right:0;color:var(--dim);background:rgba(255,64,64,.07)}
+.fillrow.ready[data-k=undo] .fsw{color:var(--red);background:rgba(255,64,64,.18)}
+.fillrow:not([data-k=undo]) .fsw{left:0;color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.fillrow.ready:not([data-k=undo]) .fsw{background:color-mix(in srgb,var(--ok) 24%,transparent)}
+.fillrow.ready{border-style:solid}
+.fsw svg{flex:none;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s ease}
+.fillrow:not([data-k=undo]) .fsw svg{stroke-width:2.4}
+.fillrow.ready .fsw svg{transform:scale(1.25)}
 .scanbox{position:relative;aspect-ratio:4/3;background:#000;border:1px solid var(--cardline);border-radius:5px;overflow:hidden}
 .scanbox video{width:100%;height:100%;object-fit:cover;display:block; filter:grayscale(1) sepia(1) hue-rotate(78deg) saturate(3.2) brightness(.95) contrast(1.15)}
 .scanbox::after{content:'';position:absolute;inset:0;pointer-events:none; background:repeating-linear-gradient(180deg,rgba(0,0,0,.35) 0 1px,transparent 1px 3px)}
@@ -862,7 +878,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.71';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.73';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -996,7 +1012,7 @@ function cleanProfile(p){
 function cleanFill(f){
   if(!f || typeof f!=='object' || !(num(f.t,1,1e13)>Date.now()-7*864e5)) return null;
   const days={}; Object.keys(f.days||{}).forEach(d=>{ if(DATE_RE.test(d) && Array.isArray(f.days[d])) days[d]=f.days[d].map(String).slice(0,200); });
-  return Object.keys(days).length?{who:String(f.who||''), t:f.t, days}:null;
+  return Object.keys(days).length?{who:String(f.who||''), t:f.t, days, ...(f.pc?{pc:1}:{})}:null;   // pc: its plan was cleared since
 }
 /* Feedback notes: text of any length, when added (t) and last changed (e). A deleted note is
    kept as a bare tombstone (d) for 120 days, so the other phone deletes it too. */
@@ -2222,11 +2238,28 @@ function bindPlanCard(){
   N.oninput=()=>{ const n=Math.round(+N.value); if(n>=1 && n<=200 && n!==pl.portions){ pl.portions=n; touch(); repaintPlan(); } };
   $('plSave').onclick=savePlan;
   $('plLoad').onclick=()=>openPlans();
-  arm($('plClr'),()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions}); touch(); render(); warp($('main')); toast('PLAN CLEARED'); });
+  const clear=()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions}); const f=fillMine(); if(f) f.pc=1;
+    touch(); render(); warp($('main')); toast('PLAN CLEARED'); };
+  if(pl.items.length && !planSaved()) $('plClr').onclick=()=>clearUnsaved(clear); else arm($('plClr'),clear);
   document.querySelectorAll('#plG .gi').forEach(x=>x.onclick=()=>{ const k=x.dataset.k, on=!ticked(k); setTicks([k],on?1:0); x.classList.toggle('on',on); sfx('tap'); });
   if($('plTick')) $('plTick').onclick=()=>{ setTicks(groceries().map(it=>it.key).filter(ticked),0);
     document.querySelectorAll('#plG .gi.on').forEach(x=>x.classList.remove('on')); toast('TICKS CLEARED'); };
   $('plWith').onclick=pickCombine;
+}
+/* Is the plan on screen exactly as saved? Same foods, amounts and sections, same portions. */
+function planSaved(){
+  const pl=P().plan, sp=P().plans.find(x=>x.id===pl.sid);
+  const key=p=>JSON.stringify([p.portions,p.items.map(e=>[e.n,e.sv,e.q,e.w,e.k,e.p,e.c,e.f,e.m||'',e.g||''])]);
+  return !!sp && key(sp)===key(pl);
+}
+function clearUnsaved(clear){
+  sfx('nope');
+  setSheet('<div class="veil"></div><div class="sheet"><h3 class="qh">Plan not saved<button class="shx back" id="cuX" aria-label="Close">\u00d7</button></h3>'+
+    '<div class="pgnote">'+(P().plan.sid?'This plan has changes that haven\u2019t been saved.':'This plan hasn\u2019t been saved.')+' Clearing it can\u2019t be undone.</div>'+
+    '<div class="duo"><button class="btn ghost" id="cuSave">[ SAVE FIRST ]</button><button class="btn" id="cuGo">[ CLEAR ANYWAY ]</button></div></div>',true);
+  lastVeil().onclick=popSheet; $('cuX').onclick=popSheet;
+  $('cuSave').onclick=()=>{ popSheet(); setTimeout(savePlan,60); };
+  $('cuGo').onclick=()=>{ popSheet(); clear(); };
 }
 /* ---------- putting planned food into the diary ----------
    The dashboard offers LOAD PLANNED DAY while a day has nothing logged; the planner offers ADD
@@ -2238,21 +2271,29 @@ function fillRow(){
   const f=fillMine(), pl=P().plan, days=f?Object.keys(f.days):[];
   let kind='', html='';
   if(PLAN){
-    if(f) kind='undo', html='<span>UNDO \u00b7 ADDED TO '+days.length+' DAY'+(days.length===1?'':'S')+'</span><b>\u21b6</b>';
-    else if(pl.items.length) kind='fill', html='<span>ADD PLAN TO DIARY DAYS</span><b>+</b>';
+    if(f && !f.pc) kind='undo', html='<span>SWIPE TO UNDO \u00b7 ADDED TO '+days.length+' DAY'+(days.length===1?'':'S')+'</span>';   // once the plan is cleared, each day undoes itself
+    else if(pl.items.length) kind='fill', html='<span>SWIPE TO ADD PLAN TO DIARY DAYS</span>';
   } else if(!SEL){
-    if(f && f.days[DAY] && entries().some(e=>f.days[DAY].includes(e.id))) kind='undo', html='<span>UNDO PLANNED DAY</span><b>\u21b6</b>';
-    else if(!entries().length && (pl.items.length || P().plans.length)) kind='load', html='<span>LOAD PLANNED DAY</span><b>+</b>';
+    if(f && f.days[DAY] && entries().some(e=>f.days[DAY].includes(e.id))) kind='undo', html='<span>SWIPE TO UNDO PLANNED DAY</span>';
+    else if(!entries().length && (pl.items.length || P().plans.length)) kind='load', html='<span>SWIPE TO LOAD PLANNED DAY</span>';
   }
   const was=FILLROW.was; FILLROW.was=kind;
   const start=was===null?!kind:(!was);                    // drawn as it was, then eased to how it is
-  return '<button class="logrow fillrow'+(start?' gone':'')+'" id="fillRow" data-k="'+kind+'"'+(kind?'':' tabindex="-1" aria-hidden="true"')+'>'+(html||'<span></span>')+'</button>';
+  const icon=kind==='undo'?BIN:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  return '<button class="logrow fillrow'+(start?' gone':'')+'" id="fillRow" data-k="'+kind+'"'+(kind?'':' tabindex="-1" aria-hidden="true"')+'>'+
+    (kind?'<i class="fsw">'+icon+'</i>':'')+(html||'<span></span>')+'</button>';
 }
 function bindFillRow(){
   const r=$('fillRow'); if(!r) return;
   const kind=r.dataset.k;
   requestAnimationFrame(()=>requestAnimationFrame(()=>r.classList.toggle('gone',!kind)));
-  r.onclick=kind==='load'?pickDayPlan:kind==='fill'?pickFillDays:kind==='undo'?undoFill:null;
+  const fn=kind==='load'?pickDayPlan:kind==='fill'?pickFillDays:kind==='undo'?(PLAN?()=>undoFill():()=>undoFill(DAY)):null;
+  if(!fn) return;
+  /* One swipe does it, so a stray tap changes nothing: undo swipes left to a bin, like deleting a
+     food; add and load swipe right to a tick. */
+  const dir=kind==='undo'?-1:1; r.style.setProperty('--dir',dir);
+  bindSwipe(r,dir,0.45,()=>{ sfx(kind==='undo'?'close':'confirm'); fn(); });
+  r.onclick=()=>{ sfx('nope'); warp(r); toast(kind==='undo'?'SWIPE LEFT TO UNDO':'SWIPE RIGHT TO '+(kind==='fill'?'ADD':'LOAD')); };
 }
 /* Copy plan foods into days; answers the new entries on each day. */
 function fillInto(dates,es){
@@ -2262,12 +2303,14 @@ function fillInto(dates,es){
   touch();
   return days;
 }
-function undoFill(){
+/* Undo what was added: every day from the planner, or just one day from the dashboard. */
+function undoFill(one){
   const f=fillMine(); if(!f) return;
   const now=Date.now(); let n=0;
-  Object.keys(f.days).forEach(d=>{ const ids=f.days[d], es=P().days[d]||[], keep=es.filter(e=>!ids.includes(e.id)); n+=es.length-keep.length;
-    ids.forEach(id=>P().del[id]=now); if(keep.length) P().days[d]=keep; else delete P().days[d]; });
-  DB.fill=null; touch(); render(); sfx('close'); toast('UNDONE \u00b7 '+items(n)+' REMOVED');
+  (one?[one]:Object.keys(f.days)).filter(d=>f.days[d]).forEach(d=>{ const ids=f.days[d], es=P().days[d]||[], keep=es.filter(e=>!ids.includes(e.id)); n+=es.length-keep.length;
+    ids.forEach(id=>P().del[id]=now); if(keep.length) P().days[d]=keep; else delete P().days[d]; delete f.days[d]; });
+  if(!Object.keys(f.days).length) DB.fill=null;
+  touch(); render(); sfx('close'); toast('UNDONE \u00b7 '+items(n)+' REMOVED');
 }
 /* The dashboard: fill the empty day from the Week Planner, or from a saved plan. */
 function pickDayPlan(){
