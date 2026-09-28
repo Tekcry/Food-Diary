@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.28.109">
+<meta name="app-version" content="2026.09.28.110">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1034,7 +1034,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.28.109';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.28.110';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1207,11 +1207,16 @@ function cleanDB(d){
    same thing twice (a food by name and serving, a meal or plan by name) becomes one, the latest
    edit, and whatever pointed at the other points at it. Each profile keeps its own diary, plan
    on screen, targets and sections. */
+/* An edit's time: now, or just after the latest copy of the thing anywhere on this phone, whichever
+   is later. A phone whose clock ran ahead leaves copies stamped in the future; without this an edit
+   made here would lose to them at the next sync and quietly revert. */
+const later=(...ts)=>Math.max(Date.now(),...ts.map(t=>(+t||0)+1));
+const allE=(k,id)=>Object.values(DB.profiles).flatMap(p=>(p[k]||[]).filter(x=>x.id===id).map(x=>x.e).concat(p.del[id]||0));
 const SHARED=[['foods',f=>sameFood(f)],['combos',c=>c.n.trim().toLowerCase()],['plans',x=>x.n.trim().toLowerCase()]];
 function unifyFoods(){
   const ps=Object.values(DB.profiles); if(!ps.length) return;
   const del={}; ps.forEach(p=>Object.keys(p.del).forEach(id=>{ del[id]=Math.max(del[id]||0,p.del[id]); }));
-  const now=Date.now(), remap={}, byId={}, lists={};
+  const remap={}, byId={}, lists={};
   SHARED.forEach(([k,key])=>{
     const m={}; ps.forEach(p=>p[k].forEach(x=>{ const y=m[x.id]; if(!y || x.e>y.e || (x.e===y.e && x.u>y.u)) m[x.id]=x; }));
     Object.assign(byId,m);
@@ -1223,8 +1228,8 @@ function unifyFoods(){
   ps.forEach(p=>{
     Object.keys(del).forEach(id=>{ if(byId[id] && !(p.del[id]>=del[id])) p.del[id]=del[id]; });   // deleted anywhere, deleted everywhere
     if(Object.keys(remap).length){
-      Object.keys(remap).forEach(id=>{ p.del[id]=now; });
-      const fix=e=>{ if(remap[e.fid]){ e.fid=remap[e.fid]; followFood(e,byId[e.fid]); if(e.e!==undefined) e.e=now; } };   // and takes its nutrition
+      Object.keys(remap).forEach(id=>{ p.del[id]=later(p.del[id],byId[id]&&byId[id].e); });
+      const fix=e=>{ if(remap[e.fid]){ e.fid=remap[e.fid]; followFood(e,byId[e.fid]); if(e.e!==undefined) e.e=later(e.e); } };   // and takes its nutrition
       Object.values(p.days).forEach(es=>es.forEach(fix));
       p.plan.items.forEach(fix);
       if(remap[p.plan.sid]) p.plan.sid=remap[p.plan.sid];
@@ -1253,7 +1258,7 @@ function save(){
   try{ localStorage.setItem(KEY,JSON.stringify(DB)); }catch(e){ dbg('STORE','save failed',e); toast('SAVE FAILED \u2014 SAVE A BACKUP FILE NOW'); }
 }
 const P=()=>DB.profiles[DB.cur];
-function touch(){ P().at=Date.now(); if(PLAN) P().pe=P().at; save(); ghQueue(); }
+function touch(){ P().at=later(P().at); if(PLAN) P().pe=later(P().pe); save(); ghQueue(); }
 
 /* ---------- dates: local calendar days, never UTC ---------- */
 function ymd(d){ d=d||new Date();
@@ -2393,9 +2398,9 @@ function liveEntry(e){
   return entries().find(x=>x.id===e.id) || Object.values(P().days).flat().find(x=>x.id===e.id) || P().plan.items.find(x=>x.id===e.id) || null;
 }
 function dropEntries(ids){
-  const now=Date.now();
+  const at={}; entries().forEach(x=>{ if(ids.includes(x.id)) at[x.id]=later(x.e,P().del[x.id]); });   // after the entry's own time, so it stays gone
   setDay(entries().filter(x=>!ids.includes(x.id)));
-  ids.forEach(id=>P().del[id]=now);
+  ids.forEach(id=>P().del[id]=at[id]||later(P().del[id]));
   touch();
 }
 /* Fresh copies of entries onto day d of profile p: into section m when given, otherwise
@@ -2441,9 +2446,9 @@ function openGroup(g){
     bindRows($('gList'),i=>openQty(es[i],{entry:es[i]}),null,i=>{ dropEntries([es[i].id]); render(); draw(); toast('REMOVED'); });
     $('gAdd').onclick=()=>openAdd(mealOf(es[0]),{g, gn:es[0].gn},null,null,true);   // over this screen, and back to it
     $('gName').onclick=()=>promptSheet('Rename',es[0].gn,n=>{      // every food in it takes the new name, so it syncs
-      const now=Date.now(); list().forEach(e=>Object.assign(e,{gn:n, e:now})); touch(); render(); popSheet(); draw(); warp(box.querySelector('h3')); sfx('confirm'); toast('RENAMED \u00b7 '+n.toUpperCase());
+      list().forEach(e=>Object.assign(e,{gn:n, e:later(e.e)})); touch(); render(); popSheet(); draw(); warp(box.querySelector('h3')); sfx('confirm'); toast('RENAMED \u00b7 '+n.toUpperCase());
     },true);
-    $('gSplit').onclick=()=>{ const now=Date.now(); es.forEach(e=>{ delete e.g; delete e.gn; e.e=now; }); touch(); closeSheet();
+    $('gSplit').onclick=()=>{ es.forEach(e=>{ delete e.g; delete e.gn; e.e=later(e.e); }); touch(); closeSheet();
       setTimeout(()=>renderMorph(mealOf(es[0])),220); toast('UNCOMBINED'); };
   };
   box.refresh=draw;                                  // redrawn when a food inside is changed
@@ -2493,7 +2498,7 @@ function openMealEdit(c,name,o){
       if(!n){ sfx('nope'); return toast('GIVE THE MEAL A NAME'); }
       if(!d.items.length){ sfx('nope'); return toast('ADD AT LEAST ONE FOOD'); }
       const cur=c && (P().combos.find(x=>x.id===c.id) || c);     // the live one: a sync may have replaced it
-      const m=cleanCombo({id:c?c.id:uid(), n, items:d.items, rc:d.rc, u:c?cur.u:now, e:now, ...(tg?{mt:tg}:{})});
+      const m=cleanCombo({id:c?c.id:uid(), n, items:d.items, rc:d.rc, u:c?cur.u:now, e:c?later(...allE('combos',c.id)):now, ...(tg?{mt:tg}:{})});
       let spread=0;
       if(c){ const old={n:cur.n, items:cur.items.map(e=>Object.assign({},e))}, same=old.n===m.n && JSON.stringify(old.items)===JSON.stringify(m.items);
         Object.keys(cur).forEach(k=>delete cur[k]); Object.assign(cur,m); if(cur!==c){ Object.keys(c).forEach(k=>delete c[k]); Object.assign(c,m); }
@@ -2528,12 +2533,11 @@ const withNames=()=>(P().gw.p||[]).map(pid=>Object.keys(DB.profiles).find(n=>n!=
 /* Combining is mutual: everyone in the group lists everyone else, so each planner shows the
    same combined groceries. Each changed profile syncs. */
 function setGroup(pids){
-  const now=Date.now();
   Object.keys(DB.profiles).forEach(n=>{ const p=DB.profiles[n]; if(!p.pid) p.pid=uid();
     const inIt=pids.includes(p.pid), next=inIt?pids.filter(x=>x!==p.pid):[], was=p.gw.p;
     if(!inIt && !was.some(x=>pids.includes(x)) && !pids.some(x=>was.includes(x))) return;   // not part of this group, before or after
     if(JSON.stringify(next.slice().sort())===JSON.stringify(was.slice().sort())) return;
-    p.gw={p:next, t:now}; p.at=now;
+    p.gw={p:next, t:later(p.gw.t)}; p.at=later(p.at);
     if(n!==DB.cur && ghOn()) ghSync(n); });
   touch();
 }
@@ -2552,8 +2556,7 @@ const qtyOf=(it,v)=>{ v=v===undefined?it.v:v; return !it.w?r1(v)+' \u00d7 '+it.u
 const ticked=k=>!!(P().gt[k] && P().gt[k][0]);
 function setTicks(keys,v){
   if(!keys.length) return;
-  const now=Date.now();
-  [DB.cur,...withNames()].forEach(who=>{ const p=DB.profiles[who]; keys.forEach(k=>p.gt[k]=[v,now]); p.at=now;
+  [DB.cur,...withNames()].forEach(who=>{ const p=DB.profiles[who]; keys.forEach(k=>p.gt[k]=[v,later(p.gt[k]&&p.gt[k][1])]); p.at=later(p.at);
     if(who!==DB.cur && ghOn()) ghSync(who); });
   touch();
 }
@@ -2672,9 +2675,9 @@ function fillInto(dates,es){
 /* Undo what was added: every day from the planner, or just one day from the dashboard. */
 function undoFill(one){
   const f=fillMine(); if(!f) return;
-  const now=Date.now(); let n=0;
+  let n=0;
   (one?[one]:Object.keys(f.days)).filter(d=>f.days[d]).forEach(d=>{ const ids=f.days[d], es=P().days[d]||[], keep=es.filter(e=>!ids.includes(e.id)); n+=es.length-keep.length;
-    ids.forEach(id=>P().del[id]=now); if(keep.length) P().days[d]=keep; else delete P().days[d]; delete f.days[d]; });
+    es.forEach(e=>{ if(ids.includes(e.id)) P().del[e.id]=later(e.e,P().del[e.id]); }); if(keep.length) P().days[d]=keep; else delete P().days[d]; delete f.days[d]; });
   if(!Object.keys(f.days).length) DB.fill=null;
   touch(); render(); sfx('close'); toast('UNDONE \u00b7 '+items(n)+' REMOVED');
 }
@@ -2711,7 +2714,7 @@ function pickCombine(){
     if(!p.pid) p.pid=uid(); if(!me.pid) me.pid=uid();
     const group=[me.pid,...me.gw.p];
     if(group.includes(p.pid)){                           // take them out: they're on their own; the rest stay together
-      setGroup(group.filter(q=>q!==p.pid)); p.gw={p:[], t:Date.now()}; p.at=p.gw.t; if(ghOn()) ghSync(others[x.dataset.i]);
+      setGroup(group.filter(q=>q!==p.pid)); p.gw={p:[], t:later(p.gw.t)}; p.at=later(p.at); if(ghOn()) ghSync(others[x.dataset.i]);
     } else setGroup([...new Set([...group, p.pid, ...p.gw.p])]);   // bring them in, with anyone they're already combined with
     topSheet().querySelectorAll('.pc').forEach(y=>y.classList.toggle('on',P().gw.p.includes(DB.profiles[others[y.dataset.i]].pid))); sfx('tap'); });
 }
@@ -2735,7 +2738,7 @@ function savePlan(){
   lastVeil().onclick=popSheet; $('svpX').onclick=popSheet;
   const name=()=>{ const n=cleanLabel($('psV').value); if(!n){ sfx('nope'); toast('GIVE THE PLAN A NAME'); } return n; };
   const done=(sp,msg)=>{ P().plan.n=sp.n; P().plan.sid=sp.id; touch(); popSheet(); render(); sfx('confirm'); toast(msg+' \u00b7 '+sp.n.toUpperCase()); };
-  const body=(id,n,u)=>cleanSavedPlan({id, n, portions:P().plan.portions, items:JSON.parse(JSON.stringify(P().plan.items)), u, e:Date.now()});   // the live plan
+  const body=(id,n,u)=>cleanSavedPlan({id, n, portions:P().plan.portions, items:JSON.parse(JSON.stringify(P().plan.items)), u, e:later(...allE('plans',id))});   // the live plan
   $('svpNew').onclick=()=>{ const n=name(); if(!n) return;
     let m=n, k=2; while(P().plans.some(x=>normS(x.n)===normS(m))) m=(n+' ('+(k++)+')').slice(0,80);
     const sp=body(uid(),m,Date.now()); P().plans.unshift(sp); done(sp,'PLAN SAVED'); };
@@ -2763,7 +2766,7 @@ function openPlans(ed){
     $('spX').onclick=()=>openPlans();
     $('spOk').onclick=()=>{ const n=cleanLabel(I.value), x=P().plans.find(p=>p.id===ed); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
       if(!x){ sfx('nope'); toast('THAT PLAN WAS DELETED ON ANOTHER PHONE'); return openPlans(); }
-      if(n!==x.n){ if(P().plan.sid===x.id) P().plan.n=n; x.n=n; x.e=Date.now(); touch(); render(); } sfx('confirm'); openPlans(); };
+      if(n!==x.n){ if(P().plan.sid===x.id) P().plan.n=n; x.n=n; x.e=later(...allE('plans',x.id)); touch(); render(); } sfx('confirm'); openPlans(); };
     arm($('spDel'),()=>{ dropSaved('plan',ed); render(); toast('PLAN DELETED'); openPlans(); });
     return;
   }
@@ -2775,12 +2778,12 @@ function openPlans(ed){
 /* Select mode: the chosen foods become one combined item, in the first one's section. */
 function combineSel(){
   const {es,n,un}=selRows();
-  if(un){ const now=Date.now(), m=mealOf(es[0]); es.forEach(e=>{ delete e.g; delete e.gn; e.e=now; });
+  if(un){ const m=mealOf(es[0]); es.forEach(e=>{ delete e.g; delete e.gn; e.e=later(e.e); });
     touch(); endSelect(); renderMorph(m); sfx('confirm'); return toast('UNCOMBINED'); }
   if(n<2){ sfx('nope'); return toast('SELECT 2 OR MORE'); }
   promptSheet('Combine as','',n=>{
-    const g=uid(), m=mealOf(es[0]), now=Date.now();
-    es.forEach(e=>Object.assign(e,{g, gn:n, m, e:now}));
+    const g=uid(), m=mealOf(es[0]);
+    es.forEach(e=>Object.assign(e,{g, gn:n, m, e:later(e.e)}));
     touch(); closeSheet(); endSelect(); sfx('confirm'); toast('COMBINED \u00b7 '+n.toUpperCase());
   },true);
 }
@@ -2920,9 +2923,9 @@ function moveEntries(ids,meal,before){
   if(at<0){ at=rest.length; rest.forEach((e,i)=>{ if(mealOf(e)===meal) at=i+1; }); }
   const order=[...rest.slice(0,at),...moving,...rest.slice(at)];
   if(order.every((e,i)=>e===day[i]) && moving.every(e=>mealOf(e)===meal)) return;   // dropped where it was
-  const base=Math.min(...day.map(place)), now=Date.now();
+  const base=Math.min(...day.map(place));
   moving.forEach(e=>{ e.m=meal; });
-  order.forEach((e,i)=>{ if(e.o!==base+i || moving.includes(e)){ e.o=base+i; e.e=now; } });
+  order.forEach((e,i)=>{ if(e.o!==base+i || moving.includes(e)){ e.o=base+i; e.e=later(e.e); } });
   setDay(order);
   touch(); sfx('confirm');
   renderMorph(...new Set([...was,meal]));
@@ -3075,7 +3078,7 @@ function paintW(){
   const V=$('wV'), step=d=>{ const n=r1((+V.value||start||0)+d*0.1); if(n>0) V.value=n.toFixed(1); };
   $('wDn').onclick=()=>step(-1); $('wUp').onclick=()=>step(1);
   V.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('wGo').click(); } };   // the keyboard's Done saves
-  const set=val=>{ const had=!!v; P().wt[sel]={v:val,e:Date.now()}; touch(); render(); drawWeight();
+  const set=val=>{ const had=!!v; P().wt[sel]={v:val,e:later(P().wt[sel]&&P().wt[sel].e)}; touch(); render(); drawWeight();
     if(had!==!!val) warp($('wBtns')); };                    // SAVE <-> UPDATE / REMOVE: only the buttons warp
   $('wGo').onclick=()=>{ const n=num(V.value,20,400); if(n===null){ sfx('nope'); return toast('ENTER A WEIGHT IN KG'); }
     V.blur(); set(r1(n)); sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); };
@@ -3310,10 +3313,10 @@ function spreadFood(f,oldN,oldSv,also,was){
   const same=e=>e.fid===f.id && sameVals(e,f);
   let n=0;
   Object.entries(DB.profiles).forEach(([who,p])=>{ let m=0;
-    Object.values(p.days).forEach(es=>es.forEach(e=>{ if(mine(e) && !same(e)){ put(e); e.e=now; m++; } }));
-    p.combos.forEach(c=>{ let hit=false; c.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); hit=true; } }); if(hit){ c.e=now; m++; } });
-    p.plan.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); e.e=now; p.pe=now; m++; } });
-    p.plans.forEach(x=>{ let hit=false; x.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); hit=true; } }); if(hit){ x.e=now; m++; } });
+    Object.values(p.days).forEach(es=>es.forEach(e=>{ if(mine(e) && !same(e)){ put(e); e.e=later(e.e); m++; } }));
+    p.combos.forEach(c=>{ let hit=false; c.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); hit=true; } }); if(hit){ c.e=later(c.e); m++; } });
+    p.plan.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); e.e=later(e.e); p.pe=later(p.pe); m++; } });
+    p.plans.forEach(x=>{ let hit=false; x.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); hit=true; } }); if(hit){ x.e=later(x.e); m++; } });
     if(who===DB.cur) n+=m; else if(m){ p.at=now; if(ghOn()) setTimeout(()=>ghSync(who),1600); }   // the other profiles upload too
   });
   return n;
@@ -3340,16 +3343,16 @@ function reMeal(list,old,nw,now,gone){
     const first=es.reduce((a,b)=>place(b)<place(a)?b:a), base=place(first), useO=es.some(e=>e.o), ids=new Set(es.map(e=>e.id));
     const fresh=nw.items.map((it,i)=>Object.assign({},it,{id:uid()+i, x:Object.assign({},it.x), q:Math.round(it.q*s*1000)/1000, m:first.m,
       t:(useO?first.t:base)+i/100, e:now, g:first.g, gn:nw.n}, useO?{o:base+i/100}:{}));
-    const at=out.findIndex(e=>ids.has(e.id)); es.forEach(e=>gone(e.id));
+    const at=out.findIndex(e=>ids.has(e.id)); es.forEach(e=>gone(e.id,e.e));
     out=out.filter(e=>!ids.has(e.id)); out.splice(at,0,...fresh); n++; });
   return [out,n];
 }
 function spreadMeal(old,nw){
   const now=Date.now(); let n=0;
   Object.entries(DB.profiles).forEach(([who,p])=>{ let m=0;
-    Object.keys(p.days).filter(d=>d>=today()).forEach(d=>{ const [l,k]=reMeal(p.days[d],old,nw,now,id=>{ p.del[id]=now; }); if(k){ p.days[d]=l; m+=k; } });   // today on: past days stay as eaten
+    Object.keys(p.days).filter(d=>d>=today()).forEach(d=>{ const [l,k]=reMeal(p.days[d],old,nw,now,(id,t)=>{ p.del[id]=later(t,p.del[id]); }); if(k){ p.days[d]=l; m+=k; } });   // today on: past days stay as eaten
     const [pl,pk]=reMeal(p.plan.items,old,nw,now,()=>{}); if(pk){ p.plan.items=pl; p.pe=now; m+=pk; }
-    p.plans.forEach(x=>{ const [l,k]=reMeal(x.items,old,nw,now,()=>{}); if(k){ x.items=l; x.e=now; m+=k; } });
+    p.plans.forEach(x=>{ const [l,k]=reMeal(x.items,old,nw,now,()=>{}); if(k){ x.items=l; x.e=later(x.e); m+=k; } });
     if(m){ p.at=now; n+=m; if(who!==DB.cur && ghOn()) setTimeout(()=>ghSync(who),1600); }   // the other profiles upload too
   });
   return n;
@@ -3464,7 +3467,7 @@ function savedList(L,q,onFood,onMeal,ed,plus,byTime){
   const ok=()=>{ const n=cleanLabel(I.value); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
     const o=(r.t==='meal'?P().combos:P().foods).find(x=>x.id===r.o.id);
     if(!o){ sfx('nope'); toast('THAT WAS DELETED ON ANOTHER PHONE'); return again(); }
-    if(n!==o.n){ const was=o.n; o.n=n; o.e=Date.now();
+    if(n!==o.n){ const was=o.n; o.n=n; o.e=later(...allE(r.t==='meal'?'combos':'foods',o.id));
       if(r.t!=='meal'){ const cs=copiesOf(o,[was,n]); spreadFood(o,was,o.sv,cs.map(x=>x.id)); dropCopies(cs); shareFood(); }
       touch(); render(); }
     sfx('confirm'); again(); };
@@ -3480,8 +3483,9 @@ function savedAs(f,e){ const L=P().foods, nk=normS(f.n), sk=String(f.sv||'').tri
 /* Other saved foods that are this one under the same name (ignoring case and punctuation): an edit
    replaces them, so a food is never saved twice with different values. */
 const copiesOf=(f,names)=>{ const ns=new Set(names.map(normS)); return P().foods.filter(x=>x.id!==f.id && ns.has(normS(x.n))); };
-function dropCopies(cs){ if(!cs.length) return; const now=Date.now();
-  Object.values(DB.profiles).forEach(p=>{ cs.forEach(x=>{ p.del[x.id]=now; }); p.foods=p.foods.filter(x=>!cs.includes(x)); }); }
+function dropCopies(cs){ if(!cs.length) return;
+  const at={}; cs.forEach(x=>{ at[x.id]=later(...allE('foods',x.id)); });   // deleted after every copy of it, so none comes back
+  Object.values(DB.profiles).forEach(p=>{ cs.forEach(x=>{ p.del[x.id]=at[x.id]; }); p.foods=p.foods.filter(x=>!cs.includes(x)); }); }
 /* Saved foods are everyone's: after an edit every profile takes it (unifyFoods) and every profile's
    file is written, so whichever profile the other phone opens has the new version. */
 function shareFood(){ unifyFoods(); const now=Date.now();
@@ -3489,7 +3493,7 @@ function shareFood(){ unifyFoods(); const now=Date.now();
 function upsertFood(f){
   const L=P().foods, now=Date.now();
   let x=(f.bc && L.find(y=>y.bc===f.bc)) || L.find(y=>y.n.toLowerCase()===f.n.toLowerCase() && y.sv.toLowerCase()===f.sv.toLowerCase());
-  if(x){ x.u=now; if(f.bc && !x.bc){ x.bc=f.bc; x.e=now; } return x; }
+  if(x){ x.u=now; if(f.bc && !x.bc){ x.bc=f.bc; x.e=later(x.e); } return x; }
   x=cleanFood(Object.assign({},f,{id:uid(),u:now,e:now}));
   L.unshift(x);
   return x;
@@ -3497,7 +3501,8 @@ function upsertFood(f){
 function dropSaved(kind,id){
   const now=Date.now(), L=P()[kind==='meal'?'combos':kind==='plan'?'plans':'foods'], i=L.findIndex(x=>x.id===id);
   if(i>=0) L.splice(i,1);                               // the one shared list
-  Object.values(DB.profiles).forEach(p=>{ p.del[id]=now; p.at=now; if(p.plan.sid===id) p.plan.sid=''; });
+  const at=later(...allE(kind==='meal'?'combos':kind==='plan'?'plans':'foods',id));   // after every copy of it, so none comes back
+  Object.values(DB.profiles).forEach(p=>{ p.del[id]=at; p.at=now; if(p.plan.sid===id) p.plan.sid=''; });
   touch(); if(ghOn()) Object.keys(DB.profiles).filter(n=>n!==DB.cur).forEach(n=>ghSync(n));
 }
 
@@ -3651,18 +3656,18 @@ function openQty(food,o){
         if(!blank && !(s('k')>0)){ sfx('nope'); return toast('ENTER THE ENERGY'); }
         const vals={n, sv, k:s('k'), p:s('p'), c:s('c'), f:s('f'), x:{}};
         XN.forEach(([k])=>{ if(s(k)>0) vals.x[k]=s(k); });
-        const grams=g?st.q*g.n:0, now=Date.now();              // the same weight is kept if the serving changes
+        const grams=g?st.q*g.n:0;                               // the same weight is kept if the serving changes
         vals.bc=bc||food.bc||'';
         if(!saved && !o.create) saved=savedAs(first,e);           // not opened as a saved food: the saved food it is, if there is one
         const oldN=saved?saved.n:first.n, oldSv=saved?saved.sv:first.sv, was=saved?copy(saved):first;   // as it was before this edit
         if(!saved){ saved=upsertFood(Object.assign({},vals)); if(!o.create && !e) saved.o=origin; }   // a list food edited: yours replaces it in search
-        Object.assign(saved,vals,{e:now});
+        Object.assign(saved,vals,{e:later(...allE('foods',saved.id))});
         const copies=o.create?[]:copiesOf(saved,[oldN,n]);       // other saved copies of it (an edit, not a new food): folded into this one
         const le=e && !o.item && liveEntry(e)||e; if(le && !le.fid) le.fid=saved.id;   // the entry open here is this food from now on
         const spread=spreadFood(saved,oldN,oldSv,copies.map(x=>x.id),was);   // every entry, planned food and meal item of it follows
         dropCopies(copies);
         if(o.item) followFood(e,saved);                            // and the ingredient open here
-        if(vals.bc) P().foods.forEach(f=>{ if(f.id!==saved.id && f.bc===vals.bc){ f.bc=''; f.e=now; } });   // one food per barcode (confirmed on scanning)
+        if(vals.bc) P().foods.forEach(f=>{ if(f.id!==saved.id && f.bc===vals.bc){ f.bc=''; f.e=later(f.e); } });   // one food per barcode (confirmed on scanning)
         shareFood(); bc=null; render();
         food=saved; first=copy(saved); if(grams && w) st.q=grams/w.n; else { st.q=1; st.w=w && w.n===100?'g':'s'; }
         o.create=false;
@@ -3679,7 +3684,7 @@ function openQty(food,o){
       if(ADD.into && !e){ intoMeal([Object.assign({},food,{fid:saved?saved.id:'', q:st.q, w:st.w})]); return up(); }
       const now=Date.now(), live=e?liveEntry(e):null, was=live?mealOf(live):st.m;
       if(e && !live){ sfx('nope'); return toast('THAT FOOD WAS REMOVED ON ANOTHER PHONE'); }
-      if(live) Object.assign(live,{q:st.q, w:st.w, m:st.m, e:now});   // the one in the diary now, even if a sync replaced it since this opened
+      if(live) Object.assign(live,{q:st.q, w:st.w, m:st.m, e:later(live.e)});   // the one in the diary now, even if a sync replaced it since this opened
       else {
         const en={id:uid(), fid:saved?saved.id:'', n:food.n, sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now,
           ...(ADD.group && !o.entry?ADD.group:{})};
@@ -3749,7 +3754,7 @@ function saveMeal(){
   promptSheet('Save as meal','',n=>{
     const now=Date.now();
     P().combos.unshift(cleanCombo({id:uid(), n, items:es, u:now, e:now, mt:mealOf(es[0])}));   // logged there, so that's its meal time
-    if(es.length>1){ const g=uid(), m=mealOf(es[0]); es.forEach(e=>Object.assign(e,{g, gn:n, m, e:now})); }
+    if(es.length>1){ const g=uid(), m=mealOf(es[0]); es.forEach(e=>Object.assign(e,{g, gn:n, m, e:later(e.e)})); }
     touch(); closeSheet(); endSelect(); sfx('confirm'); toast((es.length>1?'MEAL SAVED AND COMBINED \u00b7 ':'MEAL SAVED \u00b7 ')+n.toUpperCase());
   },true);
 }
@@ -4098,7 +4103,7 @@ function openFeedback(){
     const x=T.value; if(!x.trim()){ sfx('nope'); return toast('TYPE A NOTE FIRST'); }
     const now=Date.now();
     const f=ed && DB.fb.find(y=>y.id===ed.id && !y.d);          // by id: the list may have been refreshed meanwhile
-    if(f){ f.x=x; f.e=now; toast('NOTE SAVED'); } else { DB.fb.push({id:uid(), x, t:now, e:now}); toast('NOTE '+fbLive().length+' ADDED'); }
+    if(f){ f.x=x; f.e=later(f.e); toast('NOTE SAVED'); } else { DB.fb.push({id:uid(), x, t:now, e:now}); toast('NOTE '+fbLive().length+' ADDED'); }
     const added=!f; mode(null); fbSave(); sfx('confirm'); paint(added);
   };
   $('fbX').onclick=()=>{ mode(null); sfx('tap'); };
@@ -4109,7 +4114,7 @@ function openFeedback(){
       document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); }catch(_){} a.remove(); }
     const n=fbLive().length; sfx('confirm'); toast('COPIED '+n+' NOTE'+(n===1?'':'S'));
   };
-  arm($('fbClr'),()=>{ const now=Date.now(); DB.fb=DB.fb.map(f=>({id:f.id, t:f.t, e:now, d:1})); mode(null); fbSave(); toast('NOTES CLEARED'); paint(); });
+  arm($('fbClr'),()=>{ const now=Date.now(); DB.fb=DB.fb.map(f=>({id:f.id, t:f.t, e:later(f.e,now), d:1})); mode(null); fbSave(); toast('NOTES CLEARED'); paint(); });
   mode(null); paint(); FBPAINT=()=>{ if(!ed) paint(); };
   ghFeedback();                                        // pick up notes added on the other phone
 }
@@ -4169,7 +4174,7 @@ function openTargets(){
   });
   $('tgGo').onclick=()=>{
     if(num($('tgK').value,500,10000)===null){ sfx('nope'); return toast('CALORIES MUST BE 500\u201310,000'); }
-    P().goal=cleanGoal(g); P().ge=Date.now(); touch(); render();
+    P().goal=cleanGoal(g); P().ge=later(P().ge); touch(); render();
     sfx('confirm'); toast('TARGETS SAVED'); openSettings();
   };
   paint();
@@ -4218,7 +4223,7 @@ function openMeals(){
       '<button class="btn" id="mlAdd">[ ADD ]</button></div>':'')+'</div>'+
     '<div class="pgnote">Hold and drag to reorder. Add up to '+(MAXMEALS-FIXED.length)+' of your own; removing one moves its entries to '+esc(ms[0].n)+'.</div>',true));
   bindPanel(openSettings);
-  const done=()=>{ P().me=Date.now(); touch(); render(); openMeals(); };
+  const done=()=>{ P().me=later(P().me); touch(); render(); openMeals(); };
   const live=()=>P().meals, at=i=>live().findIndex(x=>x.id===ms[i].id);   // the sections as they are now, found by id
   bindReorder($('mlList'),(from,to)=>{ const L=live(), i=at(from); if(i>=0) L.splice(Math.min(to,L.length-1),0,L.splice(i,1)[0]); done(); });
   document.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{
@@ -4227,8 +4232,8 @@ function openMeals(){
   });
   document.querySelectorAll('[data-x]').forEach(b=>arm(b,()=>{
     const i=at(+b.dataset.x); if(i<0) return done();
-    const L=live(), gone=L.splice(i,1)[0], now=Date.now();
-    Object.values(P().days).forEach(es=>es.forEach(e=>{ if(e.m===gone.id){ e.m=L[0].id; e.e=now; } }));
+    const L=live(), gone=L.splice(i,1)[0];
+    Object.values(P().days).forEach(es=>es.forEach(e=>{ if(e.m===gone.id){ e.m=L[0].id; e.e=later(e.e); } }));
     done();
   }));
   if(ms.length>=MAXMEALS) return;
