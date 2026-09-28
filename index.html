@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.28.106">
+<meta name="app-version" content="2026.09.28.108">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -164,7 +164,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .ibf{display:inline-block;transform-origin:0 0}
 #ib.anim .ibf{transition:transform .45s cubic-bezier(.4,0,.2,1)}
 .ibkl{display:flex;align-items:baseline;gap:6px;height:15px;line-height:15px}
-.ibk .ibv{font-weight:400;font-size:15px;line-height:15px;color:var(--champ);letter-spacing:-.02em}
+.ibk .ibv{font-weight:400;font-size:15px;line-height:15px;color:var(--champ);letter-spacing:-.03em}   /* in proportion to the card's */
 .ibk.over .ibv{color:var(--alert)}
 .ibof{font-size:9px;letter-spacing:.14em;color:var(--dimmer)}
 .ibr{margin-left:auto;font-size:8.5px;letter-spacing:.16em;color:var(--dimmer)}
@@ -185,7 +185,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .ibms{margin-top:5px}
 .ibm{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;height:12px;line-height:12px}
 .ibm+.ibm{margin-top:1px}
-.ibm .ibl{font-size:8.5px;letter-spacing:.16em;color:var(--dim)}
+.ibm .ibl{font-size:8.5px;letter-spacing:.18em;color:var(--dim)}
 .ibmv{position:relative;display:flex;justify-content:flex-end;align-items:baseline}
 .ibm .ibd{position:absolute;right:100%;top:0;padding:0 4px 0 6px;text-align:right;background:var(--bg)}
 .ibmn{display:grid;grid-template-columns:3ch 1.8ch 3ch 1.6ch;font-size:11px;color:var(--champ)}
@@ -278,7 +278,7 @@ html.booted #main{animation:crtwake .9s .2s ease-out both}
   .crt-glow,.crt-lines{animation:none}
   html.booted header,html.booted #main{animation:none}
 }
-:root{--tint:rgba(0,255,102,.08);--on:var(--bg)}
+:root{--red:#ff5a5a;--tint:rgba(0,255,102,.08);--on:var(--bg)}
 #main{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
 html,body,.pgbody,.qlab{overscroll-behavior:none}
 .hnav{display:grid;grid-template-columns:60px 1fr 60px;align-items:center;margin:28px -10px 0}
@@ -364,6 +364,7 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .sellinks{display:flex;gap:10px}
 .sellink{font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--bronze);padding:7px 12px; border:1px solid var(--cardline);border-radius:5px}
 .sellink:active{border-color:var(--bronze);color:var(--champ)}
+.sellink:disabled{opacity:.3;pointer-events:none}
 .lh{font-family:var(--ui);font-size:12px;letter-spacing:.02em;color:var(--bronze);margin:14px 0 2px;font-weight:500}
 body.selecting #main{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
 .cnote{margin:0 0 10px}
@@ -1032,10 +1033,10 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.28.106';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.28.108';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
-   otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN]. */
+   otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
 const DEBUG=(()=>{ try{ return localStorage.getItem('food_log_debug')==='1'; }catch(e){ return false; } })();
 function dbg(area,...a){ if(DEBUG) console.warn('['+area+']',...a); }
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
@@ -1091,13 +1092,14 @@ function cleanEntry(x){
     ...(num(x.o,1,1e13)?{o:num(x.o,1,1e13)}:{})};                               // its place in the day, once dragged
 }
 /* A saved meal: a name and the foods in it, each a full snapshot with its amount. */
+/* mt: the saved meal's meal time, one section id. */
 function cleanCombo(x){
   if(!x || typeof x!=='object') return null;
   const n=cleanLabel(x.n), items=(Array.isArray(x.items)?x.items:[]).map(cleanEntry).filter(Boolean).slice(0,30)
     .map(e=>({fid:e.fid, n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, q:e.q, w:e.w}));
   if(!n || !items.length) return null;
   const rc=String(x.rc||'').replace(/\r/g,'').slice(0,6000);
-  return {id:String(x.id||uid()).slice(0,24), n, items, u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0), ...(rc.trim()?{rc}:{}), ...cleanSc(x.sc)};
+  return {id:String(x.id||uid()).slice(0,24), n, items, u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0), ...(rc.trim()?{rc}:{}), ...(x.mt?{mt:String(x.mt).slice(0,24)}:{}), ...cleanSc(x.sc)};   // sc: meal times from before 107
 }
 function cleanGoal(g){
   g=g||{};
@@ -1230,7 +1232,15 @@ function unifyFoods(){
     if(Object.keys(remap).length){ p.combos.forEach(c=>c.items.forEach(e=>{ if(remap[e.fid]){ e.fid=remap[e.fid]; followFood(e,byId[e.fid]); } }));
       p.plans.forEach(x=>x.items.forEach(e=>{ if(remap[e.fid]){ e.fid=remap[e.fid]; followFood(e,byId[e.fid]); } })); }
   });
+  /* A saved food's edit is the most correct version of it: every entry, planned food and meal
+     ingredient linked to it carries its name, serving and nutrition (keeping its weight). So a
+     food logged on the other phone from an older copy comes into line once the edit arrives. */
+  const F={}; lists.foods.forEach(f=>{ F[f.id]=f; });
+  const fol=e=>{ const f=e.fid && F[e.fid]; if(f && !sameVals(e,f)) followFood(e,f); };
+  ps.forEach(p=>{ Object.values(p.days).forEach(es=>es.forEach(fol)); p.plan.items.forEach(fol);
+    p.combos.forEach(c=>c.items.forEach(fol)); p.plans.forEach(x=>x.items.forEach(fol)); });
 }
+const sameVals=(e,f)=>e.n===f.n && e.sv===f.sv && e.k===f.k && e.p===f.p && e.c===f.c && e.f===f.f && JSON.stringify(e.x||{})===JSON.stringify(f.x||{});
 function load(){
   let s=null, d=null;
   try{ s=localStorage.getItem(KEY); }catch(e){ STORE='memory'; }
@@ -1265,7 +1275,6 @@ function shares(g){ g=g||P().goal;
   if(g.mode!=='g') return {pp:g.pp, cp:g.cp, fp:g.fp};
   const s=v=>Math.round(v/g.k*100);
   return {pp:s(g.pg*4), cp:s(g.cg*4), fp:s(g.fg*9)}; }
-const KBAND=0.05;                      // calories count as on target within 5% either side
 /* The calories' colour, the same on the card and the banner: green once on target, orange from
    50 kcal over. The macros never change colour. */
 const kState=(v,g)=>v>=g+50?'over':v>=g?'hit':'';
@@ -1438,14 +1447,14 @@ async function ghGet(name){
 const ghPut=(name,prof,sha)=>ghReq(ghUrl(name),{method:'PUT',body:JSON.stringify({
   message:'log: '+name+' '+today(), branch:ghCfg().branch, sha:sha||undefined,
   content:b64(JSON.stringify({v:1,name,profile:prof}))})});
-let GHT=0, GHBUSY=false, GHAGAIN=false;
+let GHT=0, GHBUSY=false; const GHPEND=new Set();   // profiles waiting for the sync running now
 function ghQueue(){ if(!ghOn()) return; clearTimeout(GHT); GHT=setTimeout(()=>{ GHT=0; ghSync(DB.cur); },1500); }
 function ghFlush(){ if(GHT){ clearTimeout(GHT); GHT=0; ghSync(DB.cur); } }
 const ghMsg=e=>e===401?'bad token':e===403?'token cannot write here':e===404?'repo not found':typeof e==='number'?'error '+e:'offline';
 async function ghSync(name){
   if(!ghOn()) return 'off';
   if(!ghCfg().moved) return ghSyncAll();              // the move to food/ comes before anything is written
-  if(GHBUSY){ GHAGAIN=true; return 'busy'; }
+  if(GHBUSY){ GHPEND.add(name); return 'busy'; }
   GHBUSY=true;
   try{
     for(let i=0;i<3;i++){
@@ -1464,7 +1473,8 @@ async function ghSync(name){
     ghSave({at:Date.now(),err:''});
     return 'ok';
   }catch(e){ const m=ghMsg(e); dbg('SYNC',name,m,e); ghSave({err:m}); return m; }
-  finally{ GHBUSY=false; refreshCog(); if(GHAGAIN){ GHAGAIN=false; ghQueue(); } }
+  finally{ GHBUSY=false; refreshCog();
+    if(GHPEND.size){ const n=GHPEND.values().next().value; GHPEND.delete(n); n===DB.cur?ghQueue():ghSync(n); } }   // then the next one
 }
 /* ---------- the shared index: profile renames and deletes, so every phone follows them ----------
    Each entry names the profile's identity, not just its name, so it never touches a
@@ -1999,19 +2009,28 @@ function picker(id,items,on){
   return '<div class="mpick" id="'+id+'">'+items.map(([v,l,off])=>
     '<button data-v="'+esc(v)+'" class="'+(v===on?'on':'')+'"'+(off?' disabled':'')+'>'+esc(l)+'</button>').join('')+'</div>';
 }
-/* Meal times: the sections a saved meal is listed under on SAVED. Worked out from where it has
-   been logged (by its combined item's name), plus the hand changes in sc. */
-function loggedIn(){ const n={}, put=e=>{ if(e.g && e.gn) (n[e.gn.toLowerCase()]=n[e.gn.toLowerCase()]||new Set()).add(e.m); };
-  Object.values(DB.profiles).forEach(p=>{ Object.values(p.days).forEach(es=>es.forEach(put)); p.plan.items.forEach(put); });   // the meals are everyone's: so is where they're eaten
-  return n; }
-const autoTimes=(o,L,name)=>(L||loggedIn())[(name||o.n).toLowerCase()]||new Set();
-function timesOf(o,L){ const a=autoTimes(o,L), sc=o.sc||{};
-  return new Set(P().meals.map(m=>m.id).filter(id=>sc[id]===1 || (sc[id]!==0 && a.has(id)))); }
-function timesDiff(on,a){ const sc={}; P().meals.forEach(({id})=>{ if(on.has(id)!==a.has(id)) sc[id]=on.has(id)?1:0; }); return sc; }
-const timesRow=(id,on)=>'<div class="qlh">Meal times</div><div class="mpick qtimes" id="'+id+'">'+
-  P().meals.map(m=>'<button data-v="'+esc(m.id)+'" class="'+(on.has(m.id)?'on':'')+'">'+esc(m.n.toUpperCase())+'</button>').join('')+'</div>';
-function timesPick(id,on){ $(id).querySelectorAll('button').forEach(b=>b.onclick=()=>{ const v=b.dataset.v;
-  on.has(v)?on.delete(v):on.add(v); b.classList.toggle('on',on.has(v)); warp(b); sfx('tap'); }); }
+/* A saved meal's meal time: one section. It's set where the meal is first logged and after that
+   changes only by hand, in the meal editor. Meals from before 107 without one use the section
+   they were first logged in (by anyone, by the combined item's name), then their old hand-picked
+   times. */
+const hasSec=id=>!!id && P().meals.some(m=>m.id===id);
+function firstLogs(){ const f={}, put=e=>{ if(!e.g || !e.gn) return;
+    const k=e.gn.trim().toLowerCase(), x=f[k]; if(!x || e.t<x.t) f[k]=e; };
+  Object.values(DB.profiles).forEach(p=>{ Object.values(p.days).forEach(es=>es.forEach(put)); p.plan.items.forEach(put); });   // the diary and the planner
+  return f; }
+function mealTime(c,F){
+  if(hasSec(c.mt)) return c.mt;
+  const e=(F||firstLogs())[c.n.trim().toLowerCase()]; if(e && hasSec(e.m)) return e.m;
+  const sc=c.sc||{}; return (P().meals.find(m=>sc[m.id]===1)||{}).id||''; }
+/* A saved meal was logged in section m: it moves up the list, and takes its meal time if it has none.
+   Both ride on u, never e, so neither can overwrite a change made to the meal on the other phone. */
+function usedMeal(c,m){
+  const now=Date.now(), lc=P().combos.find(x=>x.id===c.id); if(!lc) return;
+  lc.u=now;
+  if(!hasSec(lc.mt)) lc.mt=mealTime(lc)||m;
+}
+const timeRow=(id,on)=>'<div class="qlh">Meal time</div><div class="mpick qtimes" id="'+id+'">'+
+  P().meals.map(m=>'<button data-v="'+esc(m.id)+'" class="'+(m.id===on?'on':'')+'">'+esc(m.n.toUpperCase())+'</button>').join('')+'</div>';
 /* The pressed button warps; whatever it changes below takes the interference with it. */
 function onPick(id,fn){
   const box=$(id);
@@ -2241,12 +2260,14 @@ function ibPairs(card){
 /* Where el must be drawn to sit on src. Text scales by font size (boxes differ in line height)
    and lines up on its middle, from the left or, for right-aligned numbers ('r'), the right. */
 const ibFs=x=>parseFloat(getComputedStyle(x.querySelector('b')||x).fontSize)||1;
+const textBox=x=>{ const r=document.createRange(); r.selectNodeContents(x); const b=r.getBoundingClientRect(); return b.width?b:x.getBoundingClientRect(); };
 function ibAt(el,src,text){
-  const a=el.getBoundingClientRect(), r=src.getBoundingClientRect();
-  if(!a.width || !a.height) return '';
-  if(!text) return 'translate('+(r.left-a.left)+'px,'+(r.top-a.top)+'px) scale('+r.width/a.width+','+r.height/a.height+')';
-  const k=ibFs(src)/ibFs(el), x=text==='r'?r.right-a.width*k:r.left, y=r.top+r.height/2-a.height*k/2;
-  return 'translate('+(x-a.left)+'px,'+(y-a.top)+'px) scale('+k+')';
+  const A=el.getBoundingClientRect();
+  if(!A.width || !A.height) return '';
+  if(!text){ const r=src.getBoundingClientRect(); return 'translate('+(r.left-A.left)+'px,'+(r.top-A.top)+'px) scale('+r.width/A.width+','+r.height/A.height+')'; }
+  /* text lines up glyph on glyph, whatever the line heights around it */
+  const a=textBox(el), r=textBox(src), k=ibFs(src)/ibFs(el), x=text==='r'?r.right-a.width*k:r.left, y=r.top+r.height/2-a.height*k/2;
+  return 'translate('+(x-A.left-(a.left-A.left)*k)+'px,'+(y-A.top-(a.top-A.top)*k)+'px) scale('+k+')';
 }
 /* The skin takes the card's outline and look; the copy of the card inside it carries the labels. */
 function ibCard(b,card){
@@ -2439,10 +2460,10 @@ function openMealEdit(c,name,o){
   o=o||{};
   let replace=false;
   const then=o.reopen;                                  // opened from a meal: cancel or save goes back to it
-  if(document.getElementById('adBody')){                 // started from Add food: the editor swaps in its place, and back again after
+  if(document.querySelector('#sheetWrap .sheet:not(.out) #adBody')){   // started from Add food: the editor swaps in its place, and back again after
     const m=ADD.meal; replace=true; o.after=()=>{ openAdd(m,null,null,'saved'); if(then) then(); };
   } else if(then) o.after=()=>{ popSheet(); then(); };
-  const tg=c?timesOf(c):new Set(replace && mealById(ADD.meal)?[ADD.meal]:[]);
+  let tg=c?mealTime(c):'';                             // a new meal takes its meal time where it's first logged
   const d={n:c?c.n:(name||''), rc:c&&c.rc||'', items:(c?c.items:[]).map(e=>Object.assign({},e,{id:uid(), x:Object.assign({},e.x)}))};
   const open={i:true, r:!!d.rc}, stack=!replace && !!topSheet();
   setSheet('<div class="veil"></div><div class="sheet fit full qty cmv"></div>',stack);
@@ -2454,13 +2475,13 @@ function openMealEdit(c,name,o){
     const t=macroSum(d.items);
     box.innerHTML='<h3 class="qt"><input class="qname" id="meN" maxlength="80" autocomplete="off" placeholder="Meal name" value="'+esc(d.n)+'"></h3>'+
       '<div class="qper">ONE PORTION \u00b7 '+fmt(t.k)+' KCAL \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</div>'+
-      timesRow('meT',tg)+
+      timeRow('meT',tg)+
       '<div class="cscr">'+sec('i','Ingredients \u00b7 '+d.items.length,'<div class="rlist" id="meList">'+(d.items.length?d.items.map((e,i)=>nutRow(i,e)).join('')
         :'<div class="stat">NO FOODS YET \u2014 TAP ADD FOOD</div>')+'</div>')+
       sec('r','Recipe','<textarea class="fld rcp" id="meR" rows="8" maxlength="6000" placeholder="Method, steps and notes">'+esc(d.rc)+'</textarea>')+'</div>'+   // ingredients and recipe scroll together
       sbar('<button class="btn ghost sbx" id="meCancel" aria-label="Cancel">\u00d7</button>','<div class="duo"><button class="btn ghost" id="meAdd">[ ADD FOOD ]</button><button class="btn" id="meSave">[ SAVE ]</button></div>');
     const sc=box.querySelector('.cscr'); sc.scrollTop=box._st||0; sc.onscroll=()=>{ box._st=sc.scrollTop; };   // kept across redraws
-    foldSections(box,open); timesPick('meT',tg);
+    foldSections(box,open); onPick('meT',v=>{ tg=v; sfx('tap'); });
     bindRows($('meList'),i=>{ keep(); openQty(d.items[i],{entry:d.items[i], item:{remove:()=>d.items.splice(i,1)}}); },null,
       i=>{ keep(); d.items.splice(i,1); draw(); });
     $('meCancel').onclick=back;
@@ -2471,7 +2492,7 @@ function openMealEdit(c,name,o){
       if(!n){ sfx('nope'); return toast('GIVE THE MEAL A NAME'); }
       if(!d.items.length){ sfx('nope'); return toast('ADD AT LEAST ONE FOOD'); }
       const cur=c && (P().combos.find(x=>x.id===c.id) || c);     // the live one: a sync may have replaced it
-      const m=cleanCombo({id:c?c.id:uid(), n, items:d.items, rc:d.rc, u:c?cur.u:now, e:now, sc:timesDiff(tg,c?autoTimes(cur,null,n):new Set())});
+      const m=cleanCombo({id:c?c.id:uid(), n, items:d.items, rc:d.rc, u:c?cur.u:now, e:now, ...(tg?{mt:tg}:{})});
       let spread=0;
       if(c){ const old={n:cur.n, items:cur.items.map(e=>Object.assign({},e))}, same=old.n===m.n && JSON.stringify(old.items)===JSON.stringify(m.items);
         Object.keys(cur).forEach(k=>delete cur[k]); Object.assign(cur,m); if(cur!==c){ Object.keys(c).forEach(k=>delete c[k]); Object.assign(c,m); }
@@ -2717,7 +2738,9 @@ function savePlan(){
   $('svpNew').onclick=()=>{ const n=name(); if(!n) return;
     let m=n, k=2; while(P().plans.some(x=>normS(x.n)===normS(m))) m=(n+' ('+(k++)+')').slice(0,80);
     const sp=body(uid(),m,Date.now()); P().plans.unshift(sp); done(sp,'PLAN SAVED'); };
-  if(from) $('svpOver').onclick=()=>{ const n=name(); if(!n) return; Object.assign(from,body(from.id,n,from.u)); done(from,'PLAN OVERWRITTEN'); };
+  if(from) $('svpOver').onclick=()=>{ const n=name(); if(!n) return; const cur=P().plans.find(x=>x.id===from.id), sp=body(from.id,n,from.u);
+    if(cur) Object.assign(cur,sp); else P().plans.unshift(sp);   // deleted on the other phone meanwhile: saved again
+    done(cur||sp,'PLAN OVERWRITTEN'); };
   setTimeout(()=>$('psV') && $('psV').focus(),150);
 }
 /* The saved plans: tap one to open it on the planner; hold one to rename, share or delete it. */
@@ -2735,22 +2758,25 @@ function openPlans(ed){
   else { setSheet(panel('Saved plans',body,true),stack); topSheet().classList.add('plans'); lastVeil().onclick=popSheet; topSheet().querySelector('#pnX').onclick=popSheet; }
   const L=$('spList'); if(!L) return;
   if(ed){
-    const x=ps.find(p=>p.id===ed), I=$('spE');
+    const I=$('spE');
     $('spX').onclick=()=>openPlans();
-    $('spOk').onclick=()=>{ const n=cleanLabel(I.value); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
+    $('spOk').onclick=()=>{ const n=cleanLabel(I.value), x=P().plans.find(p=>p.id===ed); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
+      if(!x){ sfx('nope'); toast('THAT PLAN WAS DELETED ON ANOTHER PHONE'); return openPlans(); }
       if(n!==x.n){ if(P().plan.sid===x.id) P().plan.n=n; x.n=n; x.e=Date.now(); touch(); render(); } sfx('confirm'); openPlans(); };
-    arm($('spDel'),()=>{ dropSaved('plan',x.id); render(); toast('PLAN DELETED'); openPlans(); });
+    arm($('spDel'),()=>{ dropSaved('plan',ed); render(); toast('PLAN DELETED'); openPlans(); });
     return;
   }
-  bindRows(L,i=>{ const x=ps[i]; setTicks(groceries().map(it=>it.key).filter(ticked),0);
+  bindRows(L,i=>{ const x=P().plans.find(p=>p.id===ps[i].id)||ps[i]; setTicks(groceries().map(it=>it.key).filter(ticked),0);
     Object.assign(P().plan,{n:x.n, sid:x.id, portions:x.portions, items:JSON.parse(JSON.stringify(x.items))});
     touch(); closeSheet(); render(); warp($('main')); sfx('confirm'); toast('OPENED \u00b7 '+x.n.toUpperCase()); },null);
   L.querySelectorAll('.lw').forEach(w=>bindHold(w,()=>openPlans(ps[w.dataset.i].id)));
 }
 /* Select mode: the chosen foods become one combined item, in the first one's section. */
 function combineSel(){
-  const es=entries().filter(e=>SEL.has(e.id));
-  if(es.length<2){ sfx('nope'); return toast('SELECT 2 OR MORE'); }
+  const {es,n,un}=selRows();
+  if(un){ const now=Date.now(), m=mealOf(es[0]); es.forEach(e=>{ delete e.g; delete e.gn; e.e=now; });
+    touch(); endSelect(); renderMorph(m); sfx('confirm'); return toast('UNCOMBINED'); }
+  if(n<2){ sfx('nope'); return toast('SELECT 2 OR MORE'); }
   promptSheet('Combine as','',n=>{
     const g=uid(), m=mealOf(es[0]), now=Date.now();
     es.forEach(e=>Object.assign(e,{g, gn:n, m, e:now}));
@@ -2791,7 +2817,12 @@ function paintSel(){
   v.querySelectorAll('[data-msel]').forEach(b=>b.classList.toggle('on',
     entries().filter(e=>mealOf(e)===b.dataset.msel).every(e=>SEL.has(e.id))));
   $('selN').textContent=items(SEL.size)+' SELECTED';
+  const r=selRows(), b=$('selComb');
+  b.textContent=r.un?'UNCOMBINE':'COMBINE'; b.disabled=r.n<2 && !r.un;
 }
+/* What's selected, as rows: foods on their own plus combined items. un: exactly one combined item. */
+function selRows(){ const es=entries().filter(e=>SEL.has(e.id)), gs=new Set(es.filter(e=>e.g).map(e=>e.g)), n=gs.size+es.filter(e=>!e.g).length;
+  return {es, n, un:n===1 && gs.size===1}; }
 /* The selected rows fold away, then each section they left glides into place. */
 function deleteSel(){
   const ids=[...SEL], mids=[...new Set(entries().filter(e=>SEL.has(e.id)).map(mealOf))];
@@ -2996,6 +3027,7 @@ function openWeight(){
   setSheet(panel('Weight',picker('wMode',[['d','14 DAYS'],['m','MONTHS']],'d')+'<div id="wtBody"></div>'));
   bindPanel();
   onPick('wMode',v=>{ WT.mode=v; drawWeight(); warp($('wtBody')); });
+  topSheet()._live=()=>{ const a=document.activeElement; if(!WT.drag && !(a && a.id==='wV')) drawWeight(); };   // the other phone's readings, unless one is being typed
   drawWeight();
 }
 /* Everything for the current range; selecting a point later only touches the graph marks,
@@ -3268,9 +3300,13 @@ function followFood(e,f){
    and the same food inside saved meals, becomes the same, and syncs. Entries logged straight
    from a search, never linked, are recognised by the name and serving they had. An entry keeps
    its weight when the serving size changes. Answers how many were brought up to date. */
-function spreadFood(f,oldN,oldSv){
-  const now=Date.now(), mine=e=>e.fid===f.id || (!e.fid && e.n===oldN && e.sv===oldSv), put=e=>followFood(e,f);
-  const same=e=>e.n===f.n && e.sv===f.sv && e.k===f.k && e.p===f.p && e.c===f.c && e.f===f.f && e.fid===f.id && JSON.stringify(e.x)===JSON.stringify(f.x);
+function spreadFood(f,oldN,oldSv,also,was){
+  const ids=new Set([f.id,...(also||[])]), names=new Set([normS(oldN),normS(f.n)]), svs=new Set([String(oldSv).trim().toLowerCase(),f.sv.trim().toLowerCase()]);
+  const refs=[was,f].map(x=>x && per100(x)).filter(Boolean), near=a=>a && refs.some(b=>Math.abs(a[0]-b[0])<=2 && [1,2,3].every(i=>Math.abs(a[i]-b[i])<=0.3));
+  const linked=e=>!!e.fid && P().foods.some(x=>x.id===e.fid);
+  /* its own: linked to it (or to a copy folded into it), or logged unlinked under its name with its serving or nutrition */
+  const now=Date.now(), mine=e=>ids.has(e.fid) || (!linked(e) && names.has(normS(e.n)) && (svs.has(String(e.sv).trim().toLowerCase()) || near(per100(e)))), put=e=>followFood(e,f);
+  const same=e=>e.fid===f.id && sameVals(e,f);
   let n=0;
   Object.entries(DB.profiles).forEach(([who,p])=>{ let m=0;
     Object.values(p.days).forEach(es=>es.forEach(e=>{ if(mine(e) && !same(e)){ put(e); e.e=now; m++; } }));
@@ -3348,8 +3384,8 @@ function mealEntries(c,q,m){
 }
 function quickMeal(c){
   if(ADD.into) return intoMeal(c.items);
-  const now=Date.now(), es=mealEntries(c,1,ADD.meal);
-  dayPush(...es); c.u=c.e=now;
+  const es=mealEntries(c,1,ADD.meal);
+  dayPush(...es); usedMeal(c,ADD.meal);
   FRESH=new Set(es.map(e=>e.id));
   const hit=checkHits(); touch(); render();
   if(!hit){ sfx('confirm'); toast('ADDED '+c.n.toUpperCase()); }
@@ -3386,14 +3422,14 @@ function recentFoods(){
 }
 /* Saved meals and foods as one list. Tap opens one; hold opens its editor in place: rename,
    share with another profile, or delete with a second tap. byTime (Add food's SAVED): meals only,
-   under each meal time in diary order, in groups that fold; a meal in two times shows in both. */
+   under its meal time, in diary order, in groups that fold. */
 const SVO={};                                         // SAVED groups folded shut this session
 function savedList(L,q,onFood,onMeal,ed,plus,byTime){
   const ws=wordsOf(q), az=(x,y)=>x.n.localeCompare(y.n), pick=list=>ws.length?byMatch(list.slice().sort(az),ws):list.slice().sort(az);
   let groups;
-  if(byTime){ const LG=loggedIn(), ms=pick(P().combos).map(o=>[o,timesOf(o,LG)]);
-    groups=P().meals.map(s=>({k:s.id, label:s.n, list:ms.filter(([,t])=>t.has(s.id)).map(([o])=>o)}))
-      .concat({k:'', label:'Other', list:ms.filter(([,t])=>!t.size).map(([o])=>o)});
+  if(byTime){ const F=firstLogs(), ms=pick(P().combos).map(o=>[o,mealTime(o,F)]);
+    groups=P().meals.map(s=>({k:s.id, label:s.n, list:ms.filter(([,t])=>t===s.id).map(([o])=>o)}))
+      .concat({k:'', label:'Other', list:ms.filter(([,t])=>!t).map(([o])=>o)});
     if(byTime==='all') groups.push({k:'foods', label:'Foods', list:pick(P().foods), food:true});   // Settings: the foods after the meals
   } else groups=[{label:'Meals', list:pick(P().combos)},{label:'Foods', list:pick(P().foods), food:true}];
   groups=groups.filter(g=>g.list.length);
@@ -3425,17 +3461,34 @@ function savedList(L,q,onFood,onMeal,ed,plus,byTime){
   setTimeout(()=>{ I.focus(); I.select(); },150);
   $('svX').onclick=()=>again();
   const ok=()=>{ const n=cleanLabel(I.value); if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
-    if(n!==r.o.n){ const was=r.o.n; r.o.n=n; r.o.e=Date.now(); if(r.t!=='meal') spreadFood(r.o,was,r.o.sv); touch(); render(); }
+    const o=(r.t==='meal'?P().combos:P().foods).find(x=>x.id===r.o.id);
+    if(!o){ sfx('nope'); toast('THAT WAS DELETED ON ANOTHER PHONE'); return again(); }
+    if(n!==o.n){ const was=o.n; o.n=n; o.e=Date.now();
+      if(r.t!=='meal'){ const cs=copiesOf(o,[was,n]); spreadFood(o,was,o.sv,cs.map(x=>x.id)); dropCopies(cs); shareFood(); }
+      touch(); render(); }
     sfx('confirm'); again(); };
   $('svOk').onclick=ok;
   I.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); ok(); } };
   arm($('svDel'),()=>{ dropSaved(r.t,r.o.id); toast(r.t==='meal'?'MEAL DELETED':'FOOD DELETED'); again(); });
 }
 /* A food saved from a list or a scan: the saved one with that barcode, or that name and serving, else a new one. */
+/* The saved food a food on screen is when it wasn't opened as one: the saved food with its barcode,
+   else with its name and serving (ignoring case and punctuation), else the one a logged entry matches. */
+function savedAs(f,e){ const L=P().foods, nk=normS(f.n), sk=String(f.sv||'').trim().toLowerCase();
+  return (f.bc && L.find(x=>x.bc===f.bc)) || L.find(x=>normS(x.n)===nk && x.sv.trim().toLowerCase()===sk) || (e && savedOf(e)) || null; }
+/* Other saved foods that are this one under the same name (ignoring case and punctuation): an edit
+   replaces them, so a food is never saved twice with different values. */
+const copiesOf=(f,names)=>{ const ns=new Set(names.map(normS)); return P().foods.filter(x=>x.id!==f.id && ns.has(normS(x.n))); };
+function dropCopies(cs){ if(!cs.length) return; const now=Date.now();
+  Object.values(DB.profiles).forEach(p=>{ cs.forEach(x=>{ p.del[x.id]=now; }); p.foods=p.foods.filter(x=>!cs.includes(x)); }); }
+/* Saved foods are everyone's: after an edit every profile takes it (unifyFoods) and every profile's
+   file is written, so whichever profile the other phone opens has the new version. */
+function shareFood(){ unifyFoods(); const now=Date.now();
+  Object.keys(DB.profiles).filter(n=>n!==DB.cur).forEach(n=>{ DB.profiles[n].at=now; if(ghOn()) setTimeout(()=>ghSync(n),1600); }); }
 function upsertFood(f){
   const L=P().foods, now=Date.now();
   let x=(f.bc && L.find(y=>y.bc===f.bc)) || L.find(y=>y.n.toLowerCase()===f.n.toLowerCase() && y.sv.toLowerCase()===f.sv.toLowerCase());
-  if(x){ x.u=x.e=now; if(f.bc && !x.bc) x.bc=f.bc; return x; }
+  if(x){ x.u=now; if(f.bc && !x.bc){ x.bc=f.bc; x.e=now; } return x; }
   x=cleanFood(Object.assign({},f,{id:uid(),u:now,e:now}));
   L.unshift(x);
   return x;
@@ -3473,6 +3526,8 @@ function openQty(food,o){
   const e=o.entry, stack=!!topSheet();
   setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
   const box=topSheet(), back=stack?popSheet:closeSheet;
+  const copy=f=>Object.assign({},f,{x:Object.assign({},f.x||{})});
+  let first=copy(food);                                          // the food as opened, before anything is typed over it
   let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv), edit=!!o.create, h={}, bc=null, scanning=false;
   const origin=sameFood(food);                                 // the list food this is, if it's edited into one of yours
   lastVeil().onclick=()=>{ if(!edit) back(); };                 // while editing only CANCEL leaves
@@ -3555,7 +3610,7 @@ function openQty(food,o){
       const gotBc=code=>{                                       // attach a barcode, so a later scan finds this food
         const attach=moved=>{ bc=code; sfx('confirm'); draw(); warp($('qBc'));
           toast(moved?'BARCODE WILL MOVE HERE FROM '+moved.n.toUpperCase()+' \u00b7 SAVE TO KEEP IT':'BARCODE '+code+' \u00b7 SAVE TO KEEP IT'); };
-        const other=P().foods.find(f=>f.bc===code && f!==saved);
+        const other=P().foods.find(f=>f.bc===code && (!saved || f.id!==saved.id));
         other?barcodeTaken(other,code,()=>attach(other)):attach(null);
       };
       if(scanning){
@@ -3569,6 +3624,7 @@ function openQty(food,o){
         $('qBc').onclick=()=>{ stopScan(); scanning=false; keep(); draw(); sfx('tap'); };
       } else $('qBc').onclick=()=>{ keep(); scanning=true; draw(); sfx('open'); };
       $('qSave').onclick=()=>{
+        if(saved) saved=P().foods.find(x=>x.id===saved.id)||null;   // the saved food as it is now; gone if deleted on the other phone
         const n=$('qN').value.trim().replace(/\s+/g,' ');
         const blank=!Object.values(h).some(v=>v>0);       // just a name for now: saved, and shown in red
         let sv=svNorm($('qS').value); if(!sv && blank) sv='1 serving';
@@ -3580,15 +3636,18 @@ function openQty(food,o){
         XN.forEach(([k])=>{ if(h[k]>0) vals.x[k]=s(h[k]); });
         const grams=g?st.q*g.n:0, now=Date.now();              // the same weight is kept if the serving changes
         vals.bc=bc||food.bc||'';
-        const oldN=saved?saved.n:food.n, oldSv=saved?saved.sv:food.sv;   // what it was called before this edit
+        if(!saved && !o.create) saved=savedAs(first,e);           // not opened as a saved food: the saved food it is, if there is one
+        const oldN=saved?saved.n:first.n, oldSv=saved?saved.sv:first.sv, was=saved?copy(saved):first;   // as it was before this edit
         if(!saved){ saved=upsertFood(Object.assign({},vals)); if(!o.create && !e) saved.o=origin; }   // a list food edited: yours replaces it in search
         Object.assign(saved,vals,{e:now});
-        if(e && !e.fid) e.fid=saved.id;                           // the entry open here is this food from now on
-        const spread=spreadFood(saved,oldN,oldSv);                 // every entry and meal item of it follows
+        const copies=o.create?[]:copiesOf(saved,[oldN,n]);       // other saved copies of it (an edit, not a new food): folded into this one
+        const le=e && !o.item && liveEntry(e)||e; if(le && !le.fid) le.fid=saved.id;   // the entry open here is this food from now on
+        const spread=spreadFood(saved,oldN,oldSv,copies.map(x=>x.id),was);   // every entry, planned food and meal item of it follows
+        dropCopies(copies);
         if(o.item) followFood(e,saved);                            // and the ingredient open here
-        if(vals.bc) P().foods.forEach(f=>{ if(f!==saved && f.bc===vals.bc){ f.bc=''; f.e=now; } });   // one food per barcode (confirmed on scanning)
-        bc=null; render();
-        food=saved; if(grams && w) st.q=grams/w.n; else { st.q=1; st.w=w && w.n===100?'g':'s'; }
+        if(vals.bc) P().foods.forEach(f=>{ if(f.id!==saved.id && f.bc===vals.bc){ f.bc=''; f.e=now; } });   // one food per barcode (confirmed on scanning)
+        shareFood(); bc=null; render();
+        food=saved; first=copy(saved); if(grams && w) st.q=grams/w.n; else { st.q=1; st.w=w && w.n===100?'g':'s'; }
         o.create=false;
         touch(); sfx('confirm'); toast(spread>1?'FOOD SAVED \u00b7 '+spread+' ENTRIES UPDATED':'FOOD SAVED');
         edit=false; draw(); warp(box);
@@ -3632,10 +3691,10 @@ function openQty(food,o){
 function openCombo(c){
   const st={q:1, m:ADD.meal||P().meals[0].id}, stack=!!topSheet();
   const sum=q=>macroSum(c.items,q);
-  setSheet('<div class="veil"></div><div class="sheet fit full qty cmv"><h3>'+esc(c.n)+'</h3>'+
-    '<div class="qper">'+items(c.items.length)+' \u00b7 MEAL</div>'+
-    '<div class="qamt one"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1" enterkeyhint="done">'+picker('cUnit',[['s','SERVINGS']],'s')+'</div>'+   // the amount up top, clear of the keyboard
-    '<div class="qlh">Ingredients \u00b7 '+c.items.length+'</div><div class="cscr"><div class="rlist" id="cX"></div><div class="xled"><div class="xsum" id="cS"></div></div>'+
+  setSheet('<div class="veil"></div><div class="sheet fit full qty"><h3 class="qt"><span>'+esc(c.n)+'</span></h3>'+
+    '<div class="qper" id="cPer"></div>'+                                       // how many servings, as typed
+    '<div class="qctl"><div class="qamt one"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1" enterkeyhint="done">'+picker('cUnit',[['s','SERVINGS']],'s')+'</div></div>'+
+    '<div class="qlh">Foods in this meal \u00b7 '+c.items.length+'</div><div class="rlist qlab"><div id="cX"></div><div class="xled"><div class="xsum" id="cS"></div></div>'+
     (c.rc?'<div class="msec"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><div class="rcv">'+esc(c.rc)+'</div></div></div>':'')+
     '</div>'+sbar(xBtn(stack),'<button class="btn wide" id="cGo">[ LOG MEAL ]</button>',
       '<div class="qact"><button class="btn ghost wide" id="cEd">[ EDIT MEAL ]</button></div>')+'</div>',stack);
@@ -3646,7 +3705,8 @@ function openCombo(c){
   const paint=()=>{ const t=sum(st.q);
     box._pv=ADD.into?null:t; ibSync();
     $('cX').innerHTML=c.items.map((e,i)=>nutRow(i,Object.assign({},e,{q:e.q*st.q}))).join('');
-    $('cS').innerHTML=totRow('Meal',t); };
+    $('cS').innerHTML=totRow('Meal',t);
+    $('cPer').textContent=(st.q===1?'1 SERVING':r1(st.q)+' SERVINGS'); };
   V.oninput=()=>{ st.q=Math.max(0,+V.value||0); paint(); };
   V.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); V.blur(); $('cGo').click(); } };
   paint();
@@ -3654,10 +3714,10 @@ function openCombo(c){
     if(V.value!=='') st.q=Math.max(0,+V.value||0);      // what's in the box is what's logged
     if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
     if(ADD.into){ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); intoMeal(c.items.map(e=>Object.assign({},e,{q:e.q*st.q}))); return; }
-    const now=Date.now(), es=mealEntries(c,st.q,st.m);
+    const es=mealEntries(c,st.q,st.m);
     dayPush(...es);
     FRESH=new Set(es.map(e=>e.id));
-    c.u=c.e=now;
+    usedMeal(c,st.m);
     const hit=checkHits();
     touch();
     if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); nextFood(); }
@@ -3671,7 +3731,7 @@ function saveMeal(){
   const es=entries().filter(e=>SEL.has(e.id));
   promptSheet('Save as meal','',n=>{
     const now=Date.now();
-    P().combos.unshift(cleanCombo({id:uid(), n, items:es, u:now, e:now}));
+    P().combos.unshift(cleanCombo({id:uid(), n, items:es, u:now, e:now, mt:mealOf(es[0])}));   // logged there, so that's its meal time
     if(es.length>1){ const g=uid(), m=mealOf(es[0]); es.forEach(e=>Object.assign(e,{g, gn:n, m, e:now})); }
     touch(); closeSheet(); endSelect(); sfx('confirm'); toast((es.length>1?'MEAL SAVED AND COMBINED \u00b7 ':'MEAL SAVED \u00b7 ')+n.toUpperCase());
   },true);
@@ -3771,10 +3831,14 @@ const OFF_FIELDS='code,product_name,generic_name,brands,serving_size,nutrition_d
    Each phone downloads it once into IndexedDB (too big for localStorage), checks the tiny
    au-foods.v.json now and then for a newer month, and searches it instantly, offline too. */
 const LOCAL={v:'', d:null, idx:null, cmp:null, voc:null, codes:null, busy:false};
-function idb(){ return new Promise((ok,no)=>{ const r=indexedDB.open('food_diary',1);
-  r.onupgradeneeded=()=>r.result.createObjectStore('kv'); r.onsuccess=()=>ok(r.result); r.onerror=()=>no(r.error); }); }
-async function idbDo(mode,fn){ const db=await idb(); return new Promise((ok,no)=>{ const t=db.transaction('kv',mode), q=fn(t.objectStore('kv'));
-  t.oncomplete=()=>ok(q.result); t.onerror=()=>no(t.error); }); }
+let IDB=null;
+function idb(){ return IDB=IDB||new Promise((ok,no)=>{ const r=indexedDB.open('food_diary',1);
+  r.onupgradeneeded=()=>r.result.createObjectStore('kv');
+  r.onsuccess=()=>{ const db=r.result; db.onclose=db.onversionchange=()=>{ try{ db.close(); }catch(e){} IDB=null; }; ok(db); };
+  r.onerror=()=>{ IDB=null; no(r.error); }; }); }
+async function idbDo(mode,fn,again){ const db=await idb(); let t;
+  try{ t=db.transaction('kv',mode); }catch(e){ IDB=null; if(!again) return idbDo(mode,fn,true); throw e; }   // a closed connection: open it again, once
+  return new Promise((ok,no)=>{ const q=fn(t.objectStore('kv')); t.oncomplete=()=>ok(q.result); t.onerror=()=>no(t.error); }); }
 async function localLoad(){
   try{ const x=await idbDo('readonly',s=>s.get('au')); if(x && Array.isArray(x.d)){ LOCAL.v=x.v; LOCAL.d=x.d; LOCAL.idx=LOCAL.codes=LOCAL.voc=null; } }catch(e){ dbg('LIST','load',e); }
 }
@@ -4055,7 +4119,7 @@ function openTargets(){
       '<button data-d="-1" aria-label="Less">\u2212</button><input class="fld pin" id="i'+k+'" type="number" inputmode="numeric" step="1">'+
       '<button data-d="1" aria-label="More">+</button></div>').join('')+
     '<div class="tot" id="tgSum"></div><button class="btn" id="tgGo">[ SAVE TARGETS ]</button></div>'+
-    '<div class="pgnote">Calories count as on target within '+KBAND*100+'% either side. Protein counts once reached.</div>',true));
+    '<div class="pgnote">Calories count as on target from the target up to 49 kcal over. Protein counts once reached.</div>',true));
   bindPanel(openSettings);
   const paint=()=>{
     const T=targets(g), S=shares(g), tot=S.pp+S.cp+S.fp;
@@ -4138,21 +4202,23 @@ function openMeals(){
     '<div class="pgnote">Hold and drag to reorder. Add up to '+(MAXMEALS-FIXED.length)+' of your own; removing one moves its entries to '+esc(ms[0].n)+'.</div>',true));
   bindPanel(openSettings);
   const done=()=>{ P().me=Date.now(); touch(); render(); openMeals(); };
-  bindReorder($('mlList'),(from,to)=>{ ms.splice(to,0,ms.splice(from,1)[0]); done(); });
+  const live=()=>P().meals, at=i=>live().findIndex(x=>x.id===ms[i].id);   // the sections as they are now, found by id
+  bindReorder($('mlList'),(from,to)=>{ const L=live(), i=at(from); if(i>=0) L.splice(Math.min(to,L.length-1),0,L.splice(i,1)[0]); done(); });
   document.querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{
-    const m=ms[b.dataset.ed];
-    promptSheet('Rename section',m.n,v=>{ m.n=v; done(); });
+    const id=ms[b.dataset.ed].id;
+    promptSheet('Rename section',ms[b.dataset.ed].n,v=>{ const m=live().find(x=>x.id===id); if(m) m.n=v; done(); });
   });
   document.querySelectorAll('[data-x]').forEach(b=>arm(b,()=>{
-    const gone=ms.splice(+b.dataset.x,1)[0], now=Date.now();
-    Object.values(P().days).forEach(es=>es.forEach(e=>{ if(e.m===gone.id){ e.m=ms[0].id; e.e=now; } }));
+    const i=at(+b.dataset.x); if(i<0) return done();
+    const L=live(), gone=L.splice(i,1)[0], now=Date.now();
+    Object.values(P().days).forEach(es=>es.forEach(e=>{ if(e.m===gone.id){ e.m=L[0].id; e.e=now; } }));
     done();
   }));
   if(ms.length>=MAXMEALS) return;
   const add=()=>{
     const n=cleanName($('mlN').value);
     if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
-    ms.push({id:uid(),n}); done();
+    live().push({id:uid(),n}); done();
   };
   $('mlAdd').onclick=add;
   $('mlN').onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); add(); } };
@@ -4393,7 +4459,9 @@ async function liveTick(){
   if(!s) return;
   LIVE.t=setTimeout(liveTick,s*1000);
   if(document.hidden || !ghOn() || !navigator.onLine || LIVE.busy || GHBUSY) return;
-  if(document.querySelector('#sheetWrap .sheet:not(.out)') || SEL || document.querySelector('.fiw.held,.fiw.lifting')) return;
+  const top=topSheet(), open=document.querySelectorAll('#sheetWrap .sheet:not(.out)').length;
+  if((open && !(open===1 && top._live)) || SEL || document.querySelector('.fiw.held,.fiw.lifting')) return;   // screens that can take changes say so (_live)
+  const was=top && JSON.stringify(P());
   LIVE.busy=true;
   try{
     for(const name of [DB.cur,...(PLAN?withNames():[])]){         // planning combined: their plans count too
@@ -4405,6 +4473,7 @@ async function liveTick(){
       if(name===DB.cur){ const came=entries().filter(e=>!before.has(e.id)).map(e=>e.id); if(came.length) FRESH=new Set(came); }
       render();
     }
+    if(top && top.isConnected && JSON.stringify(P())!==was) top._live();
   } finally { LIVE.busy=false; }
 }
 document.addEventListener('visibilitychange',()=>{
@@ -4429,6 +4498,8 @@ boot('interference',()=>{ zapLoop(); setTimeout(rollPass,RND(1500,9000)); drawSt
 boot('sync',()=>{ refreshCog(); if(ghOn()) ghSyncAll().then(()=>{ render(); refreshCog(); }); });
 boot('update',checkUpdate);
 boot('live',()=>setTimeout(liveTick,3000));
+boot('offline',()=>{ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost'))
+  navigator.serviceWorker.register('sw.js').catch(e=>dbg('OFFLINE','no offline copy',e)); });   // sw.js sits beside this file
 boot('storage',()=>{ if(STORE==='memory') toast('NOT SAVING \u2014 SAVE A BACKUP FILE'); });
 </script>
 </body>
