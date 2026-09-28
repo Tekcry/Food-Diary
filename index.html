@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.28.108">
+<meta name="app-version" content="2026.09.28.109">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -615,6 +615,7 @@ html.ios[data-theme=dark]{--ok:#30d158}
 .qname:focus,.qsvi:focus,.lin:focus{outline:none;border-bottom:1px solid var(--bronze)}
 .qname{width:100%;font-family:inherit;letter-spacing:inherit;text-align:center;line-height:inherit}
 .qsvi{width:88%;font-family:var(--serif);letter-spacing:.08em;text-align:center; transform:scale(.72);transform-origin:left center;margin-right:-25%;vertical-align:middle}
+.lin:disabled{opacity:.35}
 .lin{width:128%;margin-left:-28%;height:18px;font-family:var(--serif);color:var(--champ);text-align:right; transform:scale(.78);transform-origin:right center;font-variant-numeric:tabular-nums}
 .qact .duo{gap:8px}
 .qctl{display:grid;gap:8px}
@@ -1033,7 +1034,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.28.108';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.28.109';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3528,7 +3529,7 @@ function openQty(food,o){
   const box=topSheet(), back=stack?popSheet:closeSheet;
   const copy=f=>Object.assign({},f,{x:Object.assign({},f.x||{})});
   let first=copy(food);                                          // the food as opened, before anything is typed over it
-  let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv), edit=!!o.create, h={}, bc=null, scanning=false;
+  let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv), edit=!!o.create, h={}, hs={}, bc=null, scanning=false;   // h: per 100 g; hs: per serving, for a serving with no weight
   const origin=sameFood(food);                                 // the list food this is, if it's edited into one of yours
   lastVeil().onclick=()=>{ if(!edit) back(); };                 // while editing only CANCEL leaves
   /* A new food shows a worked example in every box, greyed, until it's typed over. */
@@ -3568,8 +3569,17 @@ function openQty(food,o){
       V.value=r1(st.q*per[st.w]); update(); });
     V.oninput=()=>{ st.q=Math.max(0,+V.value||0)/per[st.w]; update(); };
     V.onkeydown=ev=>{ if(ev.key==='Enter' && $('qGo')){ ev.preventDefault(); V.blur(); $('qGo').click(); } };
-    /* The label: the amount beside per 100 g (per serving when the food has no weight). In
-       editing, the per 100 g cells are fields; typing only refreshes what's worked out from them. */
+    /* The label: the amount beside per 100 g (per serving when the food has no weight). In editing
+       it's the pack's label: per serving and per 100 g, both fields. Type either and the other is
+       worked out. Per 100 g is kept when the serving's weight changes; a serving with no weight
+       has per serving only. */
+    const W=()=>gramsOf(svNorm($('qS').value));
+    const perSv=k=>{ const w=W(); return w?val(h,k)*w.n/100:val(hs,k); };
+    const show=v=>v>0?String(r1(v)):'';
+    const sync=skip=>{ const w=W();                     // every field but the one being typed in
+      $('qX').querySelectorAll('.lin').forEach(f=>{ if(f===skip) return; const k=f.dataset.k;
+        if(f.classList.contains('lsv')) f.value=show(perSv(k)); else { f.disabled=!w; f.value=w?show(val(h,k)):''; } }); };
+    const setK=(obj,k,n)=>{ if(k==='kj') obj.k=n/4.184; else obj[k]=n; };
     const now=()=>{
       const sv=edit?svNorm($('qS').value):food.sv, w=gramsOf(sv), grams=g?st.q*g.n:0;
       const q=edit?(grams && w?grams/w.n:1):st.q;
@@ -3579,30 +3589,38 @@ function openQty(food,o){
     const update=()=>{ const c=now();
       const dq=e?st.q-e.q:st.q;                          // a logged food: what the new amount changes; a new one: what it adds
       box._pv=!edit && !o.item && !ADD.into?{k:food.k*dq, p:food.p*dq, c:food.c*dq, f:food.f*dq}:null; ibSync();
-      $('qAh').textContent=c.amt.toUpperCase(); $('qBh').textContent=c.w||edit?'PER 100 '+(c.w?c.w.u:'g').toUpperCase():'PER SERVING';
+      if(edit){ $('qAh').textContent='PER SERVING'; $('qBh').textContent='PER 100 '+(c.w?c.w.u:'g').toUpperCase(); return; }
+      $('qAh').textContent=c.amt.toUpperCase(); $('qBh').textContent=c.w?'PER 100 '+c.w.u.toUpperCase():'PER SERVING';
       rows.forEach(([k,,u])=>{ $('qX').querySelector('[data-a="'+k+'"]').textContent=cell(val(c.src,k)*c.q,u); });
     };
     const paint=()=>{ const c=now(), ref=c.w?100/c.w.n:1;
       $('qX').innerHTML='<div class="lrow lhead"><span></span><b id="qAh"></b><b id="qBh"></b></div>'+
-        rows.map(([k,l,u,sub])=>'<div class="lrow'+(sub?' lsub':'')+'"><span>'+l+'</span><b data-a="'+k+'"></b><b>'+
-          (edit?'<input class="lin" type="number" inputmode="decimal" step="any" data-k="'+k+'" placeholder="'+hint(k)+'" value="'+(val(h,k)>0?r1(val(h,k)):'')+'">'
-            :cell(val(c.src,k)*ref,u))+'</b></div>').join('');
+        rows.map(([k,l,u,sub])=>{ const inp=(cls,ph)=>'<input class="lin'+cls+'" type="number" inputmode="decimal" step="any" data-k="'+k+'" placeholder="'+ph+'">';
+          return '<div class="lrow'+(sub?' lsub':'')+'"><span>'+l+'</span><b data-a="'+k+'">'+(edit?inp(' lsv','\u2014'):'')+'</b><b>'+
+            (edit?inp('',hint(k)):cell(val(c.src,k)*ref,u))+'</b></div>'; }).join('');
       update();
-      if(edit){ const ins=[...$('qX').querySelectorAll('.lin')];
-        ins.forEach((f,i)=>{ f.enterKeyHint=i<ins.length-1?'next':'done';
-          f.onkeydown=ev=>{ if(ev.key!=='Enter') return; ev.preventDefault(); if(i<ins.length-1) ins[i+1].focus(); else { f.blur(); $('qSave').click(); } };
-          f.closest('.lrow').onclick=ev=>{ if(ev.target!==f) f.focus(); };  }); }   // the whole row is the box
-      if(edit) $('qX').querySelectorAll('.lin').forEach(f=>f.oninput=()=>{
-        const n=Math.max(0,+f.value||0);
-        if(f.dataset.k==='kj'){ h.k=n/4.184; const kc=$('qX').querySelector('.lin[data-k="k"]'); kc.value=n?r1(h.k):''; }
-        else { h[f.dataset.k]=n; if(f.dataset.k==='k'){ const kj=$('qX').querySelector('.lin[data-k="kj"]'); kj.value=n?r1(n*4.184):''; } }
-        update(); });
+      if(!edit) return;
+      sync(null);
+      const cols=[[...$('qX').querySelectorAll('.lin.lsv')],[...$('qX').querySelectorAll('.lin:not(.lsv)')]];
+      cols.forEach(col=>col.forEach((f,i)=>{               // Return goes down the column; the last one saves
+        f.enterKeyHint=i<col.length-1?'next':'done';
+        f.onkeydown=ev=>{ if(ev.key!=='Enter') return; ev.preventDefault(); const nx=col.slice(i+1).find(x=>!x.disabled); if(nx) nx.focus(); else { f.blur(); $('qSave').click(); } };
+        f.oninput=()=>{ const n=Math.max(0,+f.value||0), k=f.dataset.k, w=W();
+          if(f.classList.contains('lsv')){ if(w) setK(h,k,n*100/w.n); else setK(hs,k,n); } else setK(h,k,n);
+          sync(f); update(); };
+      }));
+      cols[0].forEach(f=>{ f.closest('.lrow').onclick=ev=>{ if(!ev.target.closest('input')) f.focus(); }; });   // the whole row is the box: per serving, as the pack reads
     };
     paint();
     if(edit){
       /* typing sets the unit; picking one rewrites the serving with it, so it's never there twice */
-      $('qS').oninput=()=>{ $('qU').value=parseSv($('qS').value).u; update(); };
-      $('qU').onchange=()=>{ const u=$('qU').value; if(u){ $('qS').value=svCompose(parseSv($('qS').value),u); sfx('tap'); } update(); };
+      let lastW=W();
+      const reserve=()=>{ const w=W();                  // the serving's weight changed: carry the values across
+        if(w && !lastW && !Object.values(h).some(v=>v>0)) Object.keys(hs).forEach(k=>{ h[k]=hs[k]*100/w.n; });
+        if(!w && lastW && !Object.values(hs).some(v=>v>0)) Object.keys(h).forEach(k=>{ hs[k]=h[k]*lastW.n/100; });
+        lastW=w; sync(document.activeElement); update(); };
+      $('qS').oninput=()=>{ $('qU').value=parseSv($('qS').value).u; reserve(); };
+      $('qU').onchange=()=>{ const u=$('qU').value; if(u){ $('qS').value=svCompose(parseSv($('qS').value),u); sfx('tap'); } reserve(); };
       const keep=()=>{ food=Object.assign({},food,{n:$('qN').value, sv:$('qS').value}); };    // typed text survives a redraw
       $('qCancel').onclick=()=>{ if(scanning){ stopScan(); scanning=false; } if(o.create) return back(); bc=null; edit=false; draw(); warp(box); };
       /* SCAN BARCODE opens the camera in place, just above the bar: the button becomes x (stop) with
@@ -3626,14 +3644,13 @@ function openQty(food,o){
       $('qSave').onclick=()=>{
         if(saved) saved=P().foods.find(x=>x.id===saved.id)||null;   // the saved food as it is now; gone if deleted on the other phone
         const n=$('qN').value.trim().replace(/\s+/g,' ');
-        const blank=!Object.values(h).some(v=>v>0);       // just a name for now: saved, and shown in red
-        let sv=svNorm($('qS').value); if(!sv && blank) sv='1 serving';
-        const w=gramsOf(sv);
+        const blank=![h,hs].some(o=>Object.values(o).some(v=>v>0));   // just a name for now: saved, and shown in red
+        let sv=svNorm($('qS').value); if(!sv) sv='1 serving';
+        const w=gramsOf(sv), s=k=>r1(Math.max(0,w?val(h,k)*w.n/100:val(hs,k)));   // per serving, as saved
         if(!n){ sfx('nope'); return toast('GIVE IT A NAME'); }
-        if(!blank && !w){ sfx('nope'); return toast('ADD THE WEIGHT, E.G. 40 G OR 1 SLICE (38 G)'); }
-        if(!blank && !(h.k>0)){ sfx('nope'); return toast('ENTER THE ENERGY PER 100 G'); }
-        const s=x=>w?r1((x||0)*w.n/100):0, vals={n, sv, k:s(h.k), p:s(h.p), c:s(h.c), f:s(h.f), x:{}};
-        XN.forEach(([k])=>{ if(h[k]>0) vals.x[k]=s(h[k]); });
+        if(!blank && !(s('k')>0)){ sfx('nope'); return toast('ENTER THE ENERGY'); }
+        const vals={n, sv, k:s('k'), p:s('p'), c:s('c'), f:s('f'), x:{}};
+        XN.forEach(([k])=>{ if(s(k)>0) vals.x[k]=s(k); });
         const grams=g?st.q*g.n:0, now=Date.now();              // the same weight is kept if the serving changes
         vals.bc=bc||food.bc||'';
         if(!saved && !o.create) saved=savedAs(first,e);           // not opened as a saved food: the saved food it is, if there is one
@@ -3680,8 +3697,8 @@ function openQty(food,o){
       if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
       else { closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); } });
     $('qEdit').onclick=()=>{                       // per 100 g is what editing works from
-      const w=gramsOf(food.sv); h={};
-      if(w) rows.forEach(([k])=>{ if(k!=='kj'){ const x=val(Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f}),k); if(x>0) h[k]=x*100/w.n; } });
+      const w=gramsOf(food.sv), all=Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f}); h={}; hs={};
+      rows.forEach(([k])=>{ if(k==='kj') return; const x=val(all,k); if(x>0){ if(w) h[k]=x*100/w.n; else hs[k]=x; } });
       edit=true; draw(); warp(box); };
   };
   draw();
