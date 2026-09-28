@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.100">
+<meta name="app-version" content="2026.09.26.101">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1046,7 +1046,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.100';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.101';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1390,7 +1390,7 @@ function mergeProfile(a,b){
   const sp={}; b.plans.concat(a.plans).forEach(x=>pick(sp,x));
   o.plans=Object.values(sp).filter(x=>!gone(x)).sort((x,y)=>y.u-x.u || (x.id<y.id?-1:1));
   const days={};
-  [b,a].forEach(p=>Object.keys(p.days).forEach(d=>{ days[d]=days[d]||{}; p.days[d].forEach(e=>pick(days[d],e)); }));
+  [a,b].forEach(p=>Object.keys(p.days).forEach(d=>{ days[d]=days[d]||{}; p.days[d].forEach(e=>pick(days[d],e)); }));   // a tie keeps this phone's
   Object.keys(days).forEach(d=>{
     const v=Object.values(days[d]).filter(e=>!gone(e)).sort((x,y)=>place(x)-place(y) || (x.id<y.id?-1:1));
     if(v.length) o.days[d]=v;
@@ -2166,7 +2166,7 @@ function render(){
     paintSel();
   } else {
     v.querySelectorAll('.logrow[data-meal]').forEach(b=>b.onclick=()=>openAdd(b.dataset.meal));
-    v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>{ const ids=idsOf(b), e=all.find(x=>x.id===ids[0]); if(!e) return;
+    v.querySelectorAll('.fi').forEach(b=>b.onclick=()=>{ const ids=idsOf(b), e=entries().find(x=>x.id===ids[0]); if(!e) return;   // the diary as it is now, not as it was drawn
       ids.length>1 || e.g ? openGroup(e.g) : openQty(e,{entry:e}); });
     v.querySelectorAll('.swipe').forEach(el=>bindSwipe(el,1,0.45,()=>copyMeal(el.dataset.meal,src[el.dataset.meal])));
     v.querySelectorAll('.fiw').forEach(el=>{
@@ -2385,6 +2385,11 @@ function copySource(mid){
 /* Writes to what's on screen: the day's diary, or the week plan while planning. */
 function setDay(list){ if(PLAN){ P().plan.items=list; return; } if(list.length) P().days[DAY]=list; else delete P().days[DAY]; }
 const dayPush=(...es)=>setDay(entries().concat(es));
+/* A logged food as it is in the diary (or plan) right now: syncing replaces the objects, so a
+   screen opened before a sync must not change a copy nobody sees. */
+function liveEntry(e){
+  return entries().find(x=>x.id===e.id) || Object.values(P().days).flat().find(x=>x.id===e.id) || P().plan.items.find(x=>x.id===e.id) || null;
+}
 function dropEntries(ids){
   const now=Date.now();
   setDay(entries().filter(x=>!ids.includes(x.id)));
@@ -3574,8 +3579,9 @@ function openQty(food,o){
       const up=()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); nextFood(); };
       if(o.item){ Object.assign(e,{q:st.q, w:st.w}); sfx('confirm'); toast('UPDATED'); return up(); }    // an ingredient of a meal being built
       if(ADD.into && !e){ intoMeal([Object.assign({},food,{fid:saved?saved.id:'', q:st.q, w:st.w})]); return up(); }
-      const now=Date.now(), was=e?mealOf(e):st.m;
-      if(e) Object.assign(e,{q:st.q, w:st.w, m:st.m, e:now});
+      const now=Date.now(), live=e?liveEntry(e):null, was=live?mealOf(live):st.m;
+      if(e && !live){ sfx('nope'); return toast('THAT FOOD WAS REMOVED ON ANOTHER PHONE'); }
+      if(live) Object.assign(live,{q:st.q, w:st.w, m:st.m, e:now});   // the one in the diary now, even if a sync replaced it since this opened
       else {
         const en={id:uid(), fid:saved?saved.id:'', n:food.n, sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now,
           ...(ADD.group && !o.entry?ADD.group:{})};
@@ -3589,7 +3595,7 @@ function openQty(food,o){
       if(!hit){ sfx('confirm'); toast(e?'UPDATED':'LOGGED \u00b7 '+fmt(food.k*st.q)+' KCAL'); }
     };
     if(e && o.item) arm($('qDel'),()=>{ o.item.remove(); toast('REMOVED'); popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); });
-    else if(e) arm($('qDel'),()=>{ dropEntries([e.id]); toast('REMOVED');
+    else if(e) arm($('qDel'),()=>{ dropEntries([e.id]); toast('REMOVED');   // by id, so it's the entry in the diary now
       if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
       else { closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); } });
     $('qEdit').onclick=()=>{                       // per 100 g is what editing works from
