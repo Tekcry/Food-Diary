@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.28.110">
+<meta name="app-version" content="2026.09.28.111">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1034,12 +1034,22 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.28.110';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.28.111';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
 const DEBUG=(()=>{ try{ return localStorage.getItem('food_log_debug')==='1'; }catch(e){ return false; } })();
 function dbg(area,...a){ if(DEBUG) console.warn('['+area+']',...a); }
+/* Activity log: food saves, what each sync changed in a saved food, the phone's clock against the
+   server's, and any error, with times. Kept on this phone only (last 400 lines), never synced.
+   Settings > Sync and backup > COPY LOG puts it on the clipboard to paste into a chat. */
+const DIAGK='food_log_diag';
+function diag(what,info){ try{ const a=JSON.parse(localStorage.getItem(DIAGK)||'[]'), d=new Date();
+  a.push(d.toLocaleString('en-AU',{hour12:false})+'.'+String(d.getMilliseconds()).padStart(3,'0')+' '+what+(info===undefined?'':' '+(typeof info==='string'?info:JSON.stringify(info))));
+  localStorage.setItem(DIAGK,JSON.stringify(a.slice(-400))); }catch(e){} }
+const diagFood=f=>f?{id:f.id,n:f.n,sv:f.sv,k:f.k,p:f.p,c:f.c,f:f.f,bc:f.bc,e:f.e,u:f.u}:null;
+addEventListener('error',ev=>diag('ERROR',(ev.message||'')+' @'+(ev.lineno||'')+':'+(ev.colno||'')+' '+String(ev.error&&ev.error.stack||'').slice(0,400)));
+addEventListener('unhandledrejection',ev=>diag('ERROR (async)',String(ev.reason&&(ev.reason.stack||ev.reason.message)||ev.reason).slice(0,400)));
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
 const DEF_MEALS=[{id:'b',n:'Breakfast'},{id:'l',n:'Lunch'},{id:'d',n:'Dinner'},{id:'s',n:'Snacks'}];
@@ -1467,7 +1477,12 @@ async function ghSync(name){
       const rem=await ghGet(name), local=DB.profiles[name];
       if(!local || (!rem.prof && !local.at)) break;        // never used: nothing worth uploading
       const before=JSON.stringify(local);
+      const was={}; local.foods.forEach(f=>{ was[f.id]=f; });
       DB.profiles[name]=rem.prof?mergeProfile(local,rem.prof):cleanProfile(local); unifyFoods();   // the shared foods, before it's written back
+      try{ const rf={}, key=f=>f?[f.n,f.sv,f.k,f.p,f.c,f.f,f.bc,JSON.stringify(f.x)].join('|'):''; (rem.prof?rem.prof.foods:[]).forEach(f=>{ rf[f.id]=f; });
+        const now={}; DB.profiles[name].foods.forEach(f=>{ now[f.id]=f; });
+        Object.keys(Object.assign({},was,now)).forEach(id=>{ if(key(was[id])!==key(now[id])) diag('sync '+name+' changed a food',{before:diagFood(was[id]),after:diagFood(now[id]),repo:diagFood(rf[id]),del:DB.profiles[name].del[id]||0}); });
+      }catch(e){ diag('ERROR (sync log)',String(e)); }
       const merged=DB.profiles[name], mj=JSON.stringify(merged);
       if(mj!==before){ save(); render(); }
       if(rem.prof && mj===JSON.stringify(rem.prof)) break;
@@ -3646,7 +3661,8 @@ function openQty(food,o){
         row.insertAdjacentHTML('beforeend','<button class="btn ghost sbx" id="qBc" aria-label="Stop scanning">\u00d7</button>'); host.append(row);
         $('qBc').onclick=()=>{ stopScan(); scanning=false; keep(); draw(); sfx('tap'); };
       } else $('qBc').onclick=()=>{ keep(); scanning=true; draw(); sfx('open'); };
-      $('qSave').onclick=()=>{
+      $('qSave').onclick=()=>{ try{ saveIt(); }catch(err){ diag('ERROR food save',String(err&&err.stack||err).slice(0,600)); sfx('nope'); toast('SAVE FAILED \u00b7 '+String(err&&err.message||err).slice(0,60).toUpperCase()); } };
+      const saveIt=()=>{
         if(saved) saved=P().foods.find(x=>x.id===saved.id)||null;   // the saved food as it is now; gone if deleted on the other phone
         const n=$('qN').value.trim().replace(/\s+/g,' ');
         const blank=![h,hs].some(o=>Object.values(o).some(v=>v>0));   // just a name for now: saved, and shown in red
@@ -3661,13 +3677,15 @@ function openQty(food,o){
         if(!saved && !o.create) saved=savedAs(first,e);           // not opened as a saved food: the saved food it is, if there is one
         const oldN=saved?saved.n:first.n, oldSv=saved?saved.sv:first.sv, was=saved?copy(saved):first;   // as it was before this edit
         if(!saved){ saved=upsertFood(Object.assign({},vals)); if(!o.create && !e) saved.o=origin; }   // a list food edited: yours replaces it in search
-        Object.assign(saved,vals,{e:later(...allE('foods',saved.id))});
+        const prevE=allE('foods',saved.id);                         // every copy's time before this edit (for the log)
+        Object.assign(saved,vals,{e:later(...prevE)});
         const copies=o.create?[]:copiesOf(saved,[oldN,n]);       // other saved copies of it (an edit, not a new food): folded into this one
         const le=e && !o.item && liveEntry(e)||e; if(le && !le.fid) le.fid=saved.id;   // the entry open here is this food from now on
         const spread=spreadFood(saved,oldN,oldSv,copies.map(x=>x.id),was);   // every entry, planned food and meal item of it follows
         dropCopies(copies);
         if(o.item) followFood(e,saved);                            // and the ingredient open here
         if(vals.bc) P().foods.forEach(f=>{ if(f.id!==saved.id && f.bc===vals.bc){ f.bc=''; f.e=later(f.e); } });   // one food per barcode (confirmed on scanning)
+        diag('food saved',{from:o.entry?'entry':o.item?'meal ingredient':o.create?'new':'food',typed:{h,hs,sv:$('qS').value,bc:vals.bc},saved:diagFood(saved),replaced:copies.map(diagFood),before:prevE});
         shareFood(); bc=null; render();
         food=saved; first=copy(saved); if(grams && w) st.q=grams/w.n; else { st.q=1; st.w=w && w.n===100?'g':'s'; }
         o.create=false;
@@ -4350,6 +4368,10 @@ function openSync(){
     '</div><div class="card pgcard"><div class="pghead"><h4 class="pgh">Backup file \u00b7 all profiles</h4></div>'+
     '<div class="duo"><button class="btn" id="exGo">[ SAVE FILE ]</button><button class="btn ghost" id="imGo">[ LOAD FILE ]</button></div>'+
     '<div class="pgnote">Loading merges into what is here. Nothing is lost.</div></div>'+
+    '<div class="card pgcard"><div class="pghead"><h4 class="pgh">Activity log</h4></div>'+
+    '<div class="pgrow"><span class="pk">Kept on this phone</span><span class="pv" id="dgN">'+diagCount()+' lines</span></div>'+
+    '<div class="duo"><button class="btn ghost" id="dgClr">[ CLEAR ]</button><button class="btn" id="dgCp">[ COPY LOG ]</button></div>'+
+    '<div class="pgnote">Food saves, what each sync changed, the phone\u2019s clock and any errors. Copy it to send when something goes wrong.</div></div>'+
     '<div class="card pgcard"><div class="pghead"><h4 class="pgh">Australian food list</h4></div>'+
     '<div class="pgrow"><span class="pk">Status</span><span class="pv" id="auSt">'+esc(localSummary())+'</span></div>'+
     '<button class="btn ghost" id="auGo">[ CHECK FOR UPDATE ]</button>'+
@@ -4360,6 +4382,11 @@ function openSync(){
     toast({updated:'FOOD LIST UPDATED',current:'FOOD LIST IS UP TO DATE',offline:'NO CONNECTION',missing:'NO LIST PUBLISHED YET',failed:'UPDATE FAILED \u2014 TRY AGAIN'}[r]);
     if($('auSt')) { $('auSt').textContent=localSummary(); warp($('auSt')); } };
   $('exGo').onclick=exportFile;
+  $('dgCp').onclick=async()=>{ const t='Food Diary '+APP_VERSION+' activity log\n'+diagText();
+    try{ await navigator.clipboard.writeText(t); }catch(e){ const a=document.createElement('textarea'); a.value=t; a.setAttribute('readonly',''); a.style.cssText='position:fixed;opacity:0;top:0';
+      document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); }catch(_){} a.remove(); }
+    sfx('confirm'); toast('LOG COPIED \u00b7 '+diagCount()+' LINES'); };
+  arm($('dgClr'),()=>{ try{ localStorage.removeItem(DIAGK); }catch(e){} $('dgN').textContent='0 lines'; toast('LOG CLEARED'); });
   $('imGo').onclick=()=>$('imFile').click();
   if(on){
     $('syNow').onclick=async()=>{ toast('SYNCING\u2026'); const r=await ghSyncAll();
@@ -4372,6 +4399,8 @@ function openSync(){
     $('syGo').onclick=ghConnect;
   }
 }
+const diagText=()=>{ try{ return JSON.parse(localStorage.getItem(DIAGK)||'[]').join('\n'); }catch(e){ return ''; } };
+const diagCount=()=>{ try{ return JSON.parse(localStorage.getItem(DIAGK)||'[]').length; }catch(e){ return 0; } };
 async function ghConnect(){
   const repo=$('syRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$|\/+$/g,'');
   const tok=$('syTok').value.trim();
@@ -4429,7 +4458,8 @@ const newer=(a,b)=>{ a=a.split('.').map(Number); b=b.split('.').map(Number);
 async function checkUpdate(){
   if(location.protocol!=='https:') return;
   try{
-    const r=await fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'});
+    const t0=Date.now(), r=await fetch(location.pathname+'?check='+Date.now(),{cache:'no-store'}), t1=Date.now();
+    const sd=Date.parse(r.headers.get('Date')||''); if(sd) diag('clock',{phoneAheadBySeconds:Math.round(((t0+t1)/2-sd)/1000)});   // server Date has 1-second steps
     const v=(await r.text()).match(/APP_VERSION='([\d.]+)'/);
     if(v && newer(v[1],APP_VERSION) && !GHT && !GHBUSY && !document.querySelector('#sheetWrap .sheet'))
       { seen(); location.replace(location.pathname+'?v='+v[1]); }          // an update is a resume too
@@ -4508,6 +4538,7 @@ document.addEventListener('visibilitychange',()=>{
 setInterval(()=>{ if(FOLLOW && DAY!==today() && !document.querySelector('#sheetWrap .sheet')){ DAY=today(); render(); } },60000);
 /* Each start-up step is isolated, so one failing can't keep the app from showing. */
 const boot=(name,fn)=>{ try{ fn(); }catch(e){ console.error('start-up: '+name,e); } };
+boot('diag',()=>diag('start',{v:APP_VERSION, standalone:!!(navigator.standalone||matchMedia('(display-mode: standalone)').matches), offlineCopy:!!(navigator.serviceWorker&&navigator.serviceWorker.controller), profile:(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)).cur; }catch(e){ return ''; } })()}));
 boot('load',load);
 boot('open sections',()=>{ DB.fold={}; });        // opening the app starts with every section open
 boot('render',render);
