@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.28.112">
+<meta name="app-version" content="2026.09.28.113">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1034,7 +1034,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.28.112';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.28.113';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3569,7 +3569,8 @@ function openQty(food,o){
   const val=(src,k)=>k==='kj'?(src.k||0)*4.184:(src[k]||0);
   const draw=()=>{
     g=gramsOf(food.sv); fix();
-    const hasBc=!!(bc||food.bc);
+    const own=saved&&P().foods.find(x=>x.id===saved.id) || (!o.create && savedAs(first,e));   // the saved food this is, as it is now
+    const hasBc=!!(bc||food.bc||own&&own.bc);
     /* Secondary actions under the heading; the amount and the main action (LOG FOOD, UPDATE, SAVE)
        in a bar at the bottom, where the thumb already is. */
     const top=edit?(scanning?'<div class="qscan" id="qSc"></div>':'<button class="btn ghost wide" id="qBc">'+(hasBc?'[ BARCODE \u2713 ]':'[ SCAN BARCODE ]')+'</button>')
@@ -3677,8 +3678,8 @@ function openQty(food,o){
         const vals={n, sv, k:s('k'), p:s('p'), c:s('c'), f:s('f'), x:{}};
         XN.forEach(([k])=>{ if(s(k)>0) vals.x[k]=s(k); });
         const grams=g?st.q*g.n:0;                               // the same weight is kept if the serving changes
-        vals.bc=bc||food.bc||'';
         if(!saved && !o.create) saved=savedAs(first,e);           // not opened as a saved food: the saved food it is, if there is one
+        vals.bc=bc||food.bc||saved&&saved.bc||'';                  // a new scan, else the barcode it has: an entry carries none, so never cleared by editing one
         const oldN=saved?saved.n:first.n, oldSv=saved?saved.sv:first.sv, was=saved?copy(saved):first;   // as it was before this edit
         if(!saved){ saved=upsertFood(Object.assign({},vals)); if(!o.create && !e) saved.o=origin; }   // a list food edited: yours replaces it in search
         const prevE=allE('foods',saved.id);                         // every copy's time before this edit (for the log)
