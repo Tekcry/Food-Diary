@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.103">
+<meta name="app-version" content="2026.09.26.104">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1047,7 +1047,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.103';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.104';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -3842,7 +3842,10 @@ function localSearch(q){
     const have=new Set(hits.map(([,i])=>i));
     sets.sort((x,y)=>x.size-y.size)[0].forEach(i=>{ if(!have.has(i) && sets.every(s=>s.has(i))) hits.push([rank(i,true),i]); });
   }
-  return hits.sort((x,y)=>x[0]-y[0]).slice(0,40).map(([,i])=>localFood(LOCAL.d[i])).filter(Boolean);
+  const seen=new Set(), out=[];                       // identical foods (same name, same nutrition) show once, the best match
+  for(const [,i] of hits.sort((x,y)=>x[0]-y[0])){ const f=localFood(LOCAL.d[i]); if(!f) continue;
+    const k=normS(f.n)+'|'+LOCAL.d[i].slice(4).join(); if(seen.has(k)) continue; seen.add(k); out.push(f); if(out.length>=40) break; }
+  return out;
 }
 function localSummary(){
   if(!LOCAL.d) return 'not downloaded yet';
@@ -3920,6 +3923,16 @@ function matchScore(text,ws){
   return near?1:2;
 }
 const sameFood=f=>(f.n+'|'+f.sv).toLowerCase();
+/* Per 100 g (or ml): what makes two foods identical whatever their servings. */
+const per100=f=>{ const g=gramsOf(f.sv); return g && g.n>0?['k','p','c','f'].map(k=>(f[k]||0)*100/g.n):null; };
+/* A list food that is one of yours: the same barcode, or the same name with the same nutrition
+   (within label rounding). Yours shows; the list copy doesn't. */
+function isMine(f,mine){
+  if(f.bc && mine.some(x=>x.bc===f.bc)) return true;
+  const a=per100(f); if(!a) return false;
+  return mine.some(x=>{ if(normS(x.n)!==normS(f.n)) return false; const b=per100(x);
+    return b && Math.abs(a[0]-b[0])<=2 && [1,2,3].every(i=>Math.abs(a[i]-b[i])<=0.3); });
+}
 function historyFoods(){                              // newest first, one per food
   const from=shift(today(),-HISTORY_DAYS), seen=new Set(), out=[];
   Object.keys(P().days).filter(d=>d>=from && d<=today()).forEach(d=>P().days[d].forEach(e=>out.push(e)));
@@ -3939,9 +3952,9 @@ function queueSearch(q){
   const s=$('osSt'); if(!s) return;
   if(q.length<2){ ADD.results=[]; s.textContent=''; return paintResults(); }
   const mine=yourFoods(q), have=new Set([...mine.hist,...mine.saved].map(sameFood).concat(P().foods.map(f=>f.o).filter(Boolean)));
-  ADD.results=localSearch(q).filter(f=>!have.has(sameFood(f)));
+  ADD.results=localSearch(q).filter(f=>!have.has(sameFood(f)) && !isMine(f,P().foods));
   const none=!mine.hist.length && !mine.saved.length && !ADD.results.length;
-  s.textContent=!LOCAL.d?'AUSTRALIAN LIST NOT ON THIS PHONE YET \u2014 SETTINGS \u203a AUSTRALIAN FOOD LIST'
+  s.textContent=!LOCAL.d?'AUSTRALIAN LIST NOT ON THIS PHONE YET \u2014 SETTINGS \u203a SYNC AND BACKUP'
     :none?'NO MATCHING FOODS \u2014 TRY FEWER WORDS, OR TAP + TO ADD IT':'';
   s.classList.toggle('err',none || !LOCAL.d);
   paintResults();
