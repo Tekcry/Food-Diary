@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.28.111">
+<meta name="app-version" content="2026.09.28.112">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1034,7 +1034,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.28.111';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.28.112';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1063,6 +1063,10 @@ function num(v,lo,hi){ const n=+v; return Number.isFinite(n)&&n>=lo&&n<=hi?n:nul
 const orD=(v,d)=>v===null?d:v;
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
 const r1=v=>Math.round((+v||0)*10)/10;
+/* Nutrition is kept per serving to 3 decimals, and only shown to 1. Kept to 1, a small serving
+   couldn't hold what's typed per 100 g: 7.5 g protein per 100 g is 1.05 g in a 14 g piece, which at
+   one decimal became 1.1 g, and read back per 100 g as 7.9. */
+const r3=v=>Math.round((+v||0)*1000)/1000;
 const fmt=v=>Math.round(+v||0).toLocaleString('en-AU');
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 /* Profile and section names stay short and plain: profiles become file names and sections sit
@@ -1076,7 +1080,7 @@ function blankProfile(){
 }
 function cleanX(x){
   const o={};
-  if(x && typeof x==='object') XN.forEach(([k])=>{ const v=num(x[k],0,100000); if(v) o[k]=r1(v); });
+  if(x && typeof x==='object') XN.forEach(([k])=>{ const v=num(x[k],0,100000); if(v) o[k]=r3(v); });
   return o;
 }
 /* Hand changes to a saved meal's meal times: section id -> 1 added, 0 taken off. */
@@ -3595,7 +3599,7 @@ function openQty(food,o){
        has per serving only. */
     const W=()=>gramsOf(svNorm($('qS').value));
     const perSv=k=>{ const w=W(); return w?val(h,k)*w.n/100:val(hs,k); };
-    const show=v=>v>0?String(r1(v)):'';
+    const show=v=>v>0?String(v<10?Math.round(v*100)/100:r1(v)):'';   // small amounts to 2 decimals, so 1.05 g reads as typed
     const sync=skip=>{ const w=W();                     // every field but the one being typed in
       $('qX').querySelectorAll('.lin').forEach(f=>{ if(f===skip) return; const k=f.dataset.k;
         if(f.classList.contains('lsv')) f.value=show(perSv(k)); else { f.disabled=!w; f.value=w?show(val(h,k)):''; } }); };
@@ -3667,7 +3671,7 @@ function openQty(food,o){
         const n=$('qN').value.trim().replace(/\s+/g,' ');
         const blank=![h,hs].some(o=>Object.values(o).some(v=>v>0));   // just a name for now: saved, and shown in red
         let sv=svNorm($('qS').value); if(!sv) sv='1 serving';
-        const w=gramsOf(sv), s=k=>r1(Math.max(0,w?val(h,k)*w.n/100:val(hs,k)));   // per serving, as saved
+        const w=gramsOf(sv), s=k=>r3(Math.max(0,w?val(h,k)*w.n/100:val(hs,k)));   // per serving, as saved (3 decimals)
         if(!n){ sfx('nope'); return toast('GIVE IT A NAME'); }
         if(!blank && !(s('k')>0)){ sfx('nope'); return toast('ENTER THE ENERGY'); }
         const vals={n, sv, k:s('k'), p:s('p'), c:s('c'), f:s('f'), x:{}};
@@ -3860,10 +3864,10 @@ function offMap(p){
   if(k===null || !name) return null;
   const g=gramsOf(sv);
   const m=f=>{ let v=val(f+per); if(v===null && per==='_serving' && g && val(f+'_100g')!==null) v=val(f+'_100g')*g.n/100; return v>0?v:0; };
-  const x={}; XN.forEach(([key,,,,off,mul])=>{ const v=m(off); if(v) x[key]=r1(v*mul); });
+  const x={}; XN.forEach(([key,,,,off,mul])=>{ const v=m(off); if(v) x[key]=r3(v*mul); });
   const br=String(p.brands||'').split(',')[0].trim();
   return {n:(br && !name.toLowerCase().includes(br.toLowerCase())?br+' '+name:name).slice(0,80),
-    sv, k:r1(k), p:r1(m('proteins')), c:r1(m('carbohydrates')), f:r1(m('fat')), x, bc:String(p.code||'').replace(/\D/g,'')};
+    sv, k:r3(k), p:r3(m('proteins')), c:r3(m('carbohydrates')), f:r3(m('fat')), x, bc:String(p.code||'').replace(/\D/g,'')};
 }
 const OFF_FIELDS='code,product_name,generic_name,brands,serving_size,nutrition_data_per,nutriments';
 /* ---------- the Australian list, kept on the phone ----------
