@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.26.101">
+<meta name="app-version" content="2026.09.26.103">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -192,8 +192,8 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .ibm{display:grid;grid-template-columns:52px 1fr auto;align-items:center;gap:10px;height:12px;line-height:12px}
 .ibm+.ibm{margin-top:1px}
 .ibm .ibl{font-size:8.5px;letter-spacing:.16em;color:var(--dim)}
-.ibmv{display:flex;justify-content:flex-end;align-items:baseline;gap:4px}
-.ibm .ibd{display:inline-block;width:4.5ch;text-align:right}
+.ibmv{position:relative;display:flex;justify-content:flex-end;align-items:baseline}
+.ibm .ibd{position:absolute;right:100%;top:0;padding:0 4px 0 6px;text-align:right;background:var(--bg)}
 .ibmn{display:grid;grid-template-columns:3ch 1.8ch 3ch 1.6ch;font-size:11px;color:var(--champ)}
 .ibmn b{font-weight:400;text-align:right}
 .ibmn i{font-style:normal;color:var(--dimmer);text-align:right}
@@ -867,7 +867,7 @@ html .qty .qact .btn{min-height:44px}
 .qty .qact{flex:none}
 /* the bottom bar: planner, day, LOG, profile, settings, all under the thumb */
 .bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:1fr 1fr 1.3fr 1fr 1fr;align-items:center;
-  padding:6px 10px calc(6px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+  padding:6px 10px var(--sab);background:var(--bg);border-top:1px solid var(--line);transition:transform .3s cubic-bezier(.4,0,.2,1)}
 body.selecting .bnav{transform:translateY(110%)}
 html .bnav .cog,html .bnav .whobtn,html .bnav .planbtn,html .bnav .bnb{position:relative;top:auto;right:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
   height:50px;width:100%;padding:0;margin:0;background:none;border:0;color:var(--dimmer)}
@@ -881,8 +881,8 @@ html .bnav .cog,html .bnav .whobtn,html .bnav .planbtn,html .bnav .bnb{position:
 .bnlog:active{filter:brightness(1.15)}
 html.ios .bnlog{background:var(--bronze);color:#fff}
 html.ios .bnlog i{color:#fff}
-html #main.wrap{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
-.toast{bottom:calc(78px + env(safe-area-inset-bottom))}
+html #main.wrap{padding-bottom:calc(78px + var(--sab))}
+.toast{bottom:calc(72px + var(--sab))}
 /* 6. tap targets at least 44 px */
 /* diary foods: the Add food card, row for row */
 html #main .fiw{margin-top:3px}
@@ -907,7 +907,7 @@ html .qty .qamt .qin,html .qty .qamt .mpick button{height:44px}
 .qty .qper.qsed{display:grid}
 /* the bottom bar of every screen */
 .sheet.fit.full:has(>.sbar){padding-bottom:0}
-.sbar{flex:none;display:flex;flex-direction:column;gap:8px;margin:auto -22px 0;padding:6px 10px calc(6px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.sbar{flex:none;display:flex;flex-direction:column;gap:8px;margin:auto -22px 0;padding:6px 10px var(--sab);background:var(--bg);border-top:1px solid var(--line)}
 html .sheet>.sbar{margin:auto -22px 0}
 .sbr{display:flex;gap:8px;align-items:stretch;height:50px;flex:none}          /* the core bar: always the dashboard bar's height */
 
@@ -928,11 +928,11 @@ html .sbar .secb{color:var(--bronze)}
 @keyframes dropout{to{opacity:0;transform:translateY(10px)}}
 html.ios .sheet.drop.secpick{border-radius:14px 14px 0 0}
 /* the profile and streak line: fixed at the top of every screen */
-:root{--pbh:calc(env(safe-area-inset-top) + 30px)}
-.pbar{position:fixed;left:0;right:0;top:0;z-index:400;height:var(--pbh);box-sizing:border-box;padding:env(safe-area-inset-top) 22px 0;display:flex;align-items:center;gap:10px;background:var(--bg)}
+:root{--pbt:max(0px,calc(env(safe-area-inset-top) - 8px));--pbh:max(30px,calc(env(safe-area-inset-top) + 20px));--sab:max(6px,calc(env(safe-area-inset-bottom) - 16px))}
+.pbar{position:fixed;left:0;right:0;top:0;z-index:400;height:var(--pbh);box-sizing:border-box;padding:var(--pbt) 22px 0;display:flex;align-items:center;gap:10px;background:var(--bg)}
 .pbar .eyebrow{margin:0}
 .pbar .bolt{position:static;transform:none;height:auto;margin-left:auto}
-html .pbar .rtt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:calc(env(safe-area-inset-top) + 3px);transform:none;padding:4px 10px}
+html .pbar .rtt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:calc(var(--pbt) + 3px);transform:none;padding:4px 10px}
 html header.hx{top:0;padding:0}
 html body{padding-top:var(--pbh)}
 /* every heading the same size and place as the day row */
@@ -969,7 +969,8 @@ html #main .mhl .mt{margin-left:auto;display:flex;overflow:visible}
 .ri .rm,#main .fi .fm{flex:1;min-width:0}
 /* the camera in place on the food screen */
 .qscan{display:grid;gap:8px}
-.qscan .scanbox{height:190px;max-height:26vh}
+.qscan .scanbox{width:100%;height:190px;max-height:26vh;aspect-ratio:auto;box-sizing:border-box}
+html.ios .qscan .scanbox{background:var(--fill)}
 .qscan .stat{margin:0}
 .qscan .srch{margin:0}
 .qscan .qscr{height:50px}
@@ -978,7 +979,7 @@ html #main .mhl .mt{margin-left:auto;display:flex;overflow:visible}
 .fbgo .sbf .btn{width:100%}
 .cal .sbr{margin-top:12px}
 /* selecting foods: the same bottom bar as everywhere, its x on the right */
-html .selbar{z-index:70;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 56px;padding:6px 10px calc(6px + env(safe-area-inset-bottom))}
+html .selbar{z-index:70;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 56px;padding:6px 10px var(--sab)}
 html .selbar .btn{height:50px}
 html .selbar .selhead{padding:4px 2px 2px}
 /* a total row, lined up with the food rows above it */
@@ -1004,7 +1005,7 @@ function applyTheme(t){
   document.querySelector('meta[name=theme-color]').content={crt:'#020a05',light:'#f2f2f7',dark:'#000000'}[v];
   document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').content=v==='light'?'default':'black-translucent';
 }
-try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'crt'); }catch(e){ applyTheme('crt'); }
+try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'dark'); }catch(e){ applyTheme('dark'); }
 /* iOS shuts a background app down after a few minutes and reloads it on return. Coming back
    within the hour is a resume: straight to the dashboard, no power-on from black. */
 try{ if(Date.now()-(+localStorage.getItem('food_log_seen')||0)<36e5) document.documentElement.classList.add('resumed'); }catch(e){}
@@ -1046,7 +1047,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 <input type="file" id="imFile" accept="application/json,.json" hidden>
 <script>
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.26.101';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.26.103';     // stamped by the build: date.build
 let DB=null, STORE='local';
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
 const DEF_GOAL={k:2200,mode:'p',pp:30,cp:40,fp:30,pg:165,cg:220,fg:73};
@@ -1201,7 +1202,7 @@ function cleanDB(d){
   d=d&&typeof d==='object'?d:{};
   const obj=v=>v&&typeof v==='object'?v:{};
   const out={profiles:{}, cur:String(d.cur||''), gh:obj(d.gh), fold:obj(d.fold), sfx:d.sfx!==false, idx:cleanIdx(d.idx),
-    theme:['crt','light','dark','auto'].includes(d.theme)?d.theme:'crt', fill:cleanFill(d.fill),
+    theme:['crt','light','dark','auto'].includes(d.theme)?d.theme:'dark', fill:cleanFill(d.fill),
     fb:cleanFb(d.fb)};                                                   // feedback notes, any length
   Object.keys(d.profiles||{}).forEach(n=>{ const nm=cleanName(n); if(nm) out.profiles[nm]=cleanProfile(d.profiles[n]); });
   if(!Object.keys(out.profiles).length) out.profiles.Me=blankProfile();
@@ -2490,9 +2491,14 @@ function openMealEdit(c,name,o){
       const n=cleanLabel(d.n), now=Date.now();
       if(!n){ sfx('nope'); return toast('GIVE THE MEAL A NAME'); }
       if(!d.items.length){ sfx('nope'); return toast('ADD AT LEAST ONE FOOD'); }
-      const m=cleanCombo({id:c?c.id:uid(), n, items:d.items, rc:d.rc, u:c?c.u:now, e:now, sc:timesDiff(tg,c?autoTimes(c,null,n):new Set())});
-      if(c){ Object.keys(c).forEach(k=>delete c[k]); Object.assign(c,m); } else P().combos.unshift(m);
-      touch(); sfx('confirm'); toast('MEAL SAVED \u00b7 '+n.toUpperCase()); back();
+      const cur=c && (P().combos.find(x=>x.id===c.id) || c);     // the live one: a sync may have replaced it
+      const m=cleanCombo({id:c?c.id:uid(), n, items:d.items, rc:d.rc, u:c?cur.u:now, e:now, sc:timesDiff(tg,c?autoTimes(cur,null,n):new Set())});
+      let spread=0;
+      if(c){ const old={n:cur.n, items:cur.items.map(e=>Object.assign({},e))}, same=old.n===m.n && JSON.stringify(old.items)===JSON.stringify(m.items);
+        Object.keys(cur).forEach(k=>delete cur[k]); Object.assign(cur,m); if(cur!==c){ Object.keys(c).forEach(k=>delete c[k]); Object.assign(c,m); }
+        if(!same) spread=spreadMeal(old,cur); }
+      else P().combos.unshift(m);
+      touch(); render(); sfx('confirm'); toast(spread?'MEAL SAVED \u00b7 '+spread+' LOGGED OR PLANNED COPIES UPDATED':'MEAL SAVED \u00b7 '+n.toUpperCase()); back();
     };
   };
   box.refresh=()=>{ keep(); draw(); };                 // back from adding or changing an ingredient
@@ -2592,13 +2598,14 @@ function recipesCard(){
     '</div></div>';
 }
 function bindPlanCard(){
-  const pl=P().plan, N=$('plN');
-  N.oninput=()=>{ const n=Math.round(+N.value); if(n>=1 && n<=200 && n!==pl.portions){ pl.portions=n; touch(); repaintPlan(); } };
+  const pl=()=>P().plan, N=$('plN');                  // looked up on every tap: a sync replaces the plan object
+  N.oninput=()=>{ const n=Math.round(+N.value); if(n>=1 && n<=200 && n!==pl().portions){ pl().portions=n; touch(); repaintPlan(); } };
   $('plSave').onclick=savePlan;
   $('plLoad').onclick=()=>openPlans();
-  const clear=()=>{ Object.assign(pl,blankPlan(),{portions:pl.portions}); const f=fillMine(); if(f) f.pc=1;
+  const clear=()=>{ P().plan=Object.assign(blankPlan(),{portions:pl().portions}); const f=fillMine(); if(f) f.pc=1;
     touch(); render(); warp($('main')); toast('PLAN CLEARED'); };
-  if(pl.items.length && !planSaved()) $('plClr').onclick=()=>clearUnsaved(clear); else arm($('plClr'),clear);
+  arm($('plClr'),clear); const armed=$('plClr').onclick;   // an unsaved plan asks first; decided on the tap, not when drawn
+  $('plClr').onclick=()=>pl().items.length && !planSaved()?clearUnsaved(clear):armed();
   document.querySelectorAll('#plG .gi').forEach(x=>x.onclick=()=>{ const k=x.dataset.k, on=!ticked(k); setTicks([k],on?1:0); x.classList.toggle('on',on); sfx('tap'); });
   if($('plTick')) $('plTick').onclick=()=>{ setTicks(groceries().map(it=>it.key).filter(ticked),0);
     document.querySelectorAll('#plG .gi.on').forEach(x=>x.classList.remove('on')); toast('TICKS CLEARED'); };
@@ -2731,8 +2738,8 @@ function savePlan(){
       :'<button class="btn" id="svpNew">[ SAVE ]</button>')+'</div>',true);
   lastVeil().onclick=popSheet; $('svpX').onclick=popSheet;
   const name=()=>{ const n=cleanLabel($('psV').value); if(!n){ sfx('nope'); toast('GIVE THE PLAN A NAME'); } return n; };
-  const done=(sp,msg)=>{ pl.n=sp.n; pl.sid=sp.id; touch(); popSheet(); render(); sfx('confirm'); toast(msg+' \u00b7 '+sp.n.toUpperCase()); };
-  const body=(id,n,u)=>cleanSavedPlan({id, n, portions:pl.portions, items:JSON.parse(JSON.stringify(pl.items)), u, e:Date.now()});
+  const done=(sp,msg)=>{ P().plan.n=sp.n; P().plan.sid=sp.id; touch(); popSheet(); render(); sfx('confirm'); toast(msg+' \u00b7 '+sp.n.toUpperCase()); };
+  const body=(id,n,u)=>cleanSavedPlan({id, n, portions:P().plan.portions, items:JSON.parse(JSON.stringify(P().plan.items)), u, e:Date.now()});   // the live plan
   $('svpNew').onclick=()=>{ const n=name(); if(!n) return;
     let m=n, k=2; while(P().plans.some(x=>normS(x.n)===normS(m))) m=(n+' ('+(k++)+')').slice(0,80);
     const sp=body(uid(),m,Date.now()); P().plans.unshift(sp); done(sp,'PLAN SAVED'); };
@@ -3249,16 +3256,15 @@ function openScanner(){
 }
 /* A list row: tap opens the food, + logs it straight into the chosen section, and (where
    there's something to delete) a swipe left deletes it, as on the dashboard. */
-/* P, C and F in fixed columns, wide enough for any amount, so they line up row after row and with
-   the section heading's; the food row is the same everywhere (diary, Add food, meals, lists). */
+/* P, C and F in fixed columns on totals, lined up with the section heading's. Food rows show name,
+   amount and calories only, as on the dashboard; the row is the same everywhere. */
 const mv=v=>v>=100?Math.round(v):r1(v);                // 100 and over without the decimal, so any amount fits its column
 const macCells=(p,c,f)=>'<span class="rmac"><i>P'+mv(p)+'</i><i>C'+mv(c)+'</i><i>F'+mv(f)+'</i></span>';
-const noMac='<span class="rmac"></span>';
 /* A total under a list of foods: its P, C, F and calories in the same columns as the rows above. */
 const totRow=(l,t)=>'<span class="ri rtot"><span class="rm"><span class="rn">'+l+'</span></span>'+macCells(t.p,t.c,t.f)+'<span class="rk">'+fmt(t.k)+'</span></span>';
 function foodListRow(i,name,amt,m,kcal,plus,cls){
   return '<div class="fiw lw'+(cls?' '+cls:'')+'" data-i="'+i+'"><span class="bin">'+BIN+'</span><div class="ri" role="button" tabindex="0">'+
-    '<span class="rm"><span class="rn">'+esc(name)+'</span><span class="rl2"><span class="rs">'+amt+'</span>'+(m?macCells(m.p,m.c,m.f):noMac)+'</span></span><span class="rk">'+fmt(kcal)+'</span>'+
+    '<span class="rm"><span class="rn">'+esc(name)+'</span><span class="rl2"><span class="rs">'+amt+'</span></span></span><span class="rk">'+fmt(kcal)+'</span>'+
     (plus?'<button class="qadd" aria-label="Add">+</button>':'')+'</div></div>';
 }
 function listRow(i,name,sub,kcal,plus,cls){
@@ -3307,6 +3313,42 @@ function spreadFood(f,oldN,oldSv){
     p.plan.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); e.e=now; p.pe=now; m++; } });
     p.plans.forEach(x=>{ let hit=false; x.items.forEach(e=>{ if(mine(e) && !same(e)){ put(e); hit=true; } }); if(hit){ x.e=now; m++; } });
     if(who===DB.cur) n+=m; else if(m){ p.at=now; if(ghOn()) setTimeout(()=>ghSync(who),1600); }   // the other profiles upload too
+  });
+  return n;
+}
+/* A saved meal changed: every combined item logged from it exactly as saved (same name, same foods,
+   all at one servings factor) is rebuilt from the new meal at that factor, keeping its section and
+   place, in every profile's diary from today on, plan on screen and saved plans. Earlier days are
+   history and keep what was eaten. A combined item changed on its
+   own no longer matches, so it keeps its own foods. */
+const mKey=e=>(e.fid||'')+'|'+e.n+'|'+e.sv;
+function mealFactor(es,items,name){
+  if(!es.length || es.length!==items.length || normS(es[0].gn)!==normS(name)) return 0;
+  const ord=l=>l.slice().sort((a,b)=>mKey(a)<mKey(b)?-1:mKey(a)>mKey(b)?1:a.q-b.q), A=ord(es), B=ord(items);
+  let s=0;
+  for(let i=0;i<A.length;i++){ const a=A[i], b=B[i];
+    if(mKey(a)!==mKey(b) || !(b.q>0) || ['k','p','c','f'].some(k=>Math.abs(a[k]-b[k])>0.05)) return 0;
+    const r=a.q/b.q; if(!s) s=r; else if(Math.abs(r-s)>0.002*s) return 0; }
+  return s;
+}
+function reMeal(list,old,nw,now,gone){
+  const gs={}; let out=list, n=0;
+  list.forEach(e=>{ if(e.g) (gs[e.g]=gs[e.g]||[]).push(e); });
+  Object.values(gs).forEach(es=>{ const s=mealFactor(es,old.items,old.n); if(!s) return;
+    const first=es.reduce((a,b)=>place(b)<place(a)?b:a), base=place(first), useO=es.some(e=>e.o), ids=new Set(es.map(e=>e.id));
+    const fresh=nw.items.map((it,i)=>Object.assign({},it,{id:uid()+i, x:Object.assign({},it.x), q:Math.round(it.q*s*1000)/1000, m:first.m,
+      t:(useO?first.t:base)+i/100, e:now, g:first.g, gn:nw.n}, useO?{o:base+i/100}:{}));
+    const at=out.findIndex(e=>ids.has(e.id)); es.forEach(e=>gone(e.id));
+    out=out.filter(e=>!ids.has(e.id)); out.splice(at,0,...fresh); n++; });
+  return [out,n];
+}
+function spreadMeal(old,nw){
+  const now=Date.now(); let n=0;
+  Object.entries(DB.profiles).forEach(([who,p])=>{ let m=0;
+    Object.keys(p.days).filter(d=>d>=today()).forEach(d=>{ const [l,k]=reMeal(p.days[d],old,nw,now,id=>{ p.del[id]=now; }); if(k){ p.days[d]=l; m+=k; } });   // today on: past days stay as eaten
+    const [pl,pk]=reMeal(p.plan.items,old,nw,now,()=>{}); if(pk){ p.plan.items=pl; p.pe=now; m+=pk; }
+    p.plans.forEach(x=>{ const [l,k]=reMeal(x.items,old,nw,now,()=>{}); if(k){ x.items=l; x.e=now; m+=k; } });
+    if(m){ p.at=now; n+=m; if(who!==DB.cur && ghOn()) setTimeout(()=>ghSync(who),1600); }   // the other profiles upload too
   });
   return n;
 }
@@ -3617,10 +3659,10 @@ function openCombo(c){
     (c.rc?'<div class="msec"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><div class="rcv">'+esc(c.rc)+'</div></div></div>':'')+
     '</div>'+sbar(xBtn(stack),'<button class="btn wide" id="cGo">[ LOG MEAL ]</button>',
       '<div class="qact"><button class="btn ghost wide" id="cEd">[ EDIT MEAL ]</button></div>')+'</div>',stack);
-  const box=topSheet(), back=stack?popSheet:closeSheet, V=$('cV');
+  const box=topSheet(), back=stack?()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); }:closeSheet, V=$('cV');   // the list beneath shows any change
   lastVeil().onclick=box.querySelector('.shx').onclick=back;
   foldSections(box);
-  $('cEd').onclick=()=>{ popSheet(); openMealEdit(c,null,{reopen:()=>openCombo(c)}); };   // in the same moment, so what's beneath never shows
+  $('cEd').onclick=()=>{ popSheet(); openMealEdit(c,null,{reopen:()=>openCombo(P().combos.find(x=>x.id===c.id)||c)}); };   // in the same moment, so what's beneath never shows
   const paint=()=>{ const t=sum(st.q);
     box._pv=ADD.into?null:t; ibSync();
     $('cX').innerHTML=c.items.map((e,i)=>nutRow(i,Object.assign({},e,{q:e.q*st.q}))).join('');
@@ -3937,32 +3979,18 @@ function openSettings(){
   setSheet(panel('Settings','<div class="srows">'+
     row('stTg','Targets',fmt(T.k)+' kcal \u00b7 P'+T.p+' C'+T.c+' F'+T.f)+
     row('stMl','Food sections',P().meals.map(m=>m.n).join(' \u00b7 '))+
-    row('stPr','Profiles','active: '+DB.cur)+
     row('stFd','Saved foods & meals',P().foods.length+' foods \u00b7 '+P().combos.length+' meals')+
     row('stSy','Sync and backup',ghWhen())+
-    row('stAu','Australian food list',localSummary())+
-    row('stDp','Display',THEMES[DB.theme])+
-    row('stSn','Sound',DB.sfx?'on':'off')+
+    row('stDp','Display & audio',THEMES[DB.theme]+' \u00b7 sound '+(DB.sfx?'on':'off'))+
     row('stFb','Feedback',fbLive().length?fbLive().length+' note'+(fbLive().length===1?'':'s'):'none yet')+
     '</div><div class="tiny">v'+APP_VERSION+'</div>'));
   bindPanel();
   $('stTg').onclick=openTargets;
   $('stMl').onclick=openMeals;
-  $('stPr').onclick=()=>openProfiles(true);
   $('stFd').onclick=openFoods;
   $('stSy').onclick=openSync;
   $('stDp').onclick=openDisplay;
   $('stFb').onclick=openFeedback;
-  $('stAu').onclick=async()=>{ const s=$('stAu').querySelector('.srsub'); s.textContent='CHECKING\u2026';
-    const r=await localRefresh(true);
-    toast({updated:'FOOD LIST UPDATED',current:'FOOD LIST IS UP TO DATE',offline:'NO CONNECTION',missing:'NO LIST PUBLISHED YET',failed:'UPDATE FAILED \u2014 TRY AGAIN'}[r]);
-    s.textContent=(localSummary()).toUpperCase(); warp($('stAu')); };
-  $('stSn').onclick=()=>{
-    DB.sfx=!DB.sfx; save();
-    $('stSn').querySelector('.srsub').textContent=DB.sfx?'ON':'OFF';
-    warp($('stSn'));
-    if(DB.sfx) sfx('confirm');
-  };
 }
 /* Feedback: notes about changes to make, numbered in the order they were added, kept on this
    phone. Type and ADD; tap one to change it; swipe one away to delete it. COPY ALL puts the
@@ -4014,10 +4042,12 @@ function openFeedback(){
 const THEMES={crt:'Terminal',light:'iOS light',dark:'iOS dark',auto:'iOS auto'};
 function openDisplay(){
   sfx('open');
-  setSheet(panel('Display',picker('dpMode',Object.entries(THEMES).map(([k,l])=>[k,l.toUpperCase()]),DB.theme)+
-    '<div class="pgnote">iOS auto follows the phone\u2019s light or dark setting. The status bar colour updates the next time the app opens.</div>',true));
+  setSheet(panel('Display & audio','<label class="flab">Theme</label>'+picker('dpMode',Object.entries(THEMES).map(([k,l])=>[k,l.toUpperCase()]),DB.theme)+
+    '<div class="pgnote">iOS auto follows the phone\u2019s light or dark setting. The status bar colour updates the next time the app opens.</div>'+
+    '<label class="flab">Sound</label>'+picker('dpSnd',[['1','ON'],['0','OFF']],DB.sfx?'1':'0'),true));
   bindPanel(openSettings);
   onPick('dpMode',v=>{ DB.theme=v; save(); applyTheme(v); panelHit(topSheet()); });
+  onPick('dpSnd',v=>{ DB.sfx=v==='1'; save(); if(DB.sfx) sfx('confirm'); });
 }
 /* Calories are the target. Macros are set as a share of them (never over 100% in all)
    or in grams; either way the total shows red until it reaches 100%. */
@@ -4238,8 +4268,16 @@ function openSync(){
         '<div class="pgnote">Fine-grained token for this repo only, Contents: read and write. Kept on this phone only.</div>')+
     '</div><div class="card pgcard"><div class="pghead"><h4 class="pgh">Backup file \u00b7 all profiles</h4></div>'+
     '<div class="duo"><button class="btn" id="exGo">[ SAVE FILE ]</button><button class="btn ghost" id="imGo">[ LOAD FILE ]</button></div>'+
-    '<div class="pgnote">Loading merges into what is here. Nothing is lost.</div></div>',true));
+    '<div class="pgnote">Loading merges into what is here. Nothing is lost.</div></div>'+
+    '<div class="card pgcard"><div class="pghead"><h4 class="pgh">Australian food list</h4></div>'+
+    '<div class="pgrow"><span class="pk">Status</span><span class="pv" id="auSt">'+esc(localSummary())+'</span></div>'+
+    '<button class="btn ghost" id="auGo">[ CHECK FOR UPDATE ]</button>'+
+    '<div class="pgnote">Open Food Facts and FSANZ AFCD, rebuilt on the 1st of each month.</div></div>',true));
   bindPanel(openSettings);
+  $('auGo').onclick=async()=>{ const s=$('auSt'); s.textContent='Checking\u2026';
+    const r=await localRefresh(true);
+    toast({updated:'FOOD LIST UPDATED',current:'FOOD LIST IS UP TO DATE',offline:'NO CONNECTION',missing:'NO LIST PUBLISHED YET',failed:'UPDATE FAILED \u2014 TRY AGAIN'}[r]);
+    if($('auSt')) { $('auSt').textContent=localSummary(); warp($('auSt')); } };
   $('exGo').onclick=exportFile;
   $('imGo').onclick=()=>$('imFile').click();
   if(on){
