@@ -9,12 +9,13 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.29.126">
+<meta name="app-version" content="2026.09.29.127">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
+:root{--gut:clamp(12px,3.6vw,16px)}   /* the side margin everywhere, in step with the screen's width */
 html{height:100%;overflow:hidden}
 html.standalone{height:100vh}
 body{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
@@ -22,8 +23,8 @@ body{background:var(--bg);color:var(--tx);font-family:var(--ui); font-size:16.5p
 h1,h3{margin:0;font-family:var(--serif);font-weight:400;letter-spacing:-0.005em}
 button{font-family:inherit;font-size:inherit;cursor:pointer;border:none;background:none;color:inherit}
 input{font-family:var(--mono);font-size:16px}
-header{padding:calc(22px + env(safe-area-inset-top)) 22px 14px}
-header::after{content:'';position:absolute;left:22px;right:22px;bottom:0}
+header{padding:calc(22px + env(safe-area-inset-top)) var(--gut) 14px}
+header::after{content:'';position:absolute;left:var(--gut);right:var(--gut);bottom:0}
 .eyebrow{font-size:13px;letter-spacing:.02em;color:var(--bronze)}
 header h1:empty,header .sub:empty{display:none}
 header h1{font-size:30px;margin-top:9px;letter-spacing:-.02em}
@@ -36,7 +37,7 @@ header .sub{color:var(--dim);font-size:13.5px;margin-top:7px}
 .cog.stale::after{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px; border-radius:50%;background:var(--bronze);border:2px solid var(--bg)}
 .cog svg{width:27px;height:27px;stroke:currentColor;fill:none;stroke-width:1.1; stroke-linecap:round;stroke-linejoin:round}
 .cog:active{color:var(--bronze)}
-.wrap{padding:4px 22px 26px;max-width:600px;margin:0 auto}
+.wrap{padding:4px var(--gut) 26px;max-width:600px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--cardline);border-radius:14px}
 .card:last-of-type{margin-bottom:0}
 .card h3{font-size:17px;color:var(--tx)}
@@ -112,9 +113,9 @@ html.locked,body.locked{overflow:hidden;overscroll-behavior:none;touch-action:no
 html{touch-action:pan-y;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{touch-action:pan-y}
 button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-.sheet{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--bg); overscroll-behavior:contain;-webkit-overflow-scrolling:touch; border-top:1px solid var(--line);border-bottom:1px solid var(--line); padding:24px 22px calc(26px + env(safe-area-inset-bottom)); max-height:74vh;overflow:auto;animation:fuzzin .46s steps(1,end) both;will-change:transform,opacity}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:70;background:var(--bg); overscroll-behavior:contain;-webkit-overflow-scrolling:touch; border-top:1px solid var(--line);border-bottom:1px solid var(--line); padding:24px var(--gut) calc(26px + env(safe-area-inset-bottom)); max-height:74vh;overflow:auto;animation:fuzzin .46s steps(1,end) both;will-change:transform,opacity}
 .sheet h3{font-size:21px}
-.sheet.full{top:0;bottom:0;height:100vh;height:100dvh;max-height:none;border-bottom:none; display:flex;flex-direction:column; justify-content:space-between;gap:8px;overflow:hidden; padding:calc(18px + env(safe-area-inset-top)) 22px calc(18px + env(safe-area-inset-bottom))}
+.sheet.full{top:0;bottom:0;height:100vh;height:100dvh;max-height:none;border-bottom:none; display:flex;flex-direction:column; justify-content:space-between;gap:8px;overflow:hidden; padding:calc(18px + env(safe-area-inset-top)) var(--gut) calc(18px + env(safe-area-inset-bottom))}
 .sheet.full .xled{flex:0 1 auto;min-height:0;overflow:auto;scrollbar-width:none}
 .sheet.full .xled::-webkit-scrollbar{display:none}
 .sheet.full>*{margin:0}
@@ -124,7 +125,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 .sheet.full .gtxt{font-size:11.5px}
 .sheet.full .xled div{padding:clamp(3px,0.8vh,7px) 0;font-size:clamp(11px,1.6vh,12.5px)}
 .sheet.full .btn{margin:0}
-.sheet.fit.full{top:0;bottom:0;height:100vh;height:100dvh;max-height:none; justify-content:flex-start;overflow:hidden; padding:calc(20px + env(safe-area-inset-top)) 22px calc(20px + env(safe-area-inset-bottom))}
+.sheet.fit.full{top:0;bottom:0;height:100vh;height:100dvh;max-height:none; justify-content:flex-start;overflow:hidden; padding:calc(20px + env(safe-area-inset-top)) var(--gut) calc(20px + env(safe-area-inset-bottom))}
 .sheet.fit.full>.tiny{margin-top:auto}
 .srows{display:flex;flex-direction:column;gap:9px}
 .srows .srow{margin:0}
@@ -149,7 +150,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 #ib.slide{transition:clip-path .42s cubic-bezier(.4,0,.2,1)}
 .ibskin{position:absolute;top:0;left:0;width:100%;height:100%;box-sizing:border-box;overflow:hidden;background-color:var(--bg);
   border:1px solid transparent;border-radius:0}
-#ib::after{content:'';position:absolute;left:22px;right:22px;bottom:0;height:1px;background:var(--line);opacity:0;transition:opacity .3s ease}
+#ib::after{content:'';position:absolute;left:var(--gut);right:var(--gut);bottom:0;height:1px;background:var(--line);opacity:0;transition:opacity .3s ease}
 #ib.set::after{opacity:1}                              /* the same line, and length, as under the headings */
 #ib.anim .ibskin{transition:top .45s cubic-bezier(.4,0,.2,1),left .45s cubic-bezier(.4,0,.2,1),width .45s cubic-bezier(.4,0,.2,1),height .45s cubic-bezier(.4,0,.2,1),
   border-radius .45s cubic-bezier(.4,0,.2,1),background-color .45s ease,border-color .45s ease}
@@ -160,7 +161,7 @@ button,.srow,.card h3{-webkit-user-select:none;user-select:none;-webkit-touch-ca
 #ib.anim .ibold{transition:opacity .3s ease .15s}
 #ib.anim.set .ibold{transition:opacity .2s ease}
 /* the card's layout, tighter: calories and their bar, then the three macros stacked */
-.ibrow{position:relative;padding:8px 22px 11px;font-family:var(--serif);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ibrow{position:relative;padding:8px var(--gut) 11px;font-family:var(--serif);font-variant-numeric:tabular-nums;white-space:nowrap}
 .ibf{display:inline-block;transform-origin:0 0}
 #ib.anim .ibf{transition:transform .45s cubic-bezier(.4,0,.2,1)}
 .ibkl{display:flex;align-items:baseline;gap:6px;height:15px;line-height:15px}
@@ -239,7 +240,7 @@ body.ibhz header{z-index:70}                          /* over the dashboard's ve
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (min-height:900px){
   body{font-size:15px;line-height:1.55}
-  header{padding:calc(26px + env(safe-area-inset-top)) 22px 18px}
+  header{padding:calc(26px + env(safe-area-inset-top)) var(--gut) 18px}
   header h1{font-size:25px}
   header .sub{font-size:12px}
   .eyebrow{font-size:10px}
@@ -357,7 +358,7 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .fiw.on .chk,.msel.on .chk{border-color:var(--bronze);background:var(--bronze)}
 .fiw.on .chk::after,.msel.on .chk::after{opacity:1}
 .fiw.on .fi{border-color:var(--bronze);background:var(--tint)}
-.selbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:8px; padding:12px 22px calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.selbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:8px; padding:12px var(--gut) calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
 .selbar .btn{margin:0;height:38px;padding:0 6px;display:flex;align-items:center;justify-content:center;white-space:nowrap}
 .selhead{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between}
 #selN{font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--champ)}
@@ -804,7 +805,7 @@ html header.hx h1{margin:0;font-size:17px;letter-spacing:0}
 html header.hx .sub{margin:0;font-size:11px}
 html header.hx .sub::before{content:'\00b7  '}
 html #main.wrap{padding-top:6px}
-html #main>.dfix{position:sticky;top:var(--hh,0px);z-index:25;margin:-6px -22px 0;padding:6px 22px 6px;background:var(--bg)}
+html #main>.dfix{position:sticky;top:var(--hh,0px);z-index:25;margin:-6px calc(-1 * var(--gut)) 0;padding:6px var(--gut) 6px;background:var(--bg)}
 html #main>.dfix>.card{margin-bottom:6px}
 html #main>.dfix>.card:last-child{margin-bottom:0}
 html header.hx::after{display:none}
@@ -870,7 +871,7 @@ html::-webkit-scrollbar,body::-webkit-scrollbar,*::-webkit-scrollbar{display:non
 .gi.pm b{font-family:var(--serif)}
 /* the section heading in Add food: tap it to log somewhere else */
 .secb .mfold{font-size:12px;transition:transform .3s ease}
-.sheet.drop{padding:10px 22px 14px}
+.sheet.drop{padding:10px var(--gut) 14px}
 .dropl{font-family:var(--ui);font-size:12px;letter-spacing:.02em;color:var(--dim);margin:0 0 8px}
 .secpick .mpick{margin-top:0}
 @media (prefers-reduced-motion: no-preference){
@@ -923,8 +924,8 @@ html .qty .qamt .qin,html .qty .qamt .mpick button{height:44px}
 .qty .qper.qsed{display:grid}
 /* the bottom bar of every screen */
 .sheet.fit.full:has(>.sbar){padding-bottom:0}
-.sbar{flex:none;display:flex;flex-direction:column;gap:8px;margin:auto -22px 0;padding:6px 10px var(--sab);background:var(--bg);border-top:1px solid var(--line)}
-html .sheet>.sbar{margin:auto -22px 0}
+.sbar{flex:none;display:flex;flex-direction:column;gap:8px;margin:auto calc(-1 * var(--gut)) 0;padding:6px 10px var(--sab);background:var(--bg);border-top:1px solid var(--line)}
+html .sheet>.sbar{margin:auto calc(-1 * var(--gut)) 0}
 .sbr{display:flex;gap:8px;align-items:stretch;height:50px;flex:none}          /* the core bar: always the dashboard bar's height */
 
 .sbf{flex:1;min-width:0;display:flex}
@@ -945,7 +946,7 @@ html.ios .sheet.drop.secpick{border-radius:14px 14px 0 0}
 @keyframes dropout{to{opacity:0;transform:translateY(10px)}}
 /* the profile and streak line: fixed at the top of every screen */
 :root{--pbt:max(0px,calc(env(safe-area-inset-top) - 8px));--pbh:max(30px,calc(env(safe-area-inset-top) + 20px));--sab:max(6px,calc(env(safe-area-inset-bottom) - 16px))}
-.pbar{position:fixed;left:0;right:0;top:0;z-index:400;height:var(--pbh);box-sizing:border-box;padding:var(--pbt) 22px 0;display:flex;align-items:center;gap:10px;background:var(--bg)}
+.pbar{position:fixed;left:0;right:0;top:0;z-index:400;height:var(--pbh);box-sizing:border-box;padding:var(--pbt) var(--gut) 0;display:flex;align-items:center;gap:10px;background:var(--bg)}
 .pbar .eyebrow{margin:0}
 .pbar .bolt{position:static;transform:none;height:auto;margin-left:auto}
 html .pbar .rtt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:calc(var(--pbt) + 3px);transform:none;padding:4px 10px}
@@ -1186,7 +1187,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.29.126';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.29.127';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
