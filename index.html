@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.30.135">
+<meta name="app-version" content="2026.09.30.136">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -619,6 +619,13 @@ html.ios{--ok:#34c759}
 .qname{width:100%;font-family:inherit;letter-spacing:inherit;text-align:center;line-height:inherit}
 .qsvi{width:88%;font-family:var(--serif);letter-spacing:.08em;text-align:center; transform:scale(.72);transform-origin:left center;margin-right:-25%;vertical-align:middle}
 .lin:disabled{opacity:.35}
+/* the tick above the keyboard for the amount box */
+#kbtick{position:fixed;right:calc(var(--gut) + env(safe-area-inset-right, 0px));bottom:10px;width:46px;height:46px;border-radius:50%;display:none;align-items:center;justify-content:center;
+  border:1px solid var(--bronze);background:var(--bronze);color:var(--bg);z-index:900;padding:0;-webkit-tap-highlight-color:transparent;box-shadow:0 6px 18px -6px rgba(0,0,0,.7)}
+#kbtick.on{display:flex}
+#kbtick:active{transform:scale(.94)}
+html.ios #kbtick{color:#fff;border:none}
+html.lg #kbtick{background:var(--accent)}
 /* Verified: a food you've saved yourself. A small blue shield with a tick after the name; nothing moves.
    One mask image for both spellings, with the tick cut out, so iOS shows the same shape. */
 .lw.vf .rn::after,.qt.vf>span::after{content:'';display:inline-block;width:.8em;height:.8em;margin-left:.32em;vertical-align:-.08em;background:#0a84ff;
@@ -1198,7 +1205,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.30.135';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.30.136';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1928,7 +1935,7 @@ document.addEventListener('touchmove',e=>{
 let LASTTAP=0;
 document.addEventListener('touchend',e=>{
   const now=Date.now();
-  if(now-LASTTAP<320 && e.cancelable && !e.target.closest('input,textarea,.qrow,.pct')) e.preventDefault();
+  if(now-LASTTAP<320 && e.cancelable && !e.target.closest('input,textarea,.qrow,.pct,#kbtick')) e.preventDefault();   // the keyboard tick is never a double tap
   LASTTAP=now;
 },{passive:false});
 
@@ -4808,6 +4815,21 @@ setInterval(()=>{ if(FOLLOW && DAY!==today() && !document.querySelector('#sheetW
 const boot=(name,fn)=>{ try{ fn(); }catch(e){ console.error('start-up: '+name,e); } };
 /* Start-up. With the dashboard copy already on screen, it waits one frame so that copy is painted
    first; otherwise it runs straight away, as it always has. */
+/* The amount box (a food's or a meal's): iPhone's number pad has no return key, so a tick sits just above
+   the keyboard while the box is in use, and logs it, as LOG FOOD / LOG MEAL would (Return already does). */
+const KBT=document.createElement('button'); KBT.id='kbtick'; KBT.type='button'; KBT.setAttribute('aria-label','Log it');
+KBT.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+document.body.appendChild(KBT);
+let KBIN=null, KBLAST=null, KBLT=0;          // the box in use; the last one, for a tap that lands just after it lets go
+const kbLog=t=>{ const sh=t && t.closest('.sheet'); return sh && (sh.querySelector('#qGo')||sh.querySelector('#cGo')); };
+const kbPlace=()=>{ const v=window.visualViewport, gap=v?Math.max(0,innerHeight-(v.offsetTop+v.height)):0; KBT.style.bottom='calc('+gap+'px + 10px'+(gap?'':' + env(safe-area-inset-bottom, 0px)')+')'; };
+const kbGo=()=>{ const t=KBIN || (Date.now()-KBLT<800 ? KBLAST : null), sh=t && t.isConnected && t.closest('.sheet'); KBT.classList.remove('on'); KBIN=null; if(!sh || !kbLog(t)) return;
+  t.blur(); const b=sh.querySelector('#qGo')||sh.querySelector('#cGo'); if(b) b.click(); };   // found again after the blur: the screen may redraw on it
+document.addEventListener('focusin',ev=>{ const t=ev.target; if(t && t.matches && t.matches('input.qin') && !t.disabled && kbLog(t)){ KBIN=t; kbPlace(); KBT.classList.add('on'); } });
+document.addEventListener('focusout',ev=>{ if(ev.target!==KBIN) return; KBLAST=KBIN; KBLT=Date.now(); setTimeout(()=>{ if(KBIN && document.activeElement!==KBIN){ KBT.classList.remove('on'); KBIN=null; } },250); });
+if(window.visualViewport){ visualViewport.addEventListener('resize',kbPlace); visualViewport.addEventListener('scroll',kbPlace); }
+KBT.addEventListener('pointerdown',ev=>ev.preventDefault());   // the box keeps its focus until the tap lands
+KBT.onclick=kbGo;
 function startApp(){
 boot('diag',()=>diag('start',{v:APP_VERSION, standalone:!!(navigator.standalone||matchMedia('(display-mode: standalone)').matches), offlineCopy:!!(navigator.serviceWorker&&navigator.serviceWorker.controller), profile:(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)).cur; }catch(e){ return ''; } })()}));
 boot('load',load);
