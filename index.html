@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.30.134">
+<meta name="app-version" content="2026.09.30.135">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1198,7 +1198,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.30.134';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.30.135';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1211,7 +1211,7 @@ const DIAGK='food_log_diag';
 function diag(what,info){ try{ const a=JSON.parse(localStorage.getItem(DIAGK)||'[]'), d=new Date();
   a.push(d.toLocaleString('en-AU',{hour12:false})+'.'+String(d.getMilliseconds()).padStart(3,'0')+' '+what+(info===undefined?'':' '+(typeof info==='string'?info:JSON.stringify(info))));
   localStorage.setItem(DIAGK,JSON.stringify(a.slice(-400))); }catch(e){} }
-const diagFood=f=>f?{id:f.id,n:f.n,sv:f.sv,k:f.k,p:f.p,c:f.c,f:f.f,bc:f.bc,e:f.e,u:f.u}:null;
+const diagFood=f=>f?{id:f.id,n:f.n,b:f.b||'',sv:f.sv,k:f.k,p:f.p,c:f.c,f:f.f,bc:f.bc,e:f.e,u:f.u}:null;
 addEventListener('error',ev=>diag('ERROR',(ev.message||'')+' @'+(ev.lineno||'')+':'+(ev.colno||'')+' '+String(ev.error&&ev.error.stack||'').slice(0,400)));
 addEventListener('unhandledrejection',ev=>diag('ERROR (async)',String(ev.reason&&(ev.reason.stack||ev.reason.message)||ev.reason).slice(0,400)));
 const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
@@ -1423,7 +1423,10 @@ function unifyFoods(){
      ingredient linked to it carries its name, serving and nutrition (keeping its weight). So a
      food logged on the other phone from an older copy comes into line once the edit arrives. */
   const F={}; lists.foods.forEach(f=>{ F[f.id]=f; });
-  const fol=e=>{ const f=e.fid && F[e.fid]; if(f && !sameVals(e,f)) followFood(e,f); };
+  const byName={}; lists.foods.forEach(f=>{ (byName[normS(fullName(f))]=byName[normS(fullName(f))]||[]).push(f); });
+  const near=(a,b)=>{ const x=per100(a), y=per100(b); return x && y && Math.abs(x[0]-y[0])<=2 && [1,2,3].every(i=>Math.abs(x[i]-y[i])<=0.3); };
+  const match=e=>(byName[normS(fullName(e))]||[]).find(f=>f.sv.trim().toLowerCase()===String(e.sv).trim().toLowerCase() || near(e,f));   // unlinked, but plainly this food
+  const fol=e=>{ const f=e.fid && F[e.fid] || !(e.fid && F[e.fid]) && match(e); if(f && (e.fid!==f.id || !sameVals(e,f))) followFood(e,f); };
   ps.forEach(p=>{ Object.values(p.days).forEach(es=>es.forEach(fol)); p.plan.items.forEach(fol);
     p.combos.forEach(c=>c.items.forEach(fol)); p.plans.forEach(x=>x.items.forEach(fol)); });
 }
@@ -3613,13 +3616,13 @@ function nextFood(){
 }
 /* Something chosen while building a meal becomes one of its ingredients. */
 function intoMeal(es){
-  ADD.into.items.push(...es.map(e=>({id:uid(), fid:e.fid||'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:Object.assign({},e.x), q:e.q, w:e.w})));
+  ADD.into.items.push(...es.map(e=>({id:uid(), fid:e.fid||'', n:e.n, ...(e.b?{b:e.b}:{}), sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:Object.assign({},e.x), q:e.q, w:e.w})));
   sfx('confirm'); toast('ADDED TO '+(ADD.into.n||'THE MEAL').toUpperCase());
   nextFood();
 }
 /* Log a food straight from a list: the amount given, into the section chosen at the top. */
 function quickAdd(f,q,w,fid){
-  const now=Date.now(), g=gramsOf(f.sv), en={id:uid(), fid:fid||'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:Object.assign({},f.x),
+  const now=Date.now(), g=gramsOf(f.sv), en={id:uid(), fid:fid||'', n:f.n, ...(f.b?{b:f.b}:{}), sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:Object.assign({},f.x),
     q:q||1, w:w||(g?'g':'s'), m:ADD.meal, t:now, e:now, ...(ADD.group||{})};
   if(ADD.into) return intoMeal([en]);
   dayPush(en);                                          // the amount lives on this entry only: the shared food isn't touched
@@ -3808,7 +3811,7 @@ function openQty(food,o){
     const foot=edit?'<button class="btn wide" id="qSave">[ SAVE ]</button>'
       :'<button class="btn wide" id="qGo">'+(e?'[ UPDATE ]':'[ LOG FOOD ]')+'</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
-    box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="Brand" value="'+esc(food.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
+    box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="Brand" value="'+esc(food.b||own&&own.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
           :'<span>'+(food.b?'<b class="qbn">'+esc(food.b)+'</b> ':'')+esc(food.n)+'</span>')+
         '</h3>'+
       (edit?'<div class="qper qsed"><span>SERVING \u00b7</span><span class="qsvw"><input class="qsvi" id="qS" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'+
@@ -3944,7 +3947,7 @@ function openQty(food,o){
       if(e && !live){ sfx('nope'); return toast('THAT FOOD WAS REMOVED ON ANOTHER PHONE'); }
       if(live) Object.assign(live,{q:st.q, w:st.w, m:st.m, e:later(live.e)});   // the one in the diary now, even if a sync replaced it since this opened
       else {
-        const en={id:uid(), fid:saved?saved.id:'', n:food.n, sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now,
+        const en={id:uid(), fid:saved?saved.id:'', n:food.n, ...(food.b?{b:food.b}:{}), sv:food.sv, k:food.k, p:food.p, c:food.c, f:food.f, x:Object.assign({},food.x), q:st.q, w:st.w, m:st.m, t:now, e:now,
           ...(ADD.group && !o.entry?ADD.group:{})};
         dayPush(en);
         FRESH=new Set([en.id]);
@@ -4307,7 +4310,7 @@ function paintRecent(q){
   L.innerHTML=list.length?'<div class="lh">'+(mine?'Your foods':'Recent')+'</div>'+list.map((e,i)=>lastRow(e,i)).join('')
     :!s && !historyFoods().length?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
   const logged=e=>e.m!==undefined;                   // a diary entry, rather than a saved food
-  const food=e=>logged(e)?(P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''}):e;
+  const food=e=>logged(e)?(P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, ...(e.b?{b:e.b}:{}), sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''}):e;
   bindRows(L,i=>openQty(food(list[i]),logged(list[i])?{q:list[i].q, w:list[i].w}:{}),
     i=>{ const e=list[i], f=food(e); logged(e)?quickAdd(f,e.q,e.w,P().foods.includes(f)?f.id:''):quickAdd(f,1,'',f.id); },
     i=>{ const e=list[i];                           // swipe a logged food away (Recent or Your foods); saved foods are deleted in Settings
