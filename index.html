@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.30.133">
+<meta name="app-version" content="2026.09.30.134">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1198,7 +1198,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.30.133';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.30.134';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3808,10 +3808,10 @@ function openQty(food,o){
     const foot=edit?'<button class="btn wide" id="qSave">[ SAVE ]</button>'
       :'<button class="btn wide" id="qGo">'+(e?'[ UPDATE ]':'[ LOG FOOD ]')+'</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
-    box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" placeholder="Brand" value="'+esc(food.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
+    box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="Brand" value="'+esc(food.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
           :'<span>'+(food.b?'<b class="qbn">'+esc(food.b)+'</b> ':'')+esc(food.n)+'</span>')+
         '</h3>'+
-      (edit?'<div class="qper qsed"><span>SERVING \u00b7</span><span class="qsvw"><input class="qsvi" id="qS" maxlength="40" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'+
+      (edit?'<div class="qper qsed"><span>SERVING \u00b7</span><span class="qsvw"><input class="qsvi" id="qS" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'+
           '<span class="qsel"><select id="qU" aria-label="Serving unit"><option value="">\u2014</option>'+SVU.map(([k,l])=>'<option value="'+k+'"'+(parseSv(food.sv).u===k?' selected':'')+'>'+l+'</option>').join('')+'</select><i>\u25be</i></span></span></div>'
         :'<div class="qper">SERVING \u00b7 '+esc(food.sv)+'</div>')+
       '<div class="qctl'+(edit?' off':'')+'"><div class="qamt"><input class="fld qin" id="qV" type="number" inputmode="decimal" step="any" enterkeyhint="done">'+picker('qUnit',units(),st.w)+'</div></div>'+
@@ -3874,6 +3874,7 @@ function openQty(food,o){
         if(w && !lastW && !Object.values(h).some(v=>v>0)) Object.keys(hs).forEach(k=>{ h[k]=hs[k]*100/w.n; });
         if(!w && lastW && !Object.values(hs).some(v=>v>0)) Object.keys(h).forEach(k=>{ hs[k]=h[k]*lastW.n/100; });
         lastW=w; sync(document.activeElement); update(); };
+      ['qB','qN','qS'].forEach(id=>{ $(id).onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); ev.target.blur(); } }; });   // the keyboard's tick closes it
       $('qS').oninput=()=>{ $('qU').value=parseSv($('qS').value).u; reserve(); };
       $('qU').onchange=()=>{ const u=$('qU').value; if(u){ $('qS').value=svCompose(parseSv($('qS').value),u); sfx('tap'); } reserve(); };
       const keep=()=>{ food=Object.assign({},food,{n:$('qN').value, sv:$('qS').value, b:$('qB').value}); };    // typed text survives a redraw
