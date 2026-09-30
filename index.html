@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#020a05">
+<meta name="theme-color" content="#07080b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Food Diary</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.29.127">
+<meta name="app-version" content="2026.09.30.132">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -640,6 +640,12 @@ html[data-theme=light] .lw.vf .rn::after,html[data-theme=light] .qt.vf>span::aft
 .qty h3.qt{height:24px;line-height:24px;padding:0 34px}
 .qt>span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qt .qname{height:24px;line-height:24px}
+/* The heading with the brand: in view, the brand in the secondary colour before the name; in editing, two
+   fields on the same line and at the same height, brand ending where the name begins, so nothing moves. */
+.qt .qbn{font-weight:inherit;color:var(--dim)}
+.qt .qtw{display:flex;align-items:center;gap:8px;height:24px}
+.qt .qbi{flex:0 1 36%;min-width:0;text-align:right;color:var(--dim)}
+.qt .qni{flex:1 1 64%;min-width:0;text-align:left}
 .qty .qper{height:20px;line-height:20px;white-space:nowrap;overflow:hidden}
 .qsvi{height:20px;line-height:20px}
 .mpick button:disabled{opacity:.28}
@@ -1060,6 +1066,7 @@ html.lg .card::after{content:'';position:absolute;inset:0;border-radius:inherit;
 /* rows inside cards: concentric with them (22 less the 12 inset) */
 html.lg .fi,html.lg .rlist .lw .ri{background:var(--row);border-color:transparent;border-radius:10px;box-shadow:var(--rim-ctl) !important}
 html.lg .fiw,html.lg .bin,html.lg .rlist .lw .bin{border-radius:10px}
+html.lg #main .fiw .fi{border-color:transparent}   /* the dashboard's own row rule carried the old outline */
 html.lg .fiw.on .fi{background:linear-gradient(180deg,var(--tint),var(--tint2))}
 html.lg .fiw.lifted .fi,html.lg .ri.lift{background:var(--cell);box-shadow:var(--rim),0 16px 34px -12px rgba(0,0,0,.45) !important}
 /* controls: capsules of clear glass */
@@ -1120,12 +1127,13 @@ html.lg .sheet:not(.out){animation:iosin .46s cubic-bezier(.18,1.18,.32,1) both}
 /* Theme before first paint: crt (Terminal), light (Liquid Glass), dark (the original iOS dark),
    glass (Liquid Glass dark), or auto (follows the phone between Light and Dark). */
 function applyTheme(t){
+  if(!['crt','light','dark','glass','auto'].includes(t)) t='glass';   // nothing chosen, or not a theme: Liquid Glass
   const r=document.documentElement, v=t==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;
   r.dataset.theme=v; r.classList.toggle('ios',v!=='crt'); r.classList.toggle('lg',v==='light'||v==='glass');   // lg: the Liquid Glass material
   document.querySelector('meta[name=theme-color]').content={crt:'#020a05',light:'#f1f3f9',dark:'#000000',glass:'#07080b'}[v]||'#000000';
   document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').content=v==='light'?'default':'black-translucent';
 }
-try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'dark'); }catch(e){ applyTheme('dark'); }
+try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'glass'); }catch(e){ applyTheme('glass'); }   // Liquid Glass unless one was chosen
 /* iOS shuts a background app down after a few minutes and reloads it on return. Coming back
    within the hour is a resume: straight to the dashboard, no power-on from black. */
 try{ if(Date.now()-(+localStorage.getItem('food_log_seen')||0)<36e5) document.documentElement.classList.add('resumed'); }catch(e){}
@@ -1187,7 +1195,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.29.127';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.09.30.132';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1247,6 +1255,7 @@ function cleanFood(x){
     k:orD(num(x.k,0,9000),0), p:orD(num(x.p,0,900),0), c:orD(num(x.c,0,1500),0), f:orD(num(x.f,0,900),0),
     x:cleanX(x.x), bc:x.bc?String(x.bc).replace(/\D/g,'').slice(0,20):'',
     u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0), ...(x.o?{o:String(x.o).slice(0,160)}:{}),   // o: the list food it was edited from
+    ...(x.b && String(x.b).trim()?{b:String(x.b).replace(/\s+/g,' ').trim().slice(0,40)}:{}),   // b: the brand, beside the serving
     ...(x.vf?{vf:orD(num(x.vf,0,1e13),0)}:{}),                                   // vf: when you last saved it yourself (verified)
     ...(Array.isArray(x.ob)&&x.ob.length?{ob:[...new Set(x.ob.map(b=>String(b).replace(/\D/g,'').slice(0,20)).filter(Boolean))].slice(0,20)}:{})};   // ob: barcodes it had before
 }
@@ -1255,7 +1264,7 @@ const noNut=f=>!!f && !(f.k>0||f.p>0||f.c>0||f.f>0) && !Object.values(f.x||{}).s
 const place=e=>e.o||e.t;                            // where an entry sits in its day
 function cleanEntry(x){
   const f=cleanFood(x); if(!f) return null;
-  return {id:f.id, fid:x.fid?String(x.fid).slice(0,24):'', n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x,
+  return {id:f.id, fid:x.fid?String(x.fid).slice(0,24):'', n:f.n, ...(f.b?{b:f.b}:{}), sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:f.x,
     q:orD(num(x.q,0.001,5000),1), w:['s','h','g'].includes(x.w)?x.w:'g', m:String(typeof x.m==='number'?'blds'[x.m]||'s':x.m||'s').slice(0,24),
     t:orD(num(x.t,0,1e13),0), e:orD(num(x.e,0,1e13),0),
     ...(x.g?{g:String(x.g).slice(0,24), gn:cleanLabel(x.gn)||'Combined'}:{}),   // logged as one combined item
@@ -1266,7 +1275,7 @@ function cleanEntry(x){
 function cleanCombo(x){
   if(!x || typeof x!=='object') return null;
   const n=cleanLabel(x.n), items=(Array.isArray(x.items)?x.items:[]).map(cleanEntry).filter(Boolean).slice(0,30)
-    .map(e=>({fid:e.fid, n:e.n, sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, q:e.q, w:e.w}));
+    .map(e=>({fid:e.fid, n:e.n, ...(e.b?{b:e.b}:{}), sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, q:e.q, w:e.w}));
   if(!n || !items.length) return null;
   const rc=String(x.rc||'').replace(/\r/g,'').slice(0,6000);
   return {id:String(x.id||uid()).slice(0,24), n, items, u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0), ...(rc.trim()?{rc}:{}), ...(x.mt?{mt:String(x.mt).slice(0,24)}:{}), ...cleanSc(x.sc)};   // sc: meal times from before 107
@@ -1363,7 +1372,7 @@ function cleanDB(d){
   d=d&&typeof d==='object'?d:{};
   const obj=v=>v&&typeof v==='object'?v:{};
   const out={profiles:{}, cur:String(d.cur||''), gh:obj(d.gh), fold:obj(d.fold), sfx:d.sfx!==false, idx:cleanIdx(d.idx),
-    theme:['crt','light','dark','glass','auto'].includes(d.theme)?d.theme:'dark', fill:cleanFill(d.fill),
+    theme:['crt','light','dark','glass','auto'].includes(d.theme)?d.theme:'glass', fill:cleanFill(d.fill),
     fb:cleanFb(d.fb)};                                                   // feedback notes, any length
   Object.keys(d.profiles||{}).forEach(n=>{ const nm=cleanName(n); if(nm) out.profiles[nm]=cleanProfile(d.profiles[n]); });
   if(!Object.keys(out.profiles).length) out.profiles.Me=blankProfile();
@@ -1415,7 +1424,7 @@ function unifyFoods(){
   ps.forEach(p=>{ Object.values(p.days).forEach(es=>es.forEach(fol)); p.plan.items.forEach(fol);
     p.combos.forEach(c=>c.items.forEach(fol)); p.plans.forEach(x=>x.items.forEach(fol)); });
 }
-const sameVals=(e,f)=>e.n===f.n && e.sv===f.sv && e.k===f.k && e.p===f.p && e.c===f.c && e.f===f.f && JSON.stringify(e.x||{})===JSON.stringify(f.x||{});
+const sameVals=(e,f)=>e.n===f.n && (e.b||'')===(f.b||'') && e.sv===f.sv && e.k===f.k && e.p===f.p && e.c===f.c && e.f===f.f && JSON.stringify(e.x||{})===JSON.stringify(f.x||{});
 function load(){
   let s=null, d=null;
   try{ s=localStorage.getItem(KEY); }catch(e){ STORE='memory'; }
@@ -1540,7 +1549,8 @@ function gramsOf(sv){
    otherwise the servings. */
 function qtyTxt(e){
   const g=gramsOf(e.sv);
-  return g ? r1(e.q*g.n)+' '+g.u : (e.q===1?'':r1(e.q)+' \u00d7 ')+e.sv;
+  if(Math.abs(e.q-1)<1e-6) return e.sv;               // exactly one serving: the serving as written, e.g. 25 g (1 packet)
+  return g ? r1(e.q*g.n)+' '+g.u : r1(e.q)+' \u00d7 '+e.sv;
 }
 
 /* ---------- merging ----------
@@ -1809,7 +1819,7 @@ document.addEventListener('focusout',e=>{ if(e.target.dataset) delete e.target.d
 
 /* ---------- sound: synthesised, nothing to load ----------
    iOS only lets audio start inside a touch, so the first tap anywhere wakes it. */
-['touchend','click'].forEach(t=>document.addEventListener(t,()=>{ const c=acx(); if(c && c.state==='suspended') c.resume(); },{once:true,passive:true}));
+['touchend','click'].forEach(t=>document.addEventListener(t,()=>{ if(DB && !soundOn()) return; const c=acx(); if(c && c.state==='suspended') c.resume(); },{once:true,passive:true}));   // audio only woken where sound plays (Terminal)
 let AC=null, BUS=null, NOISE=null, SFXAT=0;
 function acx(){
   if(AC) return AC;
@@ -1871,8 +1881,10 @@ function tone(freq,dur,vol,delay,o){
 function dyad(a,b,dur,vol,delay,o){ tone(a,dur,vol,delay,o); tone(b,dur,vol*0.8,delay,o); }
 const HISS={tap:[0.07,0.012],open:[0.13,0.016],close:[0.15,0.013],confirm:[0.34,0.018],
   record:[0.4,0.02],start:[0.6,0.02],level:[0.6,0.022],done:[0.7,0.02],nope:[0.28,0.02]};
+/* Sound plays in Terminal only; the other themes are silent. The Sound setting is kept for Terminal. */
+const soundOn=()=>DB.theme==='crt' && DB.sfx!==false;
 function sfx(name){
-  if(DB.sfx===false) return;
+  if(!soundOn()) return;
   const c=acx(); if(!c) return;
   if(c.state==='suspended') c.resume();
   SFXAT=Date.now();
@@ -2593,7 +2605,7 @@ function rowsOf(es){
   const out=[], at={};
   es.forEach(e=>{
     const m={p:e.p*e.q, c:e.c*e.q, f:e.f*e.q};
-    if(!e.g) return out.push({ids:[e.id], n:e.n, amt:qtyTxt(e), k:e.k*e.q, ...m});
+    if(!e.g) return out.push({ids:[e.id], n:e.n, amt:(e.b?e.b+' \u00b7 ':'')+qtyTxt(e), k:e.k*e.q, ...m});
     if(at[e.g]){ const r=at[e.g]; r.ids.push(e.id); r.k+=e.k*e.q; r.p+=m.p; r.c+=m.c; r.f+=m.f; r.amt=items(r.ids.length).toLowerCase(); return; }
     out.push(at[e.g]={g:e.g, ids:[e.id], n:e.gn, amt:'1 item', k:e.k*e.q, ...m});
   });
@@ -3508,10 +3520,11 @@ function listRow(i,name,sub,kcal,plus,cls){
     (plus?'<button class="qadd" aria-label="Add">+</button>':'')+'</div></div>';
 }
 /* An ingredient or a part of a combined item, at its amount; red with no nutrition. */
-const nutRow=(i,e)=>noNut(e)?foodListRow(i,e.n,esc(qtyTxt(e))+' \u00b7 NO NUTRITION INFO',0,false,'nonut'+(isVf(e)?' vf':''))
-  :foodListRow(i,e.n,esc(qtyTxt(e)),e.k*e.q,false,isVf(e)?'vf':'');
-const foodRow=(f,i)=>noNut(f)?foodListRow(i,f.n,'NO NUTRITION INFO',0,true,'nonut'+(isVf(f)?' vf':''))
-  :foodListRow(i,f.n,esc(f.sv)+(f.src==='afcd'?' \u00b7 AFCD':''),f.k,true,isVf(f)?'vf':'');
+const brandOf=x=>x && x.b?esc(x.b)+' \u00b7 ':'';      // the brand, first on the second line
+const nutRow=(i,e)=>noNut(e)?foodListRow(i,e.n,brandOf(e)+esc(qtyTxt(e))+' \u00b7 NO NUTRITION INFO',0,false,'nonut'+(isVf(e)?' vf':''))
+  :foodListRow(i,e.n,brandOf(e)+esc(qtyTxt(e)),e.k*e.q,false,isVf(e)?'vf':'');
+const foodRow=(f,i)=>noNut(f)?foodListRow(i,f.n,brandOf(f)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(f)?' vf':''))
+  :foodListRow(i,f.n,brandOf(f)+esc(f.sv)+(f.src==='afcd'?' \u00b7 AFCD':''),f.k,true,isVf(f)?'vf':'');
 /* Wire a list: open on tap, + to add, and optionally swipe to delete. */
 function bindRows(L,open,add,del){
   L.querySelectorAll('.lw').forEach(w=>{
@@ -3529,6 +3542,7 @@ function followFood(e,f){
   const og=gramsOf(e.sv), ng=gramsOf(f.sv);
   if(og && ng && og.u===ng.u && og.n!==ng.n) e.q=Math.round(e.q*og.n/ng.n*1000)/1000;
   Object.assign(e,{fid:f.id, n:f.n, sv:f.sv, k:f.k, p:f.p, c:f.c, f:f.f, x:Object.assign({},f.x)});
+  if(f.b) e.b=f.b; else delete e.b;                    // the brand travels with it
 }
 /* A saved food changed (its name, serving or nutrition): every diary entry of it on any day,
    and the same food inside saved meals, becomes the same, and syncs. Entries logged straight
@@ -3675,8 +3689,8 @@ function savedList(L,q,onFood,onMeal,ed,plus,byTime){
       '<button class="rx" id="svX" aria-label="Close">\u00d7</button></div>'+
       '<div class="duo">'+
       '<button class="btn ghost" id="svDel">[ DELETE ]</button><button class="btn" id="svOk">[ ACCEPT ]</button></div>';
-    if(!m && noNut(o)) return foodListRow(i,o.n,'NO NUTRITION INFO',0,plus,'nonut'+(o.vf?' vf':''));
-    return foodListRow(i,o.n,m?items(o.items.length):esc(o.sv),t.k,plus,!m&&o.vf?'vf':'');
+    if(!m && noNut(o)) return foodListRow(i,o.n,brandOf(o)+'NO NUTRITION INFO',0,plus,'nonut'+(o.vf?' vf':''));
+    return foodListRow(i,o.n,m?items(o.items.length):brandOf(o)+esc(o.sv),t.k,plus,!m&&o.vf?'vf':'');
   };
   let n=0;
   const body=g=>g.list.map(()=>row(rows[n],n++)).join('');
@@ -3708,11 +3722,11 @@ function savedList(L,q,onFood,onMeal,ed,plus,byTime){
 /* A food saved from a list or a scan: the saved one with that barcode, or that name and serving, else a new one. */
 /* The saved food a food on screen is when it wasn't opened as one: the saved food with its barcode,
    else with its name and serving (ignoring case and punctuation), else the one a logged entry matches. */
-function savedAs(f,e){ const L=P().foods, nk=normS(f.n), sk=String(f.sv||'').trim().toLowerCase();
-  return (f.bc && L.find(x=>x.bc===f.bc)) || L.find(x=>normS(x.n)===nk && x.sv.trim().toLowerCase()===sk) || (e && savedOf(e)) || null; }
+function savedAs(f,e){ const L=P().foods, nk=normS(fullName(f)), sk=String(f.sv||'').trim().toLowerCase();
+  return (f.bc && L.find(x=>x.bc===f.bc)) || L.find(x=>normS(fullName(x))===nk && x.sv.trim().toLowerCase()===sk) || (e && savedOf(e)) || null; }
 /* Other saved foods that are this one under the same name (ignoring case and punctuation): an edit
    replaces them, so a food is never saved twice with different values. */
-const copiesOf=(f,names)=>{ const ns=new Set(names.map(normS)); return P().foods.filter(x=>x.id!==f.id && ns.has(normS(x.n))); };
+const copiesOf=(f,names)=>{ const ns=new Set(names.map(normS)); return P().foods.filter(x=>x.id!==f.id && (ns.has(normS(fullName(x))) || ns.has(normS(x.n)))); };
 function dropCopies(cs){ if(!cs.length) return;
   const at={}; cs.forEach(x=>{ at[x.id]=later(...allE('foods',x.id)); });   // deleted after every copy of it, so none comes back
   Object.values(DB.profiles).forEach(p=>{ cs.forEach(x=>{ p.del[x.id]=at[x.id]; }); p.foods=p.foods.filter(x=>!cs.includes(x)); }); }
@@ -3762,7 +3776,7 @@ function openQty(food,o){
   if(!o.entry && !o.create && food && !P().foods.some(x=>x.id===food.id)){ const mine=savedFor(food); if(mine) food=mine; }   // one source: yours
   const e=o.entry, stack=!!topSheet();
   setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
-  const box=topSheet(), back=stack?popSheet:closeSheet;
+  const box=topSheet(), back=stack?()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); }:closeSheet;   // back to the list: it shows any change just saved
   const copy=f=>Object.assign({},f,{x:Object.assign({},f.x||{})});
   let first=copy(food);                                          // the food as opened, before anything is typed over it
   let saved=P().foods.find(x=>x.id===(e?e.fid:food.id)), g=gramsOf(food.sv), edit=!!o.create, h={}, hs={}, bc=null, scanning=false;   // h: per 100 g; hs: per serving, for a serving with no weight
@@ -3791,7 +3805,8 @@ function openQty(food,o){
     const foot=edit?'<button class="btn wide" id="qSave">[ SAVE ]</button>'
       :'<button class="btn wide" id="qGo">'+(e?'[ UPDATE ]':'[ LOG FOOD ]')+'</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
-    box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<input class="qname" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'">':'<span>'+esc(food.n)+'</span>')+
+    box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" placeholder="Brand" value="'+esc(food.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
+          :'<span>'+(food.b?'<b class="qbn">'+esc(food.b)+'</b> ':'')+esc(food.n)+'</span>')+
         '</h3>'+
       (edit?'<div class="qper qsed"><span>SERVING \u00b7</span><span class="qsvw"><input class="qsvi" id="qS" maxlength="40" autocomplete="off" placeholder="'+(o.create?EX.sv:'e.g. 40 g or 2 slices (76 g)')+'" value="'+esc(food.sv)+'">'+
           '<span class="qsel"><select id="qU" aria-label="Serving unit"><option value="">\u2014</option>'+SVU.map(([k,l])=>'<option value="'+k+'"'+(parseSv(food.sv).u===k?' selected':'')+'>'+l+'</option>').join('')+'</select><i>\u25be</i></span></span></div>'
@@ -3858,7 +3873,7 @@ function openQty(food,o){
         lastW=w; sync(document.activeElement); update(); };
       $('qS').oninput=()=>{ $('qU').value=parseSv($('qS').value).u; reserve(); };
       $('qU').onchange=()=>{ const u=$('qU').value; if(u){ $('qS').value=svCompose(parseSv($('qS').value),u); sfx('tap'); } reserve(); };
-      const keep=()=>{ food=Object.assign({},food,{n:$('qN').value, sv:$('qS').value}); };    // typed text survives a redraw
+      const keep=()=>{ food=Object.assign({},food,{n:$('qN').value, sv:$('qS').value, b:$('qB').value}); };    // typed text survives a redraw
       $('qCancel').onclick=()=>{ if(scanning){ stopScan(); scanning=false; } if(o.create) return back(); bc=null; edit=false; draw(); warp(box); };
       /* SCAN BARCODE opens the camera in place, just above the bar: the button becomes x (stop) with
          START CAMERA beside it, and the nutrition moves up to make room. */
@@ -3887,7 +3902,7 @@ function openQty(food,o){
         const w=gramsOf(sv), s=k=>r3(Math.max(0,w?val(h,k)*w.n/100:val(hs,k)));   // per serving, as saved (3 decimals)
         if(!n){ sfx('nope'); return toast('GIVE IT A NAME'); }
         if(!blank && !(s('k')>0)){ sfx('nope'); return toast('ENTER THE ENERGY'); }
-        const vals={n, sv, k:s('k'), p:s('p'), c:s('c'), f:s('f'), x:{}};
+        const vals={n, sv, k:s('k'), p:s('p'), c:s('c'), f:s('f'), x:{}, b:$('qB').value.replace(/\s+/g,' ').trim().slice(0,40)};
         XN.forEach(([k])=>{ if(s(k)>0) vals.x[k]=s(k); });
         const grams=g?st.q*g.n:0;                               // the same weight is kept if the serving changes
         if(!saved && !o.create) saved=savedAs(first,e);           // not opened as a saved food: the saved food it is, if there is one
@@ -3897,6 +3912,7 @@ function openQty(food,o){
         const prevE=allE('foods',saved.id);                         // every copy's time before this edit (for the log)
         const ob=new Set([...(saved.ob||[]), saved.bc].filter(b=>b && b!==vals.bc));   // barcodes it had before still find it
         Object.assign(saved,vals,{e:later(...prevE), vf:Date.now()});
+        if(!saved.b) delete saved.b;                              // no brand: none stored
         const copies=o.create?[]:copiesOf(saved,[oldN,n]);       // other saved copies of it (an edit, not a new food): folded into this one
         copies.forEach(x=>[x.bc,...(x.ob||[])].forEach(b=>{ if(b && b!==saved.bc) ob.add(b); }));
         if(ob.size) saved.ob=[...ob].slice(-20); else delete saved.ob;
@@ -4082,7 +4098,8 @@ function offMap(p){
   const m=f=>{ let v=val(f+per); if(v===null && per==='_serving' && g && val(f+'_100g')!==null) v=val(f+'_100g')*g.n/100; return v>0?v:0; };
   const x={}; XN.forEach(([key,,,,off,mul])=>{ const v=m(off); if(v) x[key]=r3(v*mul); });
   const br=String(p.brands||'').split(',')[0].trim();
-  return {n:(br && !name.toLowerCase().includes(br.toLowerCase())?br+' '+name:name).slice(0,80),
+  const own=br && !name.toLowerCase().includes(br.toLowerCase());   // a brand the name doesn't carry: kept as the brand
+  return {n:name.slice(0,80), ...(own?{b:br.slice(0,40)}:{}),
     sv, k:r3(k), p:r3(m('proteins')), c:r3(m('carbohydrates')), f:r3(m('fat')), x, bc:String(p.code||'').replace(/\D/g,'')};
 }
 const OFF_FIELDS='code,product_name,generic_name,brands,serving_size,nutrition_data_per,nutriments';
@@ -4225,20 +4242,21 @@ function matchScore(text,ws){
   }
   return near?1:2;
 }
-const sameFood=f=>(f.n+'|'+f.sv).toLowerCase();
+const fullName=f=>((f.b?f.b+' ':'')+(f.n||'')).trim();   // brand and name together: what a food is called in full
+const sameFood=f=>(fullName(f)+'|'+f.sv).toLowerCase();
 /* Per 100 g (or ml): what makes two foods identical whatever their servings. */
 const per100=f=>{ const g=gramsOf(f.sv); return g && g.n>0?['k','p','c','f'].map(k=>(f[k]||0)*100/g.n):null; };
 /* A list food that is one of yours: the same barcode, or the same name with the same nutrition
    (within label rounding). Yours shows; the list copy doesn't. */
 /* The saved food a list food is: by its barcode (now or before), the list food it was saved from,
    or its name (ignoring case and punctuation). Yours is the one source: it's shown in its place. */
-function savedFor(f){ if(!f) return null; const L=P().foods, n=normS(f.n), k=sameFood(f);
-  return (f.bc && L.find(x=>x.bc===f.bc || (x.ob||[]).includes(f.bc))) || L.find(x=>x.o===k) || L.find(x=>normS(x.n)===n) || null; }
+function savedFor(f){ if(!f) return null; const L=P().foods, n=normS(fullName(f)), k=sameFood(f);
+  return (f.bc && L.find(x=>x.bc===f.bc || (x.ob||[]).includes(f.bc))) || L.find(x=>x.o===k) || L.find(x=>normS(fullName(x))===n) || null; }
 const isVf=f=>!!(f && (f.vf || f.fid && (P().foods.find(x=>x.id===f.fid)||{}).vf));   // a food, or an entry of one, you've verified
 function isMine(f,mine){
   if(f.bc && mine.some(x=>x.bc===f.bc)) return true;
   const a=per100(f); if(!a) return false;
-  return mine.some(x=>{ if(normS(x.n)!==normS(f.n)) return false; const b=per100(x);
+  return mine.some(x=>{ if(normS(fullName(x))!==normS(fullName(f))) return false; const b=per100(x);
     return b && Math.abs(a[0]-b[0])<=2 && [1,2,3].every(i=>Math.abs(a[i]-b[i])<=0.3); });
 }
 function historyFoods(){                              // newest first, one per food
@@ -4247,7 +4265,7 @@ function historyFoods(){                              // newest first, one per f
   return foldLog(out);
 }
 /* Exact matches in their own order; close spellings after them, only when exact ones are few. */
-const byMatch=(list,ws)=>{ const s=list.map(x=>[matchScore(x.n,ws),x]).filter(([m])=>m), ex=s.filter(([m])=>m===2);
+const byMatch=(list,ws)=>{ const s=list.map(x=>[matchScore(fullName(x),ws),x]).filter(([m])=>m), ex=s.filter(([m])=>m===2);
   return ex.concat(ex.length<3?s.filter(([m])=>m===1):[]).map(([,x])=>x); };
 /* Your own foods that match: history, then saved foods not already in it. */
 function yourFoods(q){
@@ -4280,8 +4298,8 @@ function paintResults(){
 function paintRecent(q){
   const s=q.trim(), L=$('rcList');
   const mine=s.length>=2?yourFoods(s):null, list=mine?[...mine.hist,...mine.saved]:recentFoods();
-  const lastRow=(e,i)=>e.m===undefined?foodRow(e,i):noNut(e)?foodListRow(i,e.n,'NO NUTRITION INFO',0,true,'nonut'+(isVf(e)?' vf':''))   // as last logged: its amount and calories
-    :foodListRow(i,e.n,esc(qtyTxt(e)),e.k*e.q,true,isVf(e)?'vf':'');
+  const lastRow=(e,i)=>e.m===undefined?foodRow(e,i):noNut(e)?foodListRow(i,e.n,brandOf(e)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(e)?' vf':''))   // as last logged: its amount and calories
+    :foodListRow(i,e.n,brandOf(e)+esc(qtyTxt(e)),e.k*e.q,true,isVf(e)?'vf':'');
   L.innerHTML=list.length?'<div class="lh">'+(mine?'Your foods':'Recent')+'</div>'+list.map((e,i)=>lastRow(e,i)).join('')
     :!s && !historyFoods().length?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
   const logged=e=>e.m!==undefined;                   // a diary entry, rather than a saved food
@@ -4306,7 +4324,7 @@ function openSettings(){
     row('stMl','Food sections',P().meals.map(m=>m.n).join(' \u00b7 '))+
     row('stFd','Saved foods & meals',P().foods.length+' foods \u00b7 '+P().combos.length+' meals')+
     row('stSy','Sync and backup',ghWhen())+
-    row('stDp','Display & audio',THEMES[DB.theme]+' \u00b7 sound '+(DB.sfx?'on':'off'))+
+    row('stDp','Display & audio',THEMES[DB.theme]+' \u00b7 sound '+(soundOn()?'on':'off'))+
     row('stFb','Feedback',fbLive().length?fbLive().length+' note'+(fbLive().length===1?'':'s'):'none yet')+
     '</div><div class="tiny">v'+APP_VERSION+'</div>'));
   bindPanel();
@@ -4368,10 +4386,14 @@ function openDisplay(){
   sfx('open');
   setSheet(panel('Display & audio','<label class="flab">Theme</label>'+picker('dpMode',Object.entries(THEMES).map(([k,l])=>[k,l.toUpperCase()]),DB.theme)+
     '<div class="pgnote">Auto follows the phone\u2019s light or dark setting. The status bar colour updates the next time the app opens.</div>'+
-    '<label class="flab">Sound</label>'+picker('dpSnd',[['1','ON'],['0','OFF']],DB.sfx?'1':'0'),true));
+    '<label class="flab">Sound</label>'+picker('dpSnd',[['1','ON'],['0','OFF']],soundOn()?'1':'0')+'<div class="pgnote" id="dpSn"></div>',true));
   bindPanel(openSettings);
-  onPick('dpMode',v=>{ DB.theme=v; save(); applyTheme(v); panelHit(topSheet()); });
-  onPick('dpSnd',v=>{ DB.sfx=v==='1'; save(); if(DB.sfx) sfx('confirm'); });
+  const snd=()=>{ const t=DB.theme==='crt';           // outside Terminal: shown off and greyed; Terminal's own setting is kept
+    $('dpSnd').querySelectorAll('button').forEach(b=>{ b.disabled=!t; b.classList.toggle('on',b.dataset.v===(soundOn()?'1':'0')); });
+    $('dpSn').textContent=t?'':'Sound plays in Terminal only.'; };
+  onPick('dpMode',v=>{ DB.theme=v; save(); applyTheme(v); snd(); panelHit(topSheet()); });
+  onPick('dpSnd',v=>{ if(DB.theme!=='crt') return; DB.sfx=v==='1'; save(); if(DB.sfx) sfx('confirm'); });
+  snd();
 }
 /* Calories are the target. Macros are set as a share of them (never over 100% in all)
    or in grams; either way the total shows red until it reaches 100%. */
