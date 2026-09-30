@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.09.30.136">
+<meta name="app-version" content="2026.10.01.137">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -1205,7 +1205,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    food/_index.json and food/_feedback.json.
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.09.30.136';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.01.137';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1247,7 +1247,7 @@ const cleanLabel=n=>String(n||'').replace(/\s+/g,' ').trim().slice(0,80);
 
 function blankProfile(){
   return {goal:Object.assign({},DEF_GOAL), meals:DEF_MEALS.map(m=>Object.assign({},m)),
-          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, plan:blankPlan(), plans:[], gt:{}, gw:{p:[], t:0}, at:0, ge:0, me:0, pe:0, pid:''};
+          foods:[], combos:[], days:{}, hit:{}, del:{}, wt:{}, rh:{}, plan:blankPlan(), plans:[], gt:{}, gw:{p:[], t:0}, gl:{}, at:0, ge:0, me:0, pe:0, pid:''};   // gl: targets by the day they began
 }
 function cleanX(x){
   const o={};
@@ -1322,10 +1322,15 @@ function cleanSavedPlan(x){
   return {id:String(x.id||uid()).slice(0,24), n, portions:orD(num(Math.round(x.portions),1,200),10),
     items:(Array.isArray(x.items)?x.items:[]).map(cleanEntry).filter(Boolean).slice(0,120), u:orD(num(x.u,0,1e13),0), e:orD(num(x.e,0,1e13),0)};
 }
+const GL0='1970-01-01';                             // the first targets, for every day before any change
 function cleanProfile(p){
   const o=blankProfile();
   if(!p || typeof p!=='object') return o;
   o.goal=cleanGoal(p.goal);
+  /* The targets over time: {day they began: {g, e}}. Kept from before this record existed: one entry
+     from the start of time with the targets as they are, so no day already logged changes. */
+  if(p.gl && typeof p.gl==='object') Object.entries(p.gl).slice(-400).forEach(([d,v])=>{ if((DATE_RE.test(d)||d===GL0) && v && v.g) o.gl[d]={g:cleanGoal(v.g), e:orD(num(v.e,0,1e13),0)}; });
+  if(!Object.keys(o.gl).length) o.gl[GL0]={g:Object.assign({},o.goal), e:0};   // e 0: any real record, from either phone, wins over it
   if(Array.isArray(p.meals)){
     const ms=p.meals.map(m=>({id:String(m&&m.id||'').slice(0,24), n:String(m&&m.n||'').trim().slice(0,24)}))
       .filter(m=>m.id&&m.n);
@@ -1465,6 +1470,10 @@ function dayName(s){ const t=today(); return s===t?'Today':s===shift(t,-1)?'Yest
 let DAY=today(), FOLLOW=true;          // FOLLOW: roll over to the new day at midnight
 
 /* ---------- targets: calories, plus macros as a share of them or in grams ---------- */
+/* The targets a day had: the latest change on or before it. */
+function goalOn(d,p){ p=p||P(); const gl=p.gl||{}, ks=Object.keys(gl).sort(); if(!ks.length) return p.goal;
+  let k=ks[0]; ks.forEach(x=>{ if(x<=d) k=x; }); return gl[k].g; }
+const dayGoal=()=>goalOn(PLAN?today():DAY);           // the day on screen (the planner looks ahead from today)
 function targets(g){ g=g||P().goal;
   return g.mode==='g' ? {k:g.k, p:g.pg, c:g.cg, f:g.fg}
     : {k:g.k, p:Math.round(g.k*g.pp/400), c:Math.round(g.k*g.cp/400), f:Math.round(g.k*g.fp/900)}; }
@@ -1501,7 +1510,7 @@ function average(d,n){
   if(c) Object.keys(t).forEach(k=>t[k]/=c);
   return {t,c};
 }
-function onTarget(d){ const s=targetStatus(totals(d),targets()); return s.kHit&&s.pHit; }
+function onTarget(d){ const s=targetStatus(totals(d),targets(goalOn(d))); return s.kHit&&s.pHit; }
 /* Consecutive days with anything logged, ending today. An unlogged today does not break
    the run until the day is over, so the count carries from yesterday. */
 function logStreak(){
@@ -1572,6 +1581,7 @@ function qtyTxt(e){
 function mergeProfile(a,b){
   const o=blankProfile(), newer=a.at>=b.at?a:b, by=k=>a[k]!==b[k]?(a[k]>b[k]?a:b):newer;
   o.goal=Object.assign({},by('ge').goal);
+  [b.gl||{},a.gl||{}].forEach(m=>Object.entries(m).forEach(([d,v])=>{ const y=o.gl[d]; if(!y || v.e>y.e) o.gl[d]={g:Object.assign({},v.g), e:v.e}; }));   // each day's targets: the later edit
   o.meals=by('me').meals.map(m=>Object.assign({},m));
   o.plan=cleanPlan(by('pe').plan);                    // the plan on screen follows whichever phone changed it last
   o.ge=Math.max(a.ge,b.ge); o.me=Math.max(a.me,b.me); o.pe=Math.max(a.pe,b.pe);
@@ -2305,7 +2315,7 @@ function paintBolt(){
   el.setAttribute('aria-label',n+' day logging streak');
 }
 function render(){
-  const T=targets(), t=totals(), rem=T.k-t.k;
+  const T=targets(dayGoal()), t=totals(), rem=T.k-t.k;
   $('hdrK').textContent=DB.cur;
   const pl=P().plan;
   $('hdrT').textContent=PLAN?'Week Planner':dayName(DAY);
@@ -2434,7 +2444,7 @@ function ibBar(bar,v,d,g,st){
   [...bs].forEach((x,i)=>x.className=i<on?segCls(st):i<to?'pv':'');
 }
 function ibFill(){
-  const b=ibEl(), T=targets(), t=totals(), top=topSheet(), pv=top && top._pv || null, dd=k=>pv?Math.max(-t[k],pv[k]||0):0;
+  const b=ibEl(), T=targets(dayGoal()), t=totals(), top=topSheet(), pv=top && top._pv || null, dd=k=>pv?Math.max(-t[k],pv[k]||0):0;
   const sgn=(d,f)=>d>=0.5?'+'+f(d):d<=-0.5?'\u2212'+f(-d):'';   // more, or less for a smaller amount
   const K=b.querySelector('.ibk'), dk=dd('k'), vk=t.k+dk, rem=T.k-vk;
   K.querySelector('.ibv').textContent=fmt(vk);
@@ -3356,7 +3366,7 @@ function nutGuides(T){
   return {sf:T.k*0.10/9, tf:T.k*0.01/9, su:T.k*0.10/4, fi:T.k/1000*14, na:2000, ch:300};
 }
 function paintBreakdown(){
-  const T=targets(), G=nutGuides(T);
+  const T=targets(dayGoal()), G=nutGuides(T);
   let t=totals(), note=longDate(DAY), has=entries().length>0;
   if(BD!=='1'){
     const a=average(DAY,+BD); t=a.t; has=a.c>0;
@@ -3431,7 +3441,7 @@ function paintCal(){
 /* ---------- targets reached: each once a day; both together takes the screen ---------- */
 function checkHits(){
   if(PLAN) return false;                               // a plan never counts towards streaks or targets
-  const d=DAY, s=targetStatus(totals(d),targets()), h=P().hit[d]||{k:false,p:false};
+  const d=DAY, s=targetStatus(totals(d),targets(goalOn(d))), h=P().hit[d]||{k:false,p:false};
   const newK=s.kHit&&!h.k, newP=s.pHit&&!h.p;
   if(!newK && !newP) return false;
   P().hit[d]={k:h.k||s.kHit, p:h.p||s.pHit};
@@ -3444,7 +3454,7 @@ function checkHits(){
 function celebrate(d){
   fuzz(); sfx('level'); setTimeout(()=>sfx('done'),560);
   try{ navigator.vibrate([60,40,60,40,180]); }catch(e){}
-  const t=totals(d), T=targets(), n=streak(d);
+  const t=totals(d), T=targets(goalOn(d)), n=streak(d);
   const row=(l,v,g,u,ok)=>'<div><span>'+l+'</span><b class="'+(ok?'ok':'')+'">'+v+' / '+g+' '+u+'</b></div>';
   setSheet('<div class="veil" id="veil"></div><div class="sheet fit full win">'+
     '<h3>Target acquired</h3>'+
@@ -4422,7 +4432,7 @@ function openTargets(){
       '<button data-d="-1" aria-label="Less">\u2212</button><input class="fld pin" id="i'+k+'" type="number" inputmode="numeric" step="1">'+
       '<button data-d="1" aria-label="More">+</button></div>').join('')+
     '<div class="tot" id="tgSum"></div><button class="btn" id="tgGo">[ SAVE TARGETS ]</button></div>'+
-    '<div class="pgnote">Calories count as on target from the target up to 49 kcal over. Protein counts once reached.</div>',true));
+    '<div class="pgnote">Calories count as on target from the target up to 49 kcal over. Protein counts once reached. Changes apply from today; earlier days keep the targets they had.</div>',true));
   bindPanel(openSettings);
   const paint=()=>{
     const T=targets(g), S=shares(g), tot=S.pp+S.cp+S.fp;
@@ -4455,7 +4465,9 @@ function openTargets(){
   });
   $('tgGo').onclick=()=>{
     if(num($('tgK').value,500,10000)===null){ sfx('nope'); return toast('CALORIES MUST BE 500\u201310,000'); }
-    P().goal=cleanGoal(g); P().ge=later(P().ge); touch(); render();
+    P().goal=cleanGoal(g); P().ge=later(P().ge);
+    P().gl[today()]={g:Object.assign({},P().goal), e:later(P().gl[today()]&&P().gl[today()].e)};   // from today on; earlier days keep theirs
+    touch(); render();
     sfx('confirm'); toast('TARGETS SAVED'); openSettings();
   };
   paint();
