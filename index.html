@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.01.141">
+<meta name="app-version" content="2026.10.01.142">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -17,7 +17,7 @@
 html,body{margin:0;padding:0}
 :root{--gut:clamp(12px,3.6vw,16px)}   /* the side margin everywhere, in step with the screen's width */
 html{height:100%;overflow:hidden}
-html.standalone{height:100vh}
+html.standalone.tall{height:100vh}
 body{height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
 body{background:var(--bg);color:var(--tx);font-family:var(--ui); font-size:16.5px;line-height:1.55; padding-bottom:0; -webkit-text-size-adjust:100%;}
 h1,h3{margin:0;font-family:var(--serif);font-weight:400;letter-spacing:-0.005em}
@@ -551,8 +551,10 @@ html.resumed.booted header,html.resumed.booted #main{animation:none}
 .radd{margin-top:12px}
 .sheet .pgbody>.btn,.sheet .pgcard>.btn,.sheet .srch+.btn{margin-top:16px}
 .srows+.tiny{margin-top:9px}
-html.standalone .sheet.full{height:100vh}
-html.standalone .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
+html.standalone.tall .sheet.full{height:100vh}
+html.standalone.tall .sheet.fit:not(.full){max-height:calc(100vh - 14px)}
+html.standalone:not(.tall) .sheet.full{height:auto}                                  /* top and bottom: the screen below the status bar */
+html.standalone:not(.tall) .sheet.fit:not(.full){max-height:calc(100% - 14px)}
 .sheet.fit.full{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
 .sheet.fit.full.scroll .pgbody{padding-bottom:28px}
 .stat{margin-top:10px;font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--dim); text-align:center;min-height:1.5em;text-transform:uppercase}
@@ -950,6 +952,7 @@ html .sheet>.sbar{margin:auto calc(-1 * var(--gut)) 0}
 html .sbx{position:static;flex:none;margin-left:auto !important;width:56px;height:50px;min-height:0;margin:0;padding:0;line-height:1;font-size:24px;display:flex;align-items:center;justify-content:center;color:var(--dim)}
 html .sbar .sbr .btn{height:50px;min-height:0}
 html .btn.sbx{border:1px solid var(--hair);background:transparent;font-size:24px;padding:0;margin:0}
+.sbx .xi{display:block;width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;pointer-events:none}
 html.ios .btn.sbx{border:none;background:var(--fill)}
 .sbx[hidden]{display:none}
 html .sbar .secb{color:var(--bronze)}
@@ -1153,8 +1156,13 @@ try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'glass');
    within the hour is a resume: straight to the dashboard, no power-on from black. */
 try{ if(Date.now()-(+localStorage.getItem('food_log_seen')||0)<36e5) document.documentElement.classList.add('resumed'); }catch(e){}
 document.documentElement.classList.add('booting');
-/* The home-screen app sizes its viewport short of the glass; 100vh is the whole screen there. */
-if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) document.documentElement.classList.add('standalone');
+/* The home-screen app sizes its viewport short of the glass; 100vh is the whole screen there.
+   That holds only while it draws under the status bar (black-translucent, installed before 141).
+   Below an opaque status bar the viewport is the screen less the bar, and 100vh would run past
+   the bottom: there it's the viewport itself (tall: the first case). */
+if(navigator.standalone || matchMedia('(display-mode: standalone)').matches){ const r=document.documentElement; r.classList.add('standalone');
+  try{ const p=document.createElement('div'); p.style.cssText='position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top,0px);visibility:hidden;pointer-events:none';
+    r.appendChild(p); if(p.offsetHeight>0) r.classList.add('tall'); p.remove(); }catch(e){ r.classList.add('tall'); } }
 </script>
 <div class="crton" aria-hidden="true"><i></i><i></i><b></b></div>
 <div class="roll" aria-hidden="true"><canvas id="rollCv" width="128" height="30"></canvas></div>
@@ -1180,7 +1188,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
 <nav class="bnav" id="bnav"><button class="bnb on" id="bnDiary" aria-label="Diary"><svg viewBox="0 0 24 24"><path d="M6 3.5h10.5a1.5 1.5 0 0 1 1.5 1.5v15H7.5A1.5 1.5 0 0 1 6 18.5z"/><path d="M6 18.5A1.5 1.5 0 0 1 7.5 17H18M9.5 8h5M9.5 11h5"/></svg><i>DIARY</i></button><button class="planbtn" id="plan" aria-label="Meal planner and groceries"><svg viewBox="0 0 24 24"><rect x="5" y="4.5" width="14" height="16.5" rx="2"/><path d="M9 4.5V3h6v1.5"/><path d="M8.5 10h7M8.5 13.5h7M8.5 17h4.5"/></svg><i>PLANNER</i></button><button class="bnlog" id="bnLog" aria-label="Log food now"><b>+</b><i>LOG</i></button><button class="whobtn" id="who" aria-label="Switch profile (hold for profiles)"><svg viewBox="0 0 24 24"><circle cx="12" cy="9.75" r="2.92"/><path d="M7.51 16.94c0.67 -2.13 2.36 -3.37 4.49 -3.37s3.82 1.24 4.49 3.37"/>
     <path d="M2.56 12a9.44 9.44 0 0 1 16.52 -6.29"/><path d="M19.64 2v4.04h-4.04"/><path d="M21.44 12a9.44 9.44 0 0 1 -16.52 6.29"/><path d="M4.36 22v-4.04h4.04"/></svg><i>PROFILE</i></button><button class="cog" id="cog" aria-label="Settings"><svg viewBox="0 0 24 24"><path d="M21.98 9.88 L21.98 14.12 L18.95 14.53 L18.71 15.13 L20.55 17.56 L17.56 20.55 L15.13 18.71 L14.53 18.95 L14.12 21.98 L9.88 21.98 L9.47 18.95 L8.87 18.71 L6.44 20.55 L3.45 17.56 L5.29 15.13 L5.05 14.53 L2.02 14.12 L2.02 9.88 L5.05 9.47 L5.29 8.87 L3.45 6.44 L6.44 3.45 L8.87 5.29 L9.47 5.05 L9.88 2.02 L14.12 2.02 L14.53 5.05 L15.13 5.29 L17.56 3.45 L20.55 6.44 L18.71 8.87 L18.95 9.47 Z"/><circle cx="12" cy="12" r="3.4"/></svg><i>SETTINGS</i></button></nav>
 <div class="selbar tune" id="selbar" hidden><div class="selhead"><span id="selN"></span><span class="sellinks"><button class="sellink" id="selComb">COMBINE</button><button class="sellink" id="selMeal">SAVE AS MEAL ›</button></span></div>
-  <button class="btn ghost" id="selDel">[ DELETE ]</button><button class="btn" id="selGo">[ COPY TO… ]</button><button class="btn ghost sbx" id="selX" aria-label="Cancel">&times;</button></div>
+  <button class="btn ghost" id="selDel">[ DELETE ]</button><button class="btn" id="selGo">[ COPY TO… ]</button><button class="btn ghost sbx" id="selX" aria-label="Cancel"><svg class="xi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
 <div id="sheetWrap"></div>
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
   <filter id="uiwarp" x="-30%" y="-12%" width="160%" height="124%" color-interpolation-filters="sRGB">
@@ -1211,7 +1219,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.01.141';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.01.142';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2402,7 +2410,8 @@ function arm(btn,fn){
 }
 /* Every full screen ends in the same bottom bar as the dashboard's: its own actions, and its close
    (x) on the right, so nothing important is up at the top. */
-const xBtn=(back,id)=>'<button class="btn ghost shx sbx'+(back?' back':'')+'"'+(id?' id="'+id+'"':'')+' aria-label="'+(back?'Back':'Close')+'">\u00d7</button>';
+const XI='<svg class="xi" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';   // the close X, drawn
+const xBtn=(back,id)=>'<button class="btn ghost shx sbx'+(back?' back':'')+'"'+(id?' id="'+id+'"':'')+' aria-label="'+(back?'Back':'Close')+'">'+XI+'</button>';
 const sbar=(x,inner,above)=>'<div class="sbar">'+(above||'')+'<div class="sbr">'+(inner?'<div class="sbf">'+inner+'</div>':'')+(x||'')+'</div></div>';
 function panel(title,body,back,foot){
   return '<div class="veil" id="veil"></div><div class="sheet fit full scroll"><h3>'+title+'</h3>'+
@@ -2828,7 +2837,7 @@ function openMealEdit(c,name,o){
       '<div class="cscr">'+sec('i','Ingredients \u00b7 '+d.items.length,'<div class="rlist" id="meList">'+(d.items.length?d.items.map((e,i)=>nutRow(i,e)).join('')
         :'<div class="stat">NO FOODS YET \u2014 TAP ADD FOOD</div>')+'</div>')+
       sec('r','Recipe','<textarea class="fld rcp" id="meR" rows="8" maxlength="6000" placeholder="Method, steps and notes">'+esc(d.rc)+'</textarea>')+'</div>'+   // ingredients and recipe scroll together
-      sbar('<button class="btn ghost sbx" id="meCancel" aria-label="Cancel">\u00d7</button>','<div class="duo"><button class="btn ghost" id="meAdd">[ ADD FOOD ]</button><button class="btn" id="meSave">[ SAVE ]</button></div>');
+      sbar('<button class="btn ghost sbx" id="meCancel" aria-label="Cancel">'+XI+'</button>','<div class="duo"><button class="btn ghost" id="meAdd">[ ADD FOOD ]</button><button class="btn" id="meSave">[ SAVE ]</button></div>');
     const sc=box.querySelector('.cscr'); sc.scrollTop=box._st||0; sc.onscroll=()=>{ box._st=sc.scrollTop; };   // kept across redraws
     foldSections(box,open); onPick('meT',v=>{ tg=v; sfx('tap'); });
     bindRows($('meList'),i=>{ keep(); openQty(d.items[i],{entry:d.items[i], item:{remove:()=>d.items.splice(i,1)}}); },null,
@@ -3542,8 +3551,8 @@ function openCalendar(pick,note,who,multi){
     (who && names.length>1?picker('cWho',names.map(n=>[n,n.toUpperCase()]),DB.cur):'')+
     '<div class="calh"><button id="cPrev" aria-label="Previous month">\u2039</button><h3 id="cTitle"></h3>'+
     '<button id="cNext" aria-label="Next month">\u203a</button></div><div class="cal'+(multi?' multi':'')+'" id="cGrid"></div>'+
-    (multi?'<div class="sbr"><div class="sbf"><button class="btn" id="cGo" disabled>[ CHOOSE DAYS ]</button></div><button class="btn ghost sbx" id="cX" aria-label="Cancel">\u00d7</button></div>'
-      :pick?'<div class="sbr"><div class="sbf"><button class="btn" id="cToday">[ TODAY ]</button></div><button class="btn ghost sbx" id="cX" aria-label="Cancel">\u00d7</button></div>'
+    (multi?'<div class="sbr"><div class="sbf"><button class="btn" id="cGo" disabled>[ CHOOSE DAYS ]</button></div><button class="btn ghost sbx" id="cX" aria-label="Cancel">'+XI+'</button></div>'
+      :pick?'<div class="sbr"><div class="sbf"><button class="btn" id="cToday">[ TODAY ]</button></div><button class="btn ghost sbx" id="cX" aria-label="Cancel">'+XI+'</button></div>'
          :'<button class="btn" id="cToday">[ TODAY ]</button>')+'</div>');
   $('veil').onclick=closeSheet;
   $('cPrev').onclick=()=>calMove(-1);
@@ -3975,7 +3984,7 @@ function openQty(food,o){
         :'<div class="qper">SERVING \u00b7 '+esc(food.sv)+'</div>')+
       '<div class="qctl'+(edit?' off':'')+'"><div class="qamt"><input class="fld qin" id="qV" type="number" inputmode="decimal" step="any" enterkeyhint="done">'+picker('qUnit',units(),st.w)+'</div></div>'+
       '<div class="qlh">Nutritional information</div><div class="qlab" id="qX"></div>'+
-      sbar(edit?'<button class="btn ghost sbx" id="qCancel" aria-label="Cancel">\u00d7</button>':xBtn(stack),foot,'<div class="qact">'+top+'</div>');
+      sbar(edit?'<button class="btn ghost sbx" id="qCancel" aria-label="Cancel">'+XI+'</button>':xBtn(stack),foot,'<div class="qact">'+top+'</div>');
     if(box.querySelector('.shx')) box.querySelector('.shx').onclick=back;       // not while editing: CANCEL is the way out
     const V=$('qV'), per={s:1, h:g?g.n/100:1, g:g?g.n:1};          // amount typed = servings x per[unit]
     V.value=r1(st.q*per[st.w]);
@@ -4053,7 +4062,7 @@ function openQty(food,o){
         host.querySelector('.src').remove();
         const go=host.querySelector('.scgo'); go.classList.add('wide');
         const row=document.createElement('div'); row.className='sbr qscr'; row.append(go);
-        row.insertAdjacentHTML('beforeend','<button class="btn ghost sbx" id="qBc" aria-label="Stop scanning">\u00d7</button>'); host.append(row);
+        row.insertAdjacentHTML('beforeend','<button class="btn ghost sbx" id="qBc" aria-label="Stop scanning">'+XI+'</button>'); host.append(row);
         $('qBc').onclick=()=>{ stopScan(); scanning=false; keep(); draw(); sfx('tap'); };
       } else $('qBc').onclick=()=>{ keep(); scanning=true; draw(); sfx('open'); };
       $('qSave').onclick=()=>{ try{ saveIt(); }catch(err){ diag('ERROR food save',String(err&&err.stack||err).slice(0,600)); sfx('nope'); toast('SAVE FAILED \u00b7 '+String(err&&err.message||err).slice(0,60).toUpperCase()); } };
@@ -4624,7 +4633,7 @@ function openFeedback(){
   sfx('open');
   let ed=null;                                       // the note being changed, if any
   setSheet(panel('Feedback','<textarea class="fld rcp fbin" id="fbT" rows="4" placeholder="A change or problem to pass on"></textarea>'+
-      '<div class="sbr fbgo"><div class="sbf"><button class="btn" id="fbAdd">[ ADD ]</button></div><button class="btn ghost sbx" id="fbX" hidden aria-label="Cancel">\u00d7</button></div>'+
+      '<div class="sbr fbgo"><div class="sbf"><button class="btn" id="fbAdd">[ ADD ]</button></div><button class="btn ghost sbx" id="fbX" hidden aria-label="Cancel">'+XI+'</button></div>'+
       '<div class="rlist" id="fbL"></div>',true,
     '<div class="duo"><button class="btn ghost" id="fbClr">[ CLEAR ALL ]</button><button class="btn" id="fbCp">[ COPY ALL ]</button></div>'));
   bindPanel(openSettings);
