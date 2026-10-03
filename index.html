@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.01.137">
+<meta name="app-version" content="2026.10.01.140">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
@@ -920,6 +920,9 @@ html #main .fiw{margin-top:3px}
 html #main .fiw .fi{min-height:43px;padding:4px 12px;gap:6px;background:var(--card);border:1px solid var(--cardhair);border-radius:6px;align-items:center}
 html #main .fi .fm{display:block;flex:1;min-width:0}
 html #main .fi .fnm{display:block;font-size:14px;line-height:1.2}
+/* Meals (in the diary and the planner), saved meals and saved plans: a long name takes two lines,
+   then ends in an ellipsis. */
+html #main .fi.grp .fnm,.fiw.mn .rn{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow:hidden;overflow-wrap:anywhere}
 html #main .fi .fsb{display:block;margin-top:1px;font-size:10px;letter-spacing:.06em}
 html #main .fi .fk{font-size:13px;min-width:0}
 html:not(.ios) #main .fi .rn{text-shadow:0 0 4px rgba(0,255,102,.3)}   /* the glow text has outside buttons, as in Add food */
@@ -961,6 +964,10 @@ html.ios .sheet.drop.secpick{border-radius:14px 14px 0 0}
 :root{--pbt:max(0px,calc(env(safe-area-inset-top) - 8px));--pbh:max(30px,calc(env(safe-area-inset-top) + 20px));--sab:max(6px,calc(env(safe-area-inset-bottom) - 16px))}
 .pbar{position:fixed;left:0;right:0;top:0;z-index:400;height:var(--pbh);box-sizing:border-box;padding:var(--pbt) var(--gut) 0;display:flex;align-items:center;gap:10px;background:var(--bg)}
 .pbar .eyebrow{margin:0}
+/* iOS 27 lays a blur over the top of an installed web app, fogging the name and streak, unless a
+   solid fixed bar sits at the very top (at least 6px high, most of the width): it then paints the
+   status bar that colour, without the blur. It stops above the name row. */
+.sbtop{position:fixed;left:0;right:0;top:0;height:max(6px,calc(env(safe-area-inset-top) - 10px));background:var(--bg);z-index:401;pointer-events:none}
 .pbar .bolt{position:static;transform:none;height:auto;margin-left:auto}
 html .pbar .rtt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:calc(var(--pbt) + 3px);transform:none;padding:4px 10px}
 html header.hx{top:0;padding:0}
@@ -1153,6 +1160,7 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 </script>
 <div class="crton" aria-hidden="true"><i></i><i></i><b></b></div>
 <div class="roll" aria-hidden="true"><canvas id="rollCv" width="128" height="30"></canvas></div>
+<div class="sbtop" aria-hidden="true"></div>
 <div class="pbar" id="pbar"><div class="eyebrow" id="hdrK"></div>
   <div class="bolt none" id="bolt" role="img" aria-label="0 day logging streak"><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6.2L9.5 22 19.5 9.8h-6.3z"/></svg><b id="boltN">0</b></div>
   <button class="rtt tune" id="rtt" hidden><span>TODAY</span></button></div>
@@ -1202,10 +1210,11 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
      a food by hand (openQty), saved meals               barcodes, the Australian list, search
      settings screens                                    start-up, updates, wiring, live updates
    Data never changes shape: localStorage food_log_v1, repo files food/<profile>.json,
-   food/_index.json and food/_feedback.json.
+   food/_index.json, food/_feedback.json, food/_library.json (the shared foods, meals and plans)
+   and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.01.137';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.01.140';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1388,13 +1397,22 @@ function cleanDB(d){
   const obj=v=>v&&typeof v==='object'?v:{};
   const out={profiles:{}, cur:String(d.cur||''), gh:obj(d.gh), fold:obj(d.fold), sfx:d.sfx!==false, idx:cleanIdx(d.idx),
     theme:['crt','light','dark','glass','auto'].includes(d.theme)?d.theme:'glass', fill:cleanFill(d.fill),
-    fb:cleanFb(d.fb)};                                                   // feedback notes, any length
+    fb:cleanFb(d.fb),                                                    // feedback notes, any length
+    dev:String(d.dev||'').replace(/[^\w]/g,'').slice(0,24)||uid(),      // this phone, made once: what owning a profile means
+    acc:cleanAcc(d.acc), lib:cleanLib(d.lib)};                           // who owns and sees each profile; the shared library
   Object.keys(d.profiles||{}).forEach(n=>{ const nm=cleanName(n); if(nm) out.profiles[nm]=cleanProfile(d.profiles[n]); });
   if(!Object.keys(out.profiles).length) out.profiles.Me=blankProfile();
   Object.values(out.profiles).forEach(p=>{ if(!p.pid) p.pid=uid(); });     // a profile's identity, whatever it is called
   if(!out.profiles[out.cur]) out.cur=Object.keys(out.profiles)[0];
   return out;
 }
+/* The library: the shared foods, meals and plans, with their deletions, in their own file
+   (food/_library.json), so they still reach every phone when profiles are hidden from each other.
+   Kept profile-shaped, so it merges like a profile and unifyFoods keeps it the same as the rest. */
+const cleanLib=x=>{ x=x&&typeof x==='object'?x:{}; return cleanProfile({foods:x.foods, combos:x.combos, plans:x.plans, del:x.del}); };
+const libOut=l=>({foods:l.foods, combos:l.combos, plans:l.plans, del:l.del});       // what its file holds
+const libHas=l=>!!(l.foods.length || l.combos.length || l.plans.length || Object.keys(l.del).length);
+const allP=()=>Object.values(DB.profiles).concat(DB.lib?[DB.lib]:[]);           // every holder of the shared lists
 /* Foods, meals and saved plans are one set for everyone: every profile holds the same arrays,
    so anything made or changed in one is the same in all (husband and wife prep together). The
    same thing twice (a food by name and serving, a meal or plan by name) becomes one, the latest
@@ -1404,10 +1422,10 @@ function cleanDB(d){
    is later. A phone whose clock ran ahead leaves copies stamped in the future; without this an edit
    made here would lose to them at the next sync and quietly revert. */
 const later=(...ts)=>Math.max(Date.now(),...ts.map(t=>(+t||0)+1));
-const allE=(k,id)=>Object.values(DB.profiles).flatMap(p=>(p[k]||[]).filter(x=>x.id===id).map(x=>x.e).concat(p.del[id]||0));
+const allE=(k,id)=>allP().flatMap(p=>(p[k]||[]).filter(x=>x.id===id).map(x=>x.e).concat(p.del[id]||0));
 const SHARED=[['foods',f=>sameFood(f)],['combos',c=>c.n.trim().toLowerCase()],['plans',x=>x.n.trim().toLowerCase()]];
 function unifyFoods(){
-  const ps=Object.values(DB.profiles); if(!ps.length) return;
+  const ps=allP(); if(!ps.length) return;
   const del={}; ps.forEach(p=>Object.keys(p.del).forEach(id=>{ del[id]=Math.max(del[id]||0,p.del[id]); }));
   const remap={}, byId={}, lists={};
   SHARED.forEach(([k,key])=>{
@@ -1448,6 +1466,7 @@ function load(){
   try{ s=localStorage.getItem(KEY); }catch(e){ STORE='memory'; }
   try{ d=JSON.parse(s); }catch(e){ dbg('STORE','saved data unreadable',e); }
   DB=cleanDB(d); unifyFoods();
+  if(!(d && d.dev)) save();                         // this phone's id, kept from the first start
 }
 function save(){
   if(STORE!=='local') return;
@@ -1656,6 +1675,12 @@ const ghPut=(name,prof,sha)=>ghReq(ghUrl(name),{method:'PUT',body:JSON.stringify
   message:'log: '+name+' '+today(), branch:ghCfg().branch, sha:sha||undefined,
   content:b64(JSON.stringify({v:1,name,profile:prof}))})});
 let GHT=0, GHBUSY=false; const GHPEND=new Set();   // profiles waiting for the sync running now
+const LIBN='_library';                               // the library's file name, synced like a profile
+const LIBSEEN={j:''};                                // the library as its file last held it
+const libKey=l=>JSON.stringify(libOut(l),(k,v)=>k==='u'?undefined:v);   // when each was last used needs no write of its own
+const libDirty=()=>libKey(DB.lib)!==LIBSEEN.j;
+/* What this phone keeps of a profile: everything, or without the weight when only the diary is shared. */
+const viewOf=p=>lvlOf(p.pid)===1?Object.assign({},p,{wt:{}}):p;
 function ghQueue(){ if(!ghOn()) return; clearTimeout(GHT); GHT=setTimeout(()=>{ GHT=0; ghSync(DB.cur); },1500); }
 function ghFlush(){ if(GHT){ clearTimeout(GHT); GHT=0; ghSync(DB.cur); } }
 const ghMsg=e=>e===401?'bad token':e===403?'token cannot write here':e===404?'repo not found':typeof e==='number'?'error '+e:'offline';
@@ -1664,30 +1689,62 @@ async function ghSync(name){
   if(!ghCfg().moved) return ghSyncAll();              // the move to food/ comes before anything is written
   if(GHBUSY){ GHPEND.add(name); return 'busy'; }
   GHBUSY=true;
+  const lib=name===LIBN;
   try{
     for(let i=0;i<3;i++){
-      const rem=await ghGet(name), local=DB.profiles[name];
-      if(!local || (!rem.prof && !local.at)) break;        // never used: nothing worth uploading
+      const rem=await ghGet(name), local=lib?DB.lib:DB.profiles[name];
+      if(!local || (!rem.prof && !(lib?libHas(local):local.at))){ if(lib) LIBSEEN.j=libKey(local); break; }   // never used: nothing worth uploading
+      if(!lib && !lvlOf((rem.prof && rem.prof.pid) || local.pid)){ if(await ghHide(name,local,rem)) break; continue; }   // no longer shared with this phone
       const before=JSON.stringify(local);
       const was={}; local.foods.forEach(f=>{ was[f.id]=f; });
-      DB.profiles[name]=rem.prof?mergeProfile(local,rem.prof):cleanProfile(local); unifyFoods();   // the shared foods, before it's written back
+      const full=rem.prof?mergeProfile(local,rem.prof):cleanProfile(local);
+      if(lib) DB.lib=full; else DB.profiles[name]=full;
+      unifyFoods();                                          // the shared foods, before it's written back
       try{ const rf={}, key=f=>f?[f.n,f.sv,f.k,f.p,f.c,f.f,f.bc,JSON.stringify(f.x)].join('|'):''; (rem.prof?rem.prof.foods:[]).forEach(f=>{ rf[f.id]=f; });
-        const now={}; DB.profiles[name].foods.forEach(f=>{ now[f.id]=f; });
-        Object.keys(Object.assign({},was,now)).forEach(id=>{ if(key(was[id])!==key(now[id])) diag('sync '+name+' changed a food',{before:diagFood(was[id]),after:diagFood(now[id]),repo:diagFood(rf[id]),del:DB.profiles[name].del[id]||0}); });
+        const now={}; full.foods.forEach(f=>{ now[f.id]=f; });
+        Object.keys(Object.assign({},was,now)).forEach(id=>{ if(key(was[id])!==key(now[id])) diag('sync '+name+' changed a food',{before:diagFood(was[id]),after:diagFood(now[id]),repo:diagFood(rf[id]),del:full.del[id]||0}); });
       }catch(e){ diag('ERROR (sync log)',String(e)); }
-      const merged=DB.profiles[name], mj=JSON.stringify(merged);
-      if(mj!==before){ save(); render(); }
-      if(rem.prof && mj===JSON.stringify(rem.prof)) break;
-      const r=await ghPut(name,merged,rem.sha);
+      const out=lib?libOut(full):full, mj=JSON.stringify(out);   // what the file holds
+      if(!lib) DB.profiles[name]=viewOf(full);               // what this phone keeps
+      if(JSON.stringify(lib?DB.lib:DB.profiles[name])!==before){ save(); render(); }
+      if(rem.prof && mj===JSON.stringify(lib?libOut(rem.prof):rem.prof)){ if(lib) LIBSEEN.j=libKey(full); break; }
+      const r=await ghPut(name,out,rem.sha);
       if(r.status===409 || r.status===422) continue;         // moved under us: read again
       if(!r.ok) throw r.status;
+      if(lib) LIBSEEN.j=libKey(full);
       break;
     }
     ghSave({at:Date.now(),err:''});
     return 'ok';
   }catch(e){ const m=ghMsg(e); dbg('SYNC',name,m,e); ghSave({err:m}); return m; }
   finally{ GHBUSY=false; refreshCog();
+    if(!lib && DB.lib && libDirty()) GHPEND.add(LIBN);       // a shared food changed: the library too
     if(GHPEND.size){ const n=GHPEND.values().next().value; GHPEND.delete(n); n===DB.cur?ghQueue():ghSync(n); } }   // then the next one
+}
+/* A profile no longer shared with this phone: anything changed here first goes up to its file
+   (if the file is still there), then this phone's copy goes. Answers false to read it again. */
+async function ghHide(name,local,rem){
+  if(local.at && rem.prof){
+    const full=mergeProfile(local,rem.prof);
+    if(JSON.stringify(full)!==JSON.stringify(rem.prof)){
+      const r=await ghPut(name,full,rem.sha);
+      if(r.status===409 || r.status===422) return false;
+      if(!r.ok) throw r.status;
+    }
+  }
+  dropLocal(name); return true;
+}
+function dropLocal(name){
+  if(!DB.profiles[name]) return;
+  const was=DB.cur===name, used=!!DB.profiles[name].at;
+  delete DB.profiles[name];
+  if(!Object.keys(DB.profiles).length) DB.profiles.Me=Object.assign(blankProfile(),{pid:uid()});
+  if(was){ const own=new Set(mine());
+    DB.cur=Object.keys(DB.profiles).sort((a,b)=>a.localeCompare(b)).find(n=>own.has(DB.profiles[n].pid)) || Object.keys(DB.profiles).sort((a,b)=>a.localeCompare(b))[0];
+    if(typeof closeSheet==='function' && DB && $('main')){ dropSelect(); closeSheet(); } }
+  if(DB.fill && DB.fill.who===name) DB.fill=null;
+  save(); diag('profile not shared with this phone, copy removed',name);
+  if($('main')){ render(); if(used) toast(name.toUpperCase()+' IS NO LONGER SHARED'); }
 }
 /* ---------- the shared index: profile renames and deletes, so every phone follows them ----------
    Each entry names the profile's identity, not just its name, so it never touches a
@@ -1718,6 +1775,83 @@ function applyIdx(idx){
   if(!DB.profiles[DB.cur]) DB.cur=Object.keys(DB.profiles)[0];
 }
 const IDX='/contents/'+DIR+'/_index.json';
+/* ---------- privacy: who owns each profile, and who it's shared with ----------
+   food/_access.json, one entry per profile identity (pid): its name (n, changed nt), whether it was
+   deleted (d), the phone that owns it (h: that phone's id, '' for none), what the owners of other
+   profiles may see of it (s: pid -> 1 the diary, 2 the diary and the weight; null: never set up,
+   so everyone sees it, as before), when ownership or sharing last changed (t), and the admin phone
+   that released it (rb). adm: the admin phone (h), and the recovery passphrase as a PBKDF2 key (k)
+   with its salt (s) and rounds (i), never the passphrase itself. A phone sees a profile it owns, one never set up,
+   and one shared with a profile it owns. Hidden profiles are never fetched. */
+const ACCF='/contents/'+DIR+'/_access.json';
+function cleanS(x){ const o={}; if(x && typeof x==='object') Object.keys(x).sort().slice(0,60).forEach(k=>{ if(x[k]===1 || x[k]===2) o[String(k).slice(0,24)]=x[k]; }); return o; }
+function cleanAcc(x){
+  x=x&&typeof x==='object'?x:{};
+  const o={who:{}, adm:null}, w=x.who&&typeof x.who==='object'?x.who:{}, id=v=>String(v||'').replace(/[^\w]/g,'').slice(0,24);
+  Object.keys(w).filter(id).sort().slice(0,80).forEach(pid=>{ const e=w[pid]; if(!e || typeof e!=='object') return;
+    o.who[id(pid)]={n:cleanName(e.n), nt:orD(num(e.nt,0,1e13),0), d:e.d?1:0, h:id(e.h), s:e.s && typeof e.s==='object'?cleanS(e.s):null,
+      t:orD(num(e.t,0,1e13),0), rb:id(e.rb)}; });
+  const hex=(v,n)=>{ v=String(v||''); return v.length===n && /^[0-9a-f]+$/.test(v)?v:''; };
+  if(x.adm && id(x.adm.h)){ const k=hex(x.adm.k,64), sl=hex(x.adm.s,32);
+    const ok=!!(k && sl); o.adm={h:id(x.adm.h), t:orD(num(x.adm.t,0,1e13),0), k:ok?k:'', s:ok?sl:'', i:ok?orD(num(x.adm.i,1000,1e7),PASSI):0}; }
+  return o;
+}
+/* Each entry in two parts, each the later change: its name (and deletion), and its owner and sharing.
+   Equal times settle the same way on every phone. */
+function mergeAcc(a,b){
+  a=cleanAcc(a); b=cleanAcc(b);
+  const part=(x,ks)=>JSON.stringify(ks.map(k=>x[k])), late=(x,y,k,ks)=>(y[k]>x[k] || (y[k]===x[k] && part(y,ks)>part(x,ks)))?y:x;
+  const o={who:{}, adm:null}, NM=['n','nt','d'], AC=['h','s','t','rb'];
+  [...new Set([...Object.keys(a.who),...Object.keys(b.who)])].forEach(pid=>{ const x=a.who[pid], y=b.who[pid];
+    if(!x || !y) return o.who[pid]=x||y;
+    const nm=late(x,y,'nt',NM), ac=late(x,y,'t',AC);
+    o.who[pid]={n:nm.n, nt:nm.nt, d:nm.d, h:ac.h, s:ac.s, t:ac.t, rb:ac.rb}; });
+  o.adm=!a.adm?b.adm:!b.adm?a.adm:late(a.adm,b.adm,'t',['h','t','k','s','i']);
+  return cleanAcc(o);
+}
+/* The recovery passphrase, stretched (PBKDF2, SHA-256) so the key in the repo is slow to guess. */
+const PASSI=150000;
+const hexOf=buf=>[...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+const newSalt=()=>hexOf(crypto.getRandomValues(new Uint8Array(16)));
+async function passKey(pass,salt,it){
+  const raw=await crypto.subtle.importKey('raw',new TextEncoder().encode(String(pass).normalize('NFC')),'PBKDF2',false,['deriveBits']);
+  const sl=new Uint8Array(salt.match(/../g).map(h=>parseInt(h,16)));
+  return hexOf(await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:sl,iterations:it},raw,256));
+}
+const mine=()=>Object.keys(DB.acc.who).filter(pid=>{ const w=DB.acc.who[pid]; return !w.d && w.h===DB.dev; });   // the profiles this phone owns
+/* What this phone may see of a profile: 2 all of it, 1 the diary but not the weight, 0 nothing.
+   Without sync there's nothing to keep apart: everything here is this phone's. */
+function lvlOf(pid){
+  if(!ghOn()) return 2;
+  const w=pid && DB.acc.who[pid];
+  if(!w || !w.s || w.h===DB.dev) return 2;
+  return mine().reduce((l,q)=>Math.max(l,w.s[q]||0),0);
+}
+const lvlP=n=>DB.profiles[n]?lvlOf(DB.profiles[n].pid):2;
+const setUpElsewhere=pid=>{ const w=pid && DB.acc.who[pid]; return !!(w && w.s && w.h!==DB.dev && ghOn()); };   // set up, and not this phone's to change
+/* The profile a file name belongs to, as the access record knows it. */
+function rosterPid(n){ let best=null; Object.entries(DB.acc.who).forEach(([pid,w])=>{ if(!w.d && w.n===n && (!best || w.nt>best[1])) best=[pid,w.nt]; }); return best&&best[0]; }
+/* Every profile in use on this phone has an entry, so the others can share with it. */
+function rosterFix(){ let ch=false;
+  Object.entries(DB.profiles).forEach(([n,p])=>{ if(p.pid && p.at && !DB.acc.who[p.pid]){ DB.acc.who[p.pid]={n, nt:1, d:0, h:'', s:null, t:0, rb:''}; ch=true; } });
+  return ch; }
+async function ghAccess(){
+  const base='/repos/'+ghCfg().repo+ACCF;
+  for(let i=0;i<3;i++){
+    const r=await ghReq(base+'?ref='+encodeURIComponent(ghCfg().branch));
+    if(!r.ok && r.status!==404) throw r.status;
+    const j=r.ok?await r.json():{};
+    let remote=cleanAcc(null); try{ if(j.content) remote=cleanAcc(JSON.parse(unb64(j.content))); }catch(e){}
+    DB.acc=mergeAcc(DB.acc,remote); if(rosterFix()) DB.acc=cleanAcc(DB.acc);
+    save();
+    const mj=JSON.stringify(DB.acc);
+    if(mj===JSON.stringify(remote)){ if(r.ok) LIVE.etag._access=r.headers.get('ETag')||''; return; }
+    const w=await ghReq(base,{method:'PUT',body:JSON.stringify({message:'profile access',branch:ghCfg().branch,sha:j.sha||undefined,
+      content:b64(mj)})});
+    if(w.ok) return;
+    if(w.status!==409 && w.status!==422) throw w.status;
+  }
+}
 async function ghIndex(){
   const base='/repos/'+ghCfg().repo+IDX;
   for(let i=0;i<3;i++){
@@ -1764,14 +1898,16 @@ async function ghSyncAll(){
   if(!ghOn() || ALLBUSY) return 'busy';
   ALLBUSY=true;
   try{
-    try{ await ghMove(); await ghIndex(); }catch(e){ dbg('SYNC','move or index',e); return ghMsg(e); }
+    try{ await ghMove(); await ghIndex(); await ghAccess(); }catch(e){ dbg('SYNC','move, index or access',e); return ghMsg(e); }
+    await ghSync(LIBN);                                    // the shared foods first, so every profile written has them
     try{
       const r=await ghReq('/repos/'+ghCfg().repo+'/contents/'+DIR+'?ref='+encodeURIComponent(ghCfg().branch));
       const files=(r.ok?await r.json():[]).map(f=>f.name).filter(n=>/\.json$/.test(n) && n[0]!=='_').map(n=>decodeURIComponent(n.slice(0,-5)));
       for(const n of files){
         if(DB.profiles[n] || cleanName(n)!==n) continue;
         const was=DB.idx.gone[n]||DB.idx.renamed[n];
-        if(!was){ DB.profiles[n]=blankProfile(); unifyFoods(); continue; }
+        if(!was){ const pid=rosterPid(n); if(pid && !lvlOf(pid)) continue;   // not shared with this phone: never fetched
+          DB.profiles[n]=blankProfile(); unifyFoods(); continue; }
         const rem=await ghGet(n);                          // a different profile that reuses the name is kept
         if(rem.prof && rem.prof.pid!==was.pid) DB.profiles[n]=blankProfile(); else await ghDelete(n);
       }
@@ -1779,6 +1915,7 @@ async function ghSyncAll(){
     }catch(e){ dbg('SYNC','profile list',e); }
     let res='ok';
     for(const n of Object.keys(DB.profiles)){ const r=await ghSync(n); if(r!=='ok') res=r; }
+    if(libDirty()){ const r=await ghSync(LIBN); if(r!=='ok') res=r; }   // what the profiles brought in
     await ghFeedback();
     return res;
   }finally{ ALLBUSY=false; }
@@ -2897,7 +3034,7 @@ function pickDayPlan(){
     const days=fillInto([DAY],es); FRESH=new Set(days[DAY]); closeSheet(); render(); sfx('confirm'); toast('LOADED \u00b7 '+name.toUpperCase()); };
   if(!ps.length) return load(cur.items,cur.n||'Week Planner');
   const rows=(cur.items.length?[{n:'Week Planner'+(cur.n?' \u00b7 '+cur.n:''), items:cur.items}]:[]).concat(ps);
-  setSheet(panel('Load planned day','<div class="rlist" id="ldList">'+rows.map((x,i)=>{ const t=macroSum(x.items); return listRow(i,x.n,macroTxt(t),t.k,false); }).join('')+'</div>'));
+  setSheet(panel('Load planned day','<div class="rlist" id="ldList">'+rows.map((x,i)=>{ const t=macroSum(x.items); return listRow(i,x.n,macroTxt(t),t.k,false,'mn'); }).join('')+'</div>'));
   bindPanel();
   bindRows($('ldList'),i=>load(rows[i].items,rows[i].n.replace(/^Week Planner \u00b7 /,'')),null);
 }
@@ -2958,7 +3095,7 @@ function savePlan(){
 }
 /* The saved plans: tap one to open it on the planner; hold one to rename, share or delete it. */
 function openPlans(ed){
-  const ps=P().plans, row=(x,i)=>{ const t=macroSum(x.items); return listRow(i,x.n,macroTxt(t),t.k,false); };
+  const ps=P().plans, row=(x,i)=>{ const t=macroSum(x.items); return listRow(i,x.n,macroTxt(t),t.k,false,'mn'); };
   const stack=!!topSheet() && !topSheet().classList.contains('plans');
   const body=(ps.length?'<div class="rlist" id="spList">'+ps.map((x,i)=>x.id===ed
       ?'<div class="ri edit"><input class="fld" id="spE" maxlength="80" autocomplete="off" value="'+esc(x.n)+'"><button class="rx" id="spX" aria-label="Close">\u00d7</button></div>'+
@@ -3220,8 +3357,11 @@ function lifetime(){
   return {unit:ys===1?'year':ys+' years', first, pts:[...Array(n)].map((_,i)=>{ const a=y1-(n-1-i)*ys-(ys-1), z=a+ys-1;
     const la=Math.max(a,y0); return pt(a+'-01-01',ys===1?String(la):"'"+String(la).slice(2)+'\u2013'+String(z).slice(2),a+'-01-01',z+'-12-31'); })};
 }
+const wHid=()=>lvlOf(P().pid)===1;                    // this profile's weight isn't shared with this phone
 function weightCard(){
   const t=today(), avg=wAvg(t,14);
+  if(wHid()) return '<div class="card wcard" id="wcard" role="button" tabindex="0"><div class="wline"><h3>Weight</h3>'+plot(fortnight(t),'',150,40,true)+
+    '<div class="wa"><span>14-DAY AVG</span><b>\u2014</b><span>NOT SHARED</span></div></div></div>';
   return '<div class="card wcard" id="wcard" role="button" tabindex="0">'+
     '<div class="wline"><h3>Weight</h3>'+                // one line: the title, the last fortnight, the average
     plot(fortnight(t),'',150,40,true)+
@@ -3269,6 +3409,7 @@ function markPlot(svg,k){
 }
 const WT={mode:'d', end:'', sel:'', mend:'', msel:'', lsel:'', drag:false};
 function openWeight(){
+  if(wHid()){ sfx('nope'); return toast('WEIGHT ISN\u2019T SHARED WITH YOU'); }
   sfx('open');
   const t=today();
   WT.mode='d'; WT.sel=WT.end=t; WT.mend=WT.msel=t.slice(0,7); WT.lsel='';   // always opens on today
@@ -3713,7 +3854,7 @@ function savedList(L,q,onFood,onMeal,ed,plus,byTime){
       '<div class="duo">'+
       '<button class="btn ghost" id="svDel">[ DELETE ]</button><button class="btn" id="svOk">[ ACCEPT ]</button></div>';
     if(!m && noNut(o)) return foodListRow(i,o.n,brandOf(o)+'NO NUTRITION INFO',0,plus,'nonut'+(o.vf?' vf':''));
-    return foodListRow(i,o.n,m?items(o.items.length):brandOf(o)+esc(o.sv),t.k,plus,!m&&o.vf?'vf':'');
+    return foodListRow(i,o.n,m?items(o.items.length):brandOf(o)+esc(o.sv),t.k,plus,m?'mn':o.vf?'vf':'');
   };
   let n=0;
   const body=g=>g.list.map(()=>row(rows[n],n++)).join('');
@@ -3752,7 +3893,7 @@ function savedAs(f,e){ const L=P().foods, nk=normS(fullName(f)), sk=String(f.sv|
 const copiesOf=(f,names)=>{ const ns=new Set(names.map(normS)); return P().foods.filter(x=>x.id!==f.id && (ns.has(normS(fullName(x))) || ns.has(normS(x.n)))); };
 function dropCopies(cs){ if(!cs.length) return;
   const at={}; cs.forEach(x=>{ at[x.id]=later(...allE('foods',x.id)); });   // deleted after every copy of it, so none comes back
-  Object.values(DB.profiles).forEach(p=>{ cs.forEach(x=>{ p.del[x.id]=at[x.id]; }); p.foods=p.foods.filter(x=>!cs.includes(x)); }); }
+  allP().forEach(p=>{ cs.forEach(x=>{ p.del[x.id]=at[x.id]; }); p.foods=p.foods.filter(x=>!cs.includes(x)); }); }
 /* Saved foods are everyone's: after an edit every profile takes it (unifyFoods) and every profile's
    file is written, so whichever profile the other phone opens has the new version. */
 function shareFood(){ unifyFoods(); const now=Date.now();
@@ -3770,6 +3911,7 @@ function dropSaved(kind,id){
   if(i>=0) L.splice(i,1);                               // the one shared list
   const at=later(...allE(kind==='meal'?'combos':kind==='plan'?'plans':'foods',id));   // after every copy of it, so none comes back
   Object.values(DB.profiles).forEach(p=>{ p.del[id]=at; p.at=now; if(p.plan.sid===id) p.plan.sid=''; });
+  DB.lib.del[id]=at;                                    // and the library, so no phone brings it back
   touch(); if(ghOn()) Object.keys(DB.profiles).filter(n=>n!==DB.cur).forEach(n=>ghSync(n));
 }
 
@@ -4348,6 +4490,7 @@ function openSettings(){
     row('stMl','Food sections',P().meals.map(m=>m.n).join(' \u00b7 '))+
     row('stFd','Saved foods & meals',P().foods.length+' foods \u00b7 '+P().combos.length+' meals')+
     row('stSy','Sync and backup',ghWhen())+
+    row('stPv','Privacy',privSum())+
     row('stDp','Display & audio',THEMES[DB.theme]+' \u00b7 sound '+(soundOn()?'on':'off'))+
     row('stFb','Feedback',fbLive().length?fbLive().length+' note'+(fbLive().length===1?'':'s'):'none yet')+
     '</div><div class="tiny">v'+APP_VERSION+'</div>'));
@@ -4356,8 +4499,123 @@ function openSettings(){
   $('stMl').onclick=openMeals;
   $('stFd').onclick=openFoods;
   $('stSy').onclick=openSync;
+  $('stPv').onclick=openPrivacy;
   $('stDp').onclick=openDisplay;
   $('stFb').onclick=openFeedback;
+}
+/* Privacy. A phone claims its owner's profile; from then on only that phone decides who sees it:
+   OFF, the DIARY (food, targets and planner) or ALL of it (the weight too), for each other profile's
+   phone. A profile nobody has set up is seen by everyone, as before. The admin phone can only reset
+   an owner, for a lost or replaced phone: the sharing stays, and the admin can't claim it.
+   Becoming admin sets a recovery passphrase. On a new phone it moves the admin there, with every
+   profile the old admin phone owned. */
+const LV=[['0','OFF'],['1','DIARY'],['2','ALL']];
+const accLive=()=>{ const W=DB.acc.who; return Object.keys(W).filter(pid=>!W[pid].d && W[pid].n).sort((a,b)=>W[a].n.localeCompare(W[b].n) || (a<b?-1:1)); };
+function privSum(){ if(!ghOn()) return 'needs sync'; const W=DB.acc.who, m=mine().filter(pid=>!W[pid].d).map(pid=>W[pid].n).sort();
+  return m.length?'yours: '+m.join(' \u00b7 '):'no profile claimed'; }
+let ACCT=0, PVX={};                                  // PVX: the passphrase boxes opened on the Privacy screen
+function accPush(){ clearTimeout(ACCT); ACCT=setTimeout(async()=>{ ACCT=0; if(ALLBUSY) return accPush();
+  await ghSyncAll(); render(); paintPrivacy(); },900); }
+function openPrivacy(){
+  sfx('open'); PVX={};
+  setSheet(panel('Privacy','<div id="pvBody"></div>',true));
+  bindPanel(openSettings);
+  paintPrivacy();
+  if(ghOn()){ const was=JSON.stringify(DB.acc); ghSyncAll().then(()=>{ render(); if(JSON.stringify(DB.acc)!==was) paintPrivacy(); }); }   // the latest owners and sharing
+}
+function paintPrivacy(){
+  const B=$('pvBody'); if(!B) return;
+  if(!ghOn()){ B.innerHTML='<div class="card pgcard"><div class="pgnote">Privacy works through sync. Connect GitHub in Sync and backup first.</div></div>'; return; }
+  const typed={}; ['pvP1','pvP2','pvR'].forEach(id=>{ if($(id)) typed[id]=$(id).value; });   // kept through a redraw
+  const W=DB.acc.who, ids=accLive(), own=ids.filter(pid=>W[pid].h===DB.dev), claim=ids.filter(pid=>!W[pid].h && W[pid].rb!==DB.dev);
+  const adm=DB.acc.adm, isAdm=!!adm && adm.h===DB.dev, others=ids.filter(pid=>W[pid].h && W[pid].h!==DB.dev);
+  const shr=(pid,btn,lab)=>'<div class="ri shr" data-'+btn+'="'+esc(pid)+'"><span class="rm"><span class="rn">'+esc(W[pid].n)+'</span></span><button class="btn shbtn">[ '+lab+' ]</button></div>';
+  let h='<div class="card pgcard"><div class="pghead"><h4 class="pgh">This phone</h4></div>'+
+    (own.length?own.map(pid=>'<div class="pgrow"><span class="pk">'+esc(W[pid].n)+'</span><span class="pv">YOURS</span></div>').join('')
+      :'<div class="pgnote">No profile is yours yet. Claim your own, then you decide who sees it. Profiles shared with you appear once you have.</div>')+
+    (claim.length?'<div class="rlist">'+claim.map(pid=>shr(pid,'c','CLAIM')).join('')+'</div>'+
+      '<div class="pgnote">Claim only your own profile. After that, only this phone can change who sees it.</div>':'')+'</div>';
+  own.forEach(pid=>{ const rest=ids.filter(q=>q!==pid);
+    h+='<div class="card pgcard"><div class="pghead"><h4 class="pgh">Who sees '+esc(W[pid].n)+'</h4></div>'+
+      (rest.length?rest.map(q=>'<label class="flab">'+esc(W[q].n)+(W[q].h?'':' \u00b7 not claimed')+'</label>'+picker('pv'+pid+'_'+q,LV,String(W[pid].s&&W[pid].s[q]||0))).join('')
+        :'<div class="pgnote">No other profiles yet.</div>')+
+      '<div class="pgnote">DIARY: food, targets and planner. ALL: the weight too. OFF: nothing, not even the name in their profiles. Their phone follows at its next sync.</div></div>'; });
+  const pf=(id,lab,ac)=>'<label class="flab" for="'+id+'">'+lab+'</label><input class="fld" id="'+id+'" type="password" autocomplete="'+ac+
+    '" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="done" maxlength="128">';
+  const keep='<div class="pgnote">At least 8 characters. Keep it in your password manager: it moves the admin, and this phone\u2019s profiles, to a new phone.</div>';
+  h+='<div class="card pgcard"><div class="pghead"><h4 class="pgh">Admin</h4></div>'+
+    (!adm?'<div class="pgnote">No admin yet. The admin phone can reset a profile\u2019s owner if its phone is lost or replaced. It can\u2019t change who sees anything.</div>'+
+        pf('pvP1','Recovery passphrase','new-password')+pf('pvP2','Passphrase again','new-password')+keep+
+        '<button class="btn" id="pvAdm">[ MAKE THIS PHONE THE ADMIN ]</button>'
+      :'<div class="pgrow"><span class="pk">Admin</span><span class="pv">'+(isAdm?'THIS PHONE':'ANOTHER PHONE')+'</span></div>'+
+        (isAdm?'<div class="pgrow"><span class="pk">Recovery passphrase</span><span class="pv">'+(adm.k?'SET':'NOT SET')+'</span></div>'+
+          (others.length?'<div class="rlist">'+others.map(pid=>shr(pid,'r','RESET')).join('')+'</div>'+
+            '<div class="pgnote">Reset a profile when its phone is lost or replaced. Its sharing stays as it is, and its new phone claims it here. This phone can\u2019t claim it.</div>':'')+
+          (!adm.k || PVX.pass?pf('pvP1','New recovery passphrase','new-password')+pf('pvP2','Passphrase again','new-password')+keep+
+              '<button class="btn" id="pvPass">[ SAVE PASSPHRASE ]</button>'
+            :'<button class="btn ghost" id="pvPassOpen">[ CHANGE PASSPHRASE ]</button>')
+        :!adm.k?'<div class="pgnote">The admin phone hasn\u2019t set a recovery passphrase yet.</div>'
+        :PVX.rec?pf('pvR','Recovery passphrase','current-password')+
+            '<div class="pgnote">Only on the admin\u2019s new phone. This phone becomes the admin and takes every profile the old admin phone owned.</div>'+
+            '<button class="btn" id="pvRec">[ RECOVER ADMIN ]</button>'
+          :'<button class="btn ghost" id="pvRecOpen">[ RECOVER ADMIN ]</button>'))+
+    '</div><div class="pgnote">Applies on phones with version 139 or later.</div>';
+  B.innerHTML=h;
+  Object.keys(typed).forEach(id=>{ if($(id)) $(id).value=typed[id]; });
+  const done=()=>{ save(); sfx('confirm'); paintPrivacy(); accPush(); };   // the screen shows the change
+  B.querySelectorAll('[data-c]').forEach(el=>arm(el.querySelector('.shbtn'),()=>{ const pid=el.dataset.c, w=DB.acc.who[pid];
+    if(!w || w.h || w.d){ sfx('nope'); toast('ALREADY CLAIMED'); return paintPrivacy(); }
+    w.h=DB.dev; w.rb='';
+    if(!w.s){ w.s={}; accLive().filter(q=>q!==pid).forEach(q=>{ w.s[q]=2; }); }   // shared as it was until now; change it below
+    w.t=later(w.t); done(); }));
+  own.forEach(pid=>ids.filter(q=>q!==pid).forEach(q=>{ const id='pv'+pid+'_'+q; if(!$(id)) return;
+    onPick(id,v=>{ const w=DB.acc.who[pid]; if(!w || w.h!==DB.dev) return paintPrivacy();
+      w.s=Object.assign({},w.s); if(+v) w.s[q]=+v; else delete w.s[q]; w.t=later(w.t);
+      save(); accPush(); }); }));
+  if($('pvAdm')) $('pvAdm').onclick=()=>savePass(true);
+  if($('pvPass')) $('pvPass').onclick=()=>savePass(false);
+  if($('pvPassOpen')) $('pvPassOpen').onclick=()=>{ sfx('tap'); PVX.pass=1; paintPrivacy(); $('pvP1').focus(); };
+  if($('pvRecOpen')) $('pvRecOpen').onclick=()=>{ sfx('tap'); PVX.rec=1; paintPrivacy(); $('pvR').focus(); };
+  if($('pvRec')) $('pvRec').onclick=()=>recoverAdmin($('pvR').value);
+  B.querySelectorAll('[data-r]').forEach(el=>arm(el.querySelector('.shbtn'),()=>{ const pid=el.dataset.r, w=DB.acc.who[pid];
+    if(!isAdm || !w || !w.h || w.h===DB.dev) return paintPrivacy();
+    w.h=''; w.rb=DB.dev; if(!w.s) w.s={}; w.t=later(w.t); done(); }));
+}
+let PVBUSY=false;                                      // working out a passphrase's key
+/* Becoming admin (make) or changing the passphrase: typed twice, at least 8 characters. */
+async function savePass(make){
+  if(PVBUSY) return;
+  const p1=$('pvP1').value, p2=$('pvP2').value, a=DB.acc.adm;
+  if(p1.length<8){ sfx('nope'); return toast('PASSPHRASE: AT LEAST 8 CHARACTERS'); }
+  if(p1!==p2){ sfx('nope'); return toast('PASSPHRASES DON\u2019T MATCH'); }
+  if(make?!!a:!(a && a.h===DB.dev)){ sfx('nope'); return paintPrivacy(); }
+  PVBUSY=true;
+  try{ const sl=newSalt(), k=await passKey(p1,sl,PASSI);
+    if(make?!!DB.acc.adm:!(DB.acc.adm && DB.acc.adm.h===DB.dev)){ sfx('nope'); return paintPrivacy(); }   // changed meanwhile
+    DB.acc.adm={h:DB.dev, t:later(a&&a.t), k, s:sl, i:PASSI};
+  }catch(e){ dbg('PASS',e); sfx('nope'); return toast('CAN\u2019T SET A PASSPHRASE HERE'); }
+  finally{ PVBUSY=false; }
+  PVX={}; ['pvP1','pvP2'].forEach(id=>{ if($(id)) $(id).value=''; });
+  save(); sfx('confirm'); paintPrivacy(); accPush();
+}
+/* On the admin's new phone: the passphrase moves the admin here, with every profile the old
+   admin phone owned. Checked against the latest admin record. */
+async function recoverAdmin(pass){
+  if(PVBUSY) return;
+  PVBUSY=true;
+  try{
+    try{ await ghAccess(); }catch(e){ sfx('nope'); return toast('CAN\u2019T REACH GITHUB'); }
+    const a=DB.acc.adm;
+    if(!a || !a.k || a.h===DB.dev){ sfx('nope'); return paintPrivacy(); }
+    let k=''; try{ k=await passKey(pass,a.s,a.i); }catch(e){ dbg('PASS',e); }
+    if(!k || k!==a.k){ sfx('nope'); return toast('WRONG PASSPHRASE'); }
+    const old=a.h;
+    Object.values(DB.acc.who).forEach(w=>{ if(!w.d && w.h===old){ w.h=DB.dev; w.rb=''; w.t=later(w.t); } });
+    DB.acc.adm=Object.assign({},a,{h:DB.dev, t:later(a.t)});
+    diag('admin recovered on this phone');
+  }finally{ PVBUSY=false; }
+  PVX={}; if($('pvR')) $('pvR').value='';
+  save(); sfx('confirm'); paintPrivacy(); accPush();
 }
 /* Feedback: notes about changes to make, numbered in the order they were added, kept on this
    phone. Type and ADD; tap one to change it; swipe one away to delete it. COPY ALL puts the
@@ -4566,7 +4824,9 @@ function openProfiles(back,ed){
         const now=Date.now();
         DB.profiles[n]=DB.profiles[ed]; delete DB.profiles[ed];
         if(DB.cur===ed) DB.cur=n;
-        DB.profiles[n].at=now; DB.idx.renamed[ed]={to:n,t:now,pid:DB.profiles[n].pid}; save();
+        DB.profiles[n].at=now; DB.idx.renamed[ed]={to:n,t:now,pid:DB.profiles[n].pid};
+        const w=DB.acc.who[DB.profiles[n].pid]; if(w){ w.n=n; w.nt=later(w.nt); }   // the access record follows the name
+        save();
         if(ghOn()) ghSyncAll();
         render();
       }
@@ -4576,6 +4836,7 @@ function openProfiles(back,ed){
     I.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); ok(); } };
     if($('prDel')) arm($('prDel'),()=>{
       DB.idx.gone[ed]={t:Date.now(),pid:DB.profiles[ed].pid};
+      const w=DB.acc.who[DB.profiles[ed].pid]; if(w){ w.d=1; w.nt=later(w.nt); }
       delete DB.profiles[ed];
       if(DB.cur===ed) DB.cur=Object.keys(DB.profiles)[0];
       save();
@@ -4587,13 +4848,15 @@ function openProfiles(back,ed){
   document.querySelectorAll('.ri[data-i]').forEach(r=>{
     const n=names[r.dataset.i];
     r.onclick=()=>switchProfile(n);
-    bindHold(r,()=>again(n));
+    bindHold(r,()=>{ if(setUpElsewhere(DB.profiles[n].pid)){ sfx('nope'); return toast('ONLY '+n.toUpperCase()+'\u2019S PHONE CAN CHANGE IT'); } again(n); });
   });
   const add=()=>{
     const n=cleanName($('prN').value);
     if(!n){ sfx('nope'); return toast('ENTER A NAME'); }
     if(names.some(x=>x.toLowerCase()===n.toLowerCase())){ sfx('nope'); return toast('THAT PROFILE EXISTS'); }
-    DB.profiles[n]=Object.assign(blankProfile(),{pid:uid(), at:Date.now(), goal:Object.assign({},P().goal)}); unifyFoods();
+    const pid=uid(), now=Date.now();
+    DB.profiles[n]=Object.assign(blankProfile(),{pid, at:now, goal:Object.assign({},P().goal)}); unifyFoods();
+    DB.acc.who[pid]={n, nt:now, d:0, h:'', s:null, t:0, rb:''};   // open to everyone until claimed
     switchProfile(n);
   };
   $('prAdd').onclick=add;
@@ -4640,7 +4903,7 @@ function openSync(){
         '<button class="btn ghost" id="syPaste">[ PASTE ]</button></div>'+
         '<button class="btn" id="syGo">[ CONNECT ]</button>'+
         '<div class="pgnote">Fine-grained token for this repo only, Contents: read and write. Kept on this phone only.</div>')+
-    '</div><div class="card pgcard"><div class="pghead"><h4 class="pgh">Backup file \u00b7 all profiles</h4></div>'+
+    '</div><div class="card pgcard"><div class="pghead"><h4 class="pgh">Backup file \u00b7 profiles on this phone</h4></div>'+
     '<div class="duo"><button class="btn" id="exGo">[ SAVE FILE ]</button><button class="btn ghost" id="imGo">[ LOAD FILE ]</button></div>'+
     '<div class="pgnote">Loading merges into what is here. Nothing is lost.</div></div>'+
     '<div class="card pgcard"><div class="pghead"><h4 class="pgh">Activity log</h4></div>'+
@@ -4682,6 +4945,7 @@ async function ghConnect(){
   const fail=m=>{ ghSave({tok:'',err:''}); sfx('nope'); toast(m); };
   if(!/^[\w.-]+\/[\w.-]+$/.test(repo)) return fail('REPO SHOULD LOOK LIKE OWNER/NAME');
   if(!/^(gh[pousr]_|github_pat_)\w+/.test(tok)) return fail('NOT A GITHUB TOKEN');
+  if(repo!==ghCfg().repo){ DB.acc=cleanAcc(null); LIBSEEN.j=''; }   // owners and sharing belong to a repo
   ghSave({tok,repo,err:'',at:0,moved:0});            // a newly connected repo gets the data/ -> food/ check again
   toast('CONNECTING\u2026');
   let info;
@@ -4705,10 +4969,12 @@ function exportFile(){
 function importText(txt){
   let d=null; try{ d=JSON.parse(txt); }catch(e){}
   if(!d || !d.profiles){ sfx('nope'); return toast('NOT A FOOD DIARY BACKUP'); }
-  let n=0;
-  Object.keys(d.profiles).forEach(k=>{ const nm=cleanName(k); if(!nm) return; n++;
-    const p=cleanProfile(d.profiles[k]); DB.profiles[nm]=DB.profiles[nm]?mergeProfile(DB.profiles[nm],p):p; });
-  unifyFoods(); save(); render(); sfx('done'); toast('LOADED '+n+' PROFILE'+(n===1?'':'S'));
+  let n=0, x=0;
+  Object.keys(d.profiles).forEach(k=>{ const nm=cleanName(k); if(!nm) return;
+    const p=cleanProfile(d.profiles[k]), q=DB.profiles[nm], pid=p.pid||(q&&q.pid)||rosterPid(nm);
+    if(!lvlOf(pid) || (q && !lvlP(nm))){ x++; return; }          // not shared with this phone: left out
+    n++; DB.profiles[nm]=viewOf(q?mergeProfile(q,p):p); });
+  unifyFoods(); save(); render(); sfx(n?'done':'nope'); toast(x?x+' PROFILE'+(x===1?'':'S')+' NOT SHARED WITH YOU, LEFT OUT':'LOADED '+n+' PROFILE'+(n===1?'':'S'));
   if(ghOn()) ghSyncAll();
 }
 
@@ -4800,7 +5066,11 @@ async function liveTick(){
   const was=top && JSON.stringify(P());
   LIVE.busy=true;
   try{
-    for(const name of [DB.cur,...(PLAN?withNames():[])]){         // planning combined: their plans count too
+    const acc=await ghPeek('_access');                              // who sees what may have changed
+    if(acc!==null && !ALLBUSY){ const was=JSON.stringify(DB.acc); await ghAccess().catch(e=>dbg('SYNC','access',e)); if(acc) LIVE.etag._access=acc;
+      if(JSON.stringify(DB.acc)!==was){ await ghSyncAll(); render(); } }   // it did: everything again
+    for(const name of [DB.cur,...(PLAN?withNames():[]),LIBN]){      // planning combined: their plans count too; the library for foods from hidden profiles
+      if(name!==LIBN && !DB.profiles[name]) continue;
       const tag=await ghPeek(name);
       if(tag===null) continue;
       const before=new Set(entries().map(e=>e.id));
