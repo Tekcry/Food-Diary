@@ -9,9 +9,9 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.01.140">
+<meta name="app-version" content="2026.10.01.141">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;padding:0}
@@ -814,8 +814,8 @@ html header.hx .rtt{top:calc(env(safe-area-inset-top) + 9px);padding:6px 10px}
 html header.hx .hnav{grid-template-columns:48px 1fr 48px;margin:0 8px;height:44px}
 html header.hx .harr{width:48px;height:44px;font-size:22px}
 html header.hx .hdate{display:flex;align-items:center;justify-content:center;gap:6px;height:44px;white-space:nowrap;overflow:hidden}
-html header.hx h1{margin:0;font-size:17px;letter-spacing:0}
-html header.hx .sub{margin:0;font-size:11px}
+html header.hx h1{margin:0;font-size:17px;letter-spacing:0;flex:none}
+html header.hx .sub{margin:0;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis}   /* a long plan name ends in \2026; the title never moves */
 html header.hx .sub::before{content:'\00b7  '}
 html #main.wrap{padding-top:6px}
 html #main>.dfix{position:sticky;top:var(--hh,0px);z-index:25;margin:-6px calc(-1 * var(--gut)) 0;padding:6px var(--gut) 6px;background:var(--bg)}
@@ -964,10 +964,6 @@ html.ios .sheet.drop.secpick{border-radius:14px 14px 0 0}
 :root{--pbt:max(0px,calc(env(safe-area-inset-top) - 8px));--pbh:max(30px,calc(env(safe-area-inset-top) + 20px));--sab:max(6px,calc(env(safe-area-inset-bottom) - 16px))}
 .pbar{position:fixed;left:0;right:0;top:0;z-index:400;height:var(--pbh);box-sizing:border-box;padding:var(--pbt) var(--gut) 0;display:flex;align-items:center;gap:10px;background:var(--bg)}
 .pbar .eyebrow{margin:0}
-/* iOS 27 lays a blur over the top of an installed web app, fogging the name and streak, unless a
-   solid fixed bar sits at the very top (at least 6px high, most of the width): it then paints the
-   status bar that colour, without the blur. It stops above the name row. */
-.sbtop{position:fixed;left:0;right:0;top:0;height:max(6px,calc(env(safe-area-inset-top) - 10px));background:var(--bg);z-index:401;pointer-events:none}
 .pbar .bolt{position:static;transform:none;height:auto;margin-left:auto}
 html .pbar .rtt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;top:calc(var(--pbt) + 3px);transform:none;padding:4px 10px}
 html header.hx{top:0;padding:0}
@@ -1148,7 +1144,9 @@ function applyTheme(t){
   const r=document.documentElement, v=t==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):t;
   r.dataset.theme=v; r.classList.toggle('ios',v!=='crt'); r.classList.toggle('lg',v==='light'||v==='glass');   // lg: the Liquid Glass material
   document.querySelector('meta[name=theme-color]').content={crt:'#020a05',light:'#f1f3f9',dark:'#000000',glass:'#07080b'}[v]||'#000000';
-  document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').content=v==='light'?'default':'black-translucent';
+  /* An opaque status bar: the app starts below it, out of iOS 27's blur. iOS reads this once, when the
+     app is added to the Home Screen, so it takes the theme in use then: light on Light, black otherwise. */
+  document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').content=v==='light'?'default':'black';
 }
 try{ applyTheme(JSON.parse(localStorage.getItem('food_log_v1')).theme||'glass'); }catch(e){ applyTheme('glass'); }   // Liquid Glass unless one was chosen
 /* iOS shuts a background app down after a few minutes and reloads it on return. Coming back
@@ -1160,7 +1158,6 @@ if(navigator.standalone || matchMedia('(display-mode: standalone)').matches) doc
 </script>
 <div class="crton" aria-hidden="true"><i></i><i></i><b></b></div>
 <div class="roll" aria-hidden="true"><canvas id="rollCv" width="128" height="30"></canvas></div>
-<div class="sbtop" aria-hidden="true"></div>
 <div class="pbar" id="pbar"><div class="eyebrow" id="hdrK"></div>
   <div class="bolt none" id="bolt" role="img" aria-label="0 day logging streak"><svg viewBox="0 0 24 24"><path d="M13.5 2 4.5 13.5h6.2L9.5 22 19.5 9.8h-6.3z"/></svg><b id="boltN">0</b></div>
   <button class="rtt tune" id="rtt" hidden><span>TODAY</span></button></div>
@@ -1214,7 +1211,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.01.140';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.01.141';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
