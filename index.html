@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.152">
+<meta name="app-version" content="2026.10.04.156">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1189,9 +1189,12 @@ html.lg body:has(#sheetWrap .sheet:not(.out)) header.hx{visibility:hidden}   /* 
 /* 146: the day row is a carousel. The middle of the row is its window: the date slides across it and
    fades at its edges; the day coming in is drawn exactly like the date. */
 html header.hx{touch-action:pan-y}
-html header.hx .hdate{justify-self:stretch;position:relative;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent)}
-html header.hx .hdate>#hdrT,html header.hx .hdate>#hdrS{will-change:transform}
+html header.hx .hdate{justify-self:stretch;position:relative}
+/* 154: the edge fade and the transform layers exist only while the date is sliding. Kept on all the time, they
+   made the date's text come back late after a screen closed (the layers are dropped while the row is hidden
+   and drawn again afterwards); now it comes back with the tabs. */
+html header.hx .hdate.sliding{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent)}
+html header.hx .hdate.sliding>#hdrT,html header.hx .hdate.sliding>#hdrS{will-change:transform}
 html header.hx .dpeek{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 6px;white-space:nowrap;overflow:hidden;pointer-events:none}
 /* 147: every screen's bottom bar looks like the dashboard's (Light and Dark). Its buttons sit in the same
    floating pill, in exactly the same place: the main action is a blue capsule like LOG, the rest plain
@@ -1212,7 +1215,8 @@ html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav,html.lg[data-the
 html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav>button,html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) header.hx>.hnav{opacity:0}
 /* 148: Add food's section carousel. Three to a row: the section in the middle in full, its neighbours
    smaller and grey, the rest fading off the ends. */
-.seccar{position:relative;height:100%;overflow:hidden;touch-action:pan-y;cursor:pointer;
+.seccar{position:relative;height:100%;touch-action:pan-y;cursor:pointer}
+.seccar .scv{height:100%;overflow:hidden;
   -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent)}
 .seccar .sct{display:flex;height:100%;will-change:transform}
 .seccar .sci{flex:0 0 33.333%;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;margin:0;padding:0 2px;background:none;border:0;box-shadow:none;
@@ -1226,7 +1230,7 @@ html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav>button,html.lg[d
 .sbi i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap}
 .sbi.on{color:var(--bronze)}
 .sbi.linked{position:relative}
-.sbi.linked::after{content:'\2713';position:absolute;top:7px;right:calc(50% - 20px);font-size:11px;line-height:1;color:var(--ok)}
+.sbi.linked::after{content:'\2713';position:absolute;top:8px;left:calc(50% + 9px);font-size:11px;line-height:1;color:var(--ok);pointer-events:none}   /* 156: above the icon's top right; drawn on top, so the icon itself never moves */
 /* Light and Dark: the bar is the tab bar's grid: 1, 2, LOG's place (3), 4, the X (5) */
 html.lg[data-theme] .sheet>.sbar>.sbr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);align-items:center;gap:0}
 html.lg[data-theme] .sheet>.sbar>.sbr>.sbf{display:contents}
@@ -1253,22 +1257,28 @@ html.lg[data-theme] .sheet>.sbar>.sbr:not(:has(>.sbf))::before{left:calc(100% - 
 @keyframes xpillout{to{left:-2px;right:-2px}}
 /* Add food's sections: the carousel runs the bar's width, the section in LOG's place inside the
    dashboard's selection pill (the pill stays put; the names slide through it), fading out before the X */
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/1/2/6;height:50px;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%)}
+html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/1/2/6;height:50px}
+html.lg[data-theme] .seccar .scv{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%)}
 html.lg[data-theme] .seccar .sci{flex:0 0 calc(100% / 5.3 * 1.3)}
 html.lg[data-theme] .seccar::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:calc(100% / 5.3 * 1.3 - 4px);transform:translateX(-50%);
   border-radius:999px;background:var(--clear);box-shadow:var(--rim-ctl) !important;pointer-events:none}
 html[data-theme=dark].lg .seccar::before{background:rgba(255,255,255,.1)}
-/* 152: Add food's bar also holds ADD FOOD (slot 1) and the barcode (slot 4); the carousel is now LOG's place
-   alone, one section wide, the others slide in as it's dragged. The barcode folds away on SAVED. */
-.sbf>.seccar{flex:1.6 1 0}
-.seccar .sci{flex:0 0 100% !important}
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/3;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent)}
-html.lg[data-theme] .seccar::before{width:calc(100% - 4px)}
-html.lg[data-theme] .sheet>.sbar>.sbr .sbi.nosc,.sbi.nosc{opacity:0;pointer-events:none}
+/* 153: the barcode is in slot 1 of every bar that scans (an icon, lit while the camera's on); on SAVED it folds
+   away. The section carousel is back across the bar with a small arrow either side. */
+.sbi.nosc{opacity:0;pointer-events:none}
 .sbi{transition:opacity .2s ease}
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.sbi{position:relative;z-index:2}
+html.lg[data-theme] .sheet>.sbar>.sbr .sbi.s1i{grid-column:1;justify-self:center;width:44px}   /* narrow, so the carousel's arrow beside it stays tappable */
+html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.sbi{position:relative;z-index:3}
+html:not(.ios) .sbf>.sbi.s1i{flex:0 0 18%}
+html:not(.ios) .sbf>.seccar{flex:2.8 1 0}
+.seccar .scar{position:absolute;top:0;bottom:0;width:18px;margin:0;padding:0;background:none;border:0;box-shadow:none;display:flex;align-items:center;justify-content:center;
+  color:var(--dimmer);z-index:2;-webkit-tap-highlight-color:transparent;transition:opacity .2s ease}
+.seccar .scar svg{width:9px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.seccar .scar.end{opacity:.22;pointer-events:none}
+.seccar .scar.l{left:0}.seccar .scar.r{right:0}
+html:not(.ios) .seccar .scv{margin:0 20px}
+html.lg[data-theme] .seccar .scar.l{left:calc(17% - 9px)}
+html.lg[data-theme] .seccar .scar.r{left:calc(80.1% - 9px);right:auto}
 html.lg[data-theme] .seccar .sct{position:relative;z-index:1}
 html.lg[data-theme] .seccar .sci.on{color:var(--bronze)}
 /* 151: bars change smoothly (see barMorph) */
@@ -1400,7 +1410,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.152';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.156';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1673,7 +1683,7 @@ const longDate=s=>{ const d=dObj(s); return WD[d.getDay()]+' '+d.getDate()+' '+M
 const shortDay=s=>{ const d=dObj(s); return (WD[d.getDay()].slice(0,3)+' '+d.getDate()+' '+MON[d.getMonth()].slice(0,3)).toUpperCase(); };
 function dayName(s){ const t=today(); return s===t?'Today':s===shift(t,-1)?'Yesterday':s===shift(t,1)?'Tomorrow':WD[dObj(s).getDay()]; }
 /* The day row's two lines for a day: its name, then the date and how long logging has run. */
-function dayLabel(d){ const o=dObj(d); return [dayName(d), WD[o.getDay()].slice(0,3)+' '+o.getDate()+' '+MON[o.getMonth()].slice(0,3)+' \u00b7 '+sinceStart()]; }
+function dayLabel(d){ const o=dObj(d); return [dayName(d), WD[o.getDay()].slice(0,3)+' '+o.getDate()+' '+MON[o.getMonth()].slice(0,3)]; }
 let DAY=today(), FOLLOW=true;          // FOLLOW: roll over to the new day at midnight
 
 /* ---------- targets: calories, plus macros as a share of them or in grams ---------- */
@@ -1727,11 +1737,6 @@ function logStreak(){
   return n;
 }
 function streak(d){ let n=0; while(n<400 && onTarget(d)){ n++; d=shift(d,-1); } return n; }
-function sinceStart(){
-  const k=Object.keys(P().days).sort(); if(!k.length) return 'DAY 1';
-  const days=Math.round((dObj(today())-dObj(k[0]))/864e5)+1;
-  return days<7?'DAY '+days:'WEEK '+(Math.floor((days-1)/7)+1)+' \u00b7 DAY '+days;
-}
 /* ---------- weight: one reading a day ---------- */
 const wOf=d=>{ const w=P().wt[d]; return w && w.v>0 ? w.v : null; };
 function wAvg(end,n){ let s=0,c=0; for(let i=0;i<n;i++){ const v=wOf(shift(end,-i)); if(v){ s+=v; c++; } } return c?{a:s/c,c}:null; }
@@ -2310,11 +2315,11 @@ function dcPeek(side){
   const box=$('dCal'), d=shift(DAY,side), l=dayLabel(d), p=document.createElement('div');
   p.className='dpeek'; p.setAttribute('aria-hidden','true');
   p.innerHTML='<h1>'+esc(l[0])+'</h1><div class="sub">'+esc(l[1])+'</div>';
-  box.appendChild(p); DC.peek=p; DC.side=side; DC.day=d; DC.w=box.clientWidth;
+  box.classList.add('sliding'); box.appendChild(p); DC.peek=p; DC.side=side; DC.day=d; DC.w=box.clientWidth;
 }
 function dcClear(){
   [$('hdrT'),$('hdrS')].forEach(e=>{ e.style.transition=''; e.style.transform=''; });
-  if(DC.peek) DC.peek.remove(); DC.peek=null; DC.side=0; DC.x=0;
+  if(DC.peek) DC.peek.remove(); DC.peek=null; DC.side=0; DC.x=0; $('dCal').classList.remove('sliding');
 }
 function dcStop(){ if(DC.fin){ clearTimeout(DC.tm); DC.fin(); } }     // a new swipe or tap finishes the slide under way
 /* side: 1 into the next day, -1 the previous one, 0 back to where it was */
@@ -2662,7 +2667,8 @@ const xBtn=(back,id)=>'<button class="btn ghost shx sbx'+(back?' back':'')+'"'+(
    fade out where they were, a changed label fades over, and the pill opens out or draws in when one side
    has only the X. Opacity only (and the pill's width); with Reduce Motion it simply changes. */
 let BARPREV=null;                                  // the bar just popped, for a screen that replaces it in the same moment
-const BK=e=>e.classList.contains('sbx')?'__x':e.id;   // the X is the X, whatever its id
+const isMain=e=>e.matches('.btn:not(.ghost):not(.sbx)');
+const BK=e=>e.classList.contains('sbx')?'__x':isMain(e)?'__main':e.id;   // 155: the blue main button is one item whatever it says   // the X is the X, whatever its id
 function barSnap(sh){
   const r=sh && sh.querySelector(':scope>.sbar>.sbr'); if(!r) return null;
   const items=new Map();
@@ -2677,8 +2683,8 @@ function barMorph(was,sh){
   if(was.x!==x){ sh.classList.remove('pgrow','pshrink'); void sh.offsetWidth; sh.classList.add(x?'pshrink':'pgrow'); }
   const now=new Set(), rb=r.getBoundingClientRect(), host=r.querySelector(':scope>.sbf')||r;
   r.querySelectorAll(':scope>.sbx, :scope>.sbf>*').forEach(e=>{ const k=BK(e); if(!k) return; now.add(k);
-    const w=was.items.get(k); if(!w) bFade(e); else if(w.txt!==e.textContent) bFade(e.querySelector(':scope>i')||e); });
-  was.items.forEach((w,k)=>{ if(now.has(k)) return;
+    const w=was.items.get(k); if(!w) bFade(e); else if(w.txt!==e.textContent && k!=='__main') bFade(e.querySelector(':scope>i')||e); });   // 155: a main button changing words stays solid
+  was.items.forEach((w,k)=>{ if(now.has(k) || k==='__main') return;     // 155: a gone main button leaves with its screen, no blue ghost left behind
     const t=document.createElement('div'); t.innerHTML=w.html; const g=t.firstElementChild; if(!g) return;
     g.removeAttribute('id'); g.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id')); g.setAttribute('aria-hidden','true'); g.classList.add('bghost');
     g.style.cssText+=';position:absolute;grid-area:auto;margin:0;left:'+(w.rect.left-rb.left)+'px;top:'+(w.rect.top-rb.top)+'px;width:'+w.rect.width+'px;height:'+w.rect.height+'px;pointer-events:none';
@@ -2698,7 +2704,7 @@ const ICO={edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19
   add:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   bin:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>',
   cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8.5A1.5 1.5 0 0 1 5 7h2.5l1.5-2h6l1.5 2H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z"/><circle cx="12" cy="13" r="3.6"/></svg>'};
-const sbi=(id,icon,label,slot,extra)=>'<button class="btn ghost sbi s'+slot+(extra?' '+extra:'')+'" id="'+id+'" aria-label="'+label+'">'+icon+(label&&slot!=='4i'?'<i>'+label.toUpperCase()+'</i>':'')+'</button>';
+const sbi=(id,icon,label,slot,extra)=>'<button class="btn ghost sbi s'+slot+(extra?' '+extra:'')+'" id="'+id+'" aria-label="'+label+'">'+icon+(label&&!/i$/.test(slot)?'<i>'+label.toUpperCase()+'</i>':'')+'</button>';
 const sbar=(x,inner,above)=>'<div class="sbar">'+(above||'')+'<div class="sbr">'+(inner?'<div class="sbf">'+inner+'</div>':'')+(x||'')+'</div></div>';
 function panel(title,body,back,foot){
   return '<div class="veil" id="veil"></div><div class="sheet fit full scroll"><h3>'+title+'</h3>'+
@@ -3909,6 +3915,7 @@ function secCarousel(box,onPick){
     items.forEach((el,k)=>{ const d=Math.min(1,Math.abs(k-c));
       el.style.transition=e?'transform '+e:'none'; el.style.transform='scale('+(1-.24*d).toFixed(3)+')';
       el.classList.toggle('on',k===Math.round(c)); el.setAttribute('aria-pressed',k===Math.round(c)?'true':'false'); });
+    const m=Math.round(c); box.querySelector('.scar.l').classList.toggle('end',m<=0); box.querySelector('.scar.r').classList.toggle('end',m>=items.length-1);
   };
   const go=k=>{ k=Math.max(0,Math.min(items.length-1,k)); const ch=k!==i; i=k; x=off(k); paint(x,ease()); if(ch){ sfx('tap'); onPick(ms[k].id); } };
   box.to=id=>{ const k=ms.findIndex(m=>m.id===id); if(k>=0) go(k); };
@@ -3930,6 +3937,7 @@ function secCarousel(box,onPick){
     go(k); });
   box.addEventListener('pointercancel',()=>{ if(s && s.on) go(i); s=null; });
   box.addEventListener('click',e=>{ if(Date.now()-at<400) return;   // the end of a drag isn't a tap
+    const ar=e.target.closest('.scar'); if(ar) return go(i+(ar.classList.contains('l')?-1:1));   // 153: the arrows move one
     const b=e.target.closest('.sci'), k=b?items.indexOf(b):i;
     if(k!==i) go(k);                                                 // a neighbour slides in; the middle does nothing (149: no list)
   });
@@ -3943,13 +3951,13 @@ function openAdd(meal,group,into,tab,over){
   const secTitle=()=>esc(mealById(ADD.meal)?mealById(ADD.meal).n:'food')+(PLAN?' \u00b7 Plan':'');
   const bySec=!into && !ADD.group;                     // logging into a section: its name is a button to change it
   const title=bySec?'<span id="adT">'+secTitle()+'</span>':esc((into?(into.n||'meal'):ADD.group.gn)+(PLAN && !into?' \u00b7 Plan':''));
-  const secBtn=bySec?'<div class="seccar" id="adSec" role="group" aria-label="Section to log to"><div class="sct">'+
-    P().meals.map(m=>'<button class="sci" data-v="'+esc(m.id)+'" aria-label="Log to '+esc(m.n)+'">'+esc(m.n.toUpperCase())+'</button>').join('')+'</div></div>':'';   // 148: a carousel
+  const secBtn=bySec?'<div class="seccar" id="adSec" role="group" aria-label="Section to log to"><div class="scv"><div class="sct">'+
+    P().meals.map(m=>'<button class="sci" data-v="'+esc(m.id)+'" aria-label="Log to '+esc(m.n)+'">'+esc(m.n.toUpperCase())+'</button>').join('')+'</div></div><button class="scar l" tabindex="-1" aria-label="Previous section"><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M7 1.5L2 7l5 5.5"/></svg></button><button class="scar r" tabindex="-1" aria-label="Next section"><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M2 1.5L7 7l-5 5.5"/></svg></button></div>':'';   // 148: a carousel; 153: arrows
   setSheet(panel(title,
     picker('adTabs',[['search','SEARCH'],['saved','SAVED']],ADD.tab)+
     '<div class="srch bar" id="adBar"><input class="fld" id="osQ" type="search" enterkeyhint="search" placeholder="Search foods" autocomplete="off">'+
-      '</div>'+
-    '<div id="adBody"></div>',!!(into||over),sbi('adNew',ICO.add,'Add food',1)+(secBtn||'<span class="sbgap" aria-hidden="true"></span>')+sbi('adScan',BARCODE,'Scan barcode','4i')),!!(into||over));   // 152: ADD FOOD and the barcode are in the bottom bar      // over a meal being built or a combined item: back returns to it
+      '<button class="btn plus" id="nfAdd" aria-label="New food">+</button></div>'+
+    '<div id="adBody"></div>',!!(into||over),sbi('adScan',BARCODE,'Scan barcode','1i')+(secBtn||'<span class="sbgap" aria-hidden="true"></span>')),!!(into||over));   // 152: ADD FOOD and the barcode are in the bottom bar      // over a meal being built or a combined item: back returns to it
   const back=into||over?()=>{ ADD.into=null; ADD.group=null; popSheet(); const up=topSheet(); if(up && up.refresh) up.refresh(); }:closeSheet;
   if(into||over){ lastVeil().onclick=back; topSheet().querySelector('#pnX').onclick=back; } else bindPanel(back);   // stacked: its own back button, not one beneath
   topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
@@ -3957,7 +3965,7 @@ function openAdd(meal,group,into,tab,over){
   const Q=$('osQ');
   Q.oninput=()=>{ if(ADD.tab==='search'){ ADD.sq=Q.value; paintRecent(Q.value); queueSearch(Q.value); } else { ADD.q=Q.value; paintSaved(); } };
   searchKey(Q);
-  $('adNew').onclick=()=>ADD.tab==='saved' && !ADD.into ? openMealEdit(null,Q.value.trim())
+  $('nfAdd').onclick=()=>ADD.tab==='saved' && !ADD.into ? openMealEdit(null,Q.value.trim())
     : openQty({id:'', n:Q.value.trim(), sv:'', k:0, p:0, c:0, f:0, x:{}, bc:''},{create:true});
   $('adScan').onclick=openScanner;
   onPick('adTabs',v=>{ ADD.tab=v; paintTab(); const B=$('adBody'); B.classList.remove('tabin'); void B.offsetWidth; B.classList.add('tabin'); warp(B); });
@@ -3969,9 +3977,7 @@ function paintTab(){
   Q.dispatchEvent(new Event('clear'));                // the clear button follows the value
   $('adScan').classList.toggle('nosc',!s);            // the barcode button folds away on SAVED
   $('adScan').tabIndex=s?0:-1;
-  const nb=$('adNew'), nl=nb.querySelector(':scope>i'), nt=s || ADD.into?'ADD FOOD':'NEW MEAL';
-  nb.setAttribute('aria-label',s || ADD.into?'Add food':'New meal');
-  if(nl.textContent!==nt) swapText(nl,()=>{ nl.textContent=nt; });
+  $('nfAdd').setAttribute('aria-label',s || ADD.into?'New food':'New meal');
   if(s){
     b.innerHTML='<div class="rlist" id="rcList"></div><div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
       '<div class="src">DATA: OPEN FOOD FACTS \u00b7 FOOD STANDARDS AUSTRALIA NEW ZEALAND (AFCD)</div>';
@@ -3986,10 +3992,10 @@ function paintSaved(){ savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo,''
    the scanner, so after logging it you're back in Add food. */
 function openScanner(){
   setSheet('<div class="veil"></div><div class="sheet fit full scanfull"><h3>Scan barcode</h3><div id="scHost" class="scanfs"></div>'+
-    sbar(xBtn(true,'scBack'),sbi('scGo',ICO.cam,'Start',1)+'<span class="sbgap" aria-hidden="true"></span>')+'</div>',true);   // 150: SAVE's place kept, empty; 152: no barcode button while scanning
+    sbar(xBtn(true,'scBack'),'<span class="sbgap" aria-hidden="true"></span>')+'</div>',true);   // 150: SAVE's place kept, empty; 152: no barcode button while scanning
   const back=()=>{ stopScan(); popSheet(); };
   lastVeil().onclick=back; $('scBack').onclick=back;
-  scanView($('scHost'),lookupCode,'',$('scGo'),true);
+  scanView($('scHost'),lookupCode,'',true,true);
   startScan();
 }
 /* P, C and F in fixed columns on totals, lined up with the section heading's. Food rows show name,
@@ -4277,9 +4283,9 @@ function openQty(food,o){
     mf:'1.2', c:'0', su:'0', fi:'0', na:'74', ch:'85'};
   const hint=k=>o.create?EX[k]:'\u2014';
   const units=()=>{ const s=g && g.n===100;                     // a serving of exactly 100 g is no serving of its own
-    return [['s','SERVINGS',s],['h','100 '+(g?g.u:'g').toUpperCase(),!g],['g',g&&g.u==='ml'?'ML':'GRAMS',!g]]; };
+    return [['s','SERVINGS',s],['g',g&&g.u==='ml'?'ML':'GRAMS',!g]]; };   // 155: no 100 g choice
   const st={q:e?e.q:(o.q||1), m:e?mealOf(e):ADD.meal, w:e?e.w:(o.w||'g')};
-  const fix=()=>{ if(!g) st.w='s'; else if(st.w==='s' && g.n===100) st.w='g'; };
+  const fix=()=>{ if(!g) st.w='s'; else if(st.w==='h' || (st.w==='s' && g.n===100)) st.w='g'; };   // 155: an old entry kept per 100 g shows in grams
   const cell=(v,u)=>v>0?(u==='g'?r1(v):fmt(v))+' '+u:'\u2014';
   const rows=NP.flatMap(r=>r[0]==='k'?[r,['kj','\u2013 kilojoules','kJ',1]]:[r]);
   const val=(src,k)=>k==='kj'?(src.k||0)*4.184:(src[k]||0);
@@ -4290,9 +4296,10 @@ function openQty(food,o){
     /* Secondary actions under the heading; the amount and the main action (LOG FOOD, UPDATE, SAVE)
        in a bar at the bottom, where the thumb already is. */
     const top=edit&&scanning?'<div class="qscan scanfs" id="qSc"></div>':'';   // 151: the camera fills the screen behind the bar           // the camera, while scanning; every button is in the bar (149)
-    const foot=edit?(scanning?sbi('qCam',ICO.cam,'Start',1):'')+'<button class="btn wide" id="qSave">SAVE</button>'+sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','4i',(hasBc?'linked':'')+(scanning?' on':''))
-      :e?sbi('qEdit',ICO.edit,'Edit',1)+sbi('qDel',ICO.bin,'Remove',2)+'<button class="btn wide" id="qGo">UPDATE</button>'
-      :sbi('qEdit',ICO.edit,'Edit',1)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
+    const bcb=sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','1i',(hasBc?'linked':'')+(scanning?' on':''));   // 156: the barcode is first in the bar on every food screen
+    const foot=edit?bcb+'<button class="btn wide" id="qSave">SAVE</button>'
+      :e?bcb+sbi('qEdit',ICO.edit,'Edit',2)+'<button class="btn wide" id="qGo">UPDATE</button>'+sbi('qDel',ICO.bin,'Remove',4)
+      :bcb+sbi('qEdit',ICO.edit,'Edit',2)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
     const was=barSnap(box)||box._barWas||null; box._barWas=null;  // 151: its bar changes smoothly (from the screen beneath, the first time)
     box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="Brand" value="'+esc(food.b||own&&own.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
@@ -4378,7 +4385,7 @@ function openQty(food,o){
       if(scanning){
         const host=$('qSc'), use=code=>{ code=String(code).replace(/\D/g,''); if(code.length<6){ sfx('nope'); return toast('THAT DOESN\u2019T LOOK LIKE A BARCODE'); }
           stopScan(); scanning=false; keep(); gotBc(code); };
-        scanView(host,use,'TRY AGAIN',$('qCam'),true); startScan();   // 151: the same view as Add food's scanner, the camera on at once
+        scanView(host,use,'TRY AGAIN',false,true); startScan();   // 151: the same view as Add food's scanner, the camera on at once
         $('qBc').onclick=()=>{ stopScan(); scanning=false; keep(); draw(); sfx('tap'); };
       } else $('qBc').onclick=()=>{ keep(); scanning=true; draw(); sfx('open'); };
       $('qSave').onclick=()=>{ try{ saveIt(); }catch(err){ diag('ERROR food save',String(err&&err.stack||err).slice(0,600)); sfx('nope'); toast('SAVE FAILED \u00b7 '+String(err&&err.message||err).slice(0,60).toUpperCase()); } };
@@ -4443,10 +4450,12 @@ function openQty(food,o){
     else if(e) arm($('qDel'),()=>{ dropEntries([e.id]); toast('REMOVED');   // by id, so it's the entry in the diary now
       if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
       else { closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); } });
-    $('qEdit').onclick=()=>{                       // per 100 g is what editing works from
+    const goEdit=()=>{                             // per 100 g is what editing works from
       const w=gramsOf(food.sv), all=Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f}); h={}; hs={};
       rows.forEach(([k])=>{ if(k==='kj') return; const x=val(all,k); if(x>0){ if(w) h[k]=x*100/w.n; else hs[k]=x; } });
-      edit=true; draw(); warp(box); };
+      edit=true; };
+    $('qEdit').onclick=()=>{ goEdit(); draw(); warp(box); };
+    $('qBc').onclick=()=>{ goEdit(); scanning=true; draw(); sfx('open'); };      // 156: the barcode from a food's own screen: edit, with the camera on
   };
   draw();
 }
@@ -4505,13 +4514,12 @@ const sq=s=>SCAN.host && SCAN.host.querySelector(s);
 /* The camera view, drawn into host; every barcode read goes to cb. One camera at a time. */
 /* The camera box; its START / STOP is the camera in the screen's bottom bar (go, slot 1: 150), the same
    on both scanners. credit: the Open Food Facts line, where the lookup uses it. */
-function scanView(host,cb,alt,go,credit){
+function scanView(host,cb,alt,bar,credit){
   stopScan(); SCAN.alt=alt||'';
   host.innerHTML='<div class="scanbox"><video playsinline muted autoplay></video><div class="sfr"></div><div class="sln"></div>'+
     '<div class="sidle">[ CAMERA OFF ]</div></div><div class="stat"></div><div class="scres"></div>'+
     (credit?'<div class="src">DATA: OPEN FOOD FACTS</div>':'');
-  SCAN.host=host; SCAN.cb=cb; SCAN.go=go;
-  go.onclick=()=>{ SCAN.on?stopScan():startScan(); };
+  SCAN.host=host; SCAN.cb=cb; SCAN.bar=bar;                      // bar: this scanner's bar takes ADD BY HAND (153: no START/STOP, the camera starts by itself)
   sq('video').onplaying=()=>{ if(SCAN.on) sq('.scanbox').classList.add('live'); };   // label clears only on real frames
 }
 let ZXP=null;
@@ -4526,7 +4534,7 @@ function loadZX(){
 /* The scanner's main action, in the bar's middle (SAVE's place): ADD BY HAND after a miss; null puts the
    empty place back. It fades in and out. */
 function scMain(label,fn){
-  const bar=SCAN.go && SCAN.go.closest('.sbf'); if(!bar) return;
+  const bar=SCAN.bar && SCAN.host && SCAN.host.closest('.sheet') && SCAN.host.closest('.sheet').querySelector(':scope>.sbar>.sbr>.sbf'); if(!bar) return;
   const cur=bar.querySelector('#scAdd'), gap=bar.querySelector('.sbgap');
   if(!label){ if(cur){ const g=document.createElement('span'); g.className='sbgap'; g.setAttribute('aria-hidden','true'); cur.replaceWith(g);
       if(!calm() && cur.animate){ const r=cur.getBoundingClientRect(), b=bar.closest('.sbr').getBoundingClientRect(); cur.removeAttribute('id'); cur.classList.add('bghost');
@@ -4540,9 +4548,6 @@ function scMain(label,fn){
 function scStat(t,err){ const el=sq('.stat'); if(!el) return; if(el.textContent===t){ el.classList.toggle('err',!!err); return; }
   swapText(el,()=>{ el.textContent=t; el.classList.toggle('err',!!err); }); }
 function scPaint(on){
-  const g=SCAN.go; if(!g || !g.isConnected) return;
-  g.classList.toggle('on',on); g.setAttribute('aria-label',on?'Stop camera':'Start camera');
-  const l=g.querySelector(':scope>i'), t=on?'STOP':'START'; if(l && l.textContent!==t) swapText(l,()=>{ l.textContent=t; });
   if(!on && sq('.scanbox')) sq('.scanbox').classList.remove('live');
 }
 const CAM={video:{facingMode:{ideal:'environment'}},audio:false};
