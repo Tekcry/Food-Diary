@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.155">
+<meta name="app-version" content="2026.10.04.156">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1230,7 +1230,7 @@ html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav>button,html.lg[d
 .sbi i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap}
 .sbi.on{color:var(--bronze)}
 .sbi.linked{position:relative}
-.sbi.linked::after{content:'\2713';position:absolute;top:7px;right:calc(50% - 20px);font-size:11px;line-height:1;color:var(--ok)}
+.sbi.linked::after{content:'\2713';position:absolute;top:8px;left:calc(50% + 9px);font-size:11px;line-height:1;color:var(--ok);pointer-events:none}   /* 156: above the icon's top right; drawn on top, so the icon itself never moves */
 /* Light and Dark: the bar is the tab bar's grid: 1, 2, LOG's place (3), 4, the X (5) */
 html.lg[data-theme] .sheet>.sbar>.sbr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);align-items:center;gap:0}
 html.lg[data-theme] .sheet>.sbar>.sbr>.sbf{display:contents}
@@ -1410,7 +1410,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.155';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.156';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -4296,9 +4296,10 @@ function openQty(food,o){
     /* Secondary actions under the heading; the amount and the main action (LOG FOOD, UPDATE, SAVE)
        in a bar at the bottom, where the thumb already is. */
     const top=edit&&scanning?'<div class="qscan scanfs" id="qSc"></div>':'';   // 151: the camera fills the screen behind the bar           // the camera, while scanning; every button is in the bar (149)
-    const foot=edit?sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','1i',(hasBc?'linked':'')+(scanning?' on':''))+'<button class="btn wide" id="qSave">SAVE</button>'
-      :e?sbi('qEdit',ICO.edit,'Edit',1)+sbi('qDel',ICO.bin,'Remove',2)+'<button class="btn wide" id="qGo">UPDATE</button>'
-      :sbi('qEdit',ICO.edit,'Edit',1)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
+    const bcb=sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','1i',(hasBc?'linked':'')+(scanning?' on':''));   // 156: the barcode is first in the bar on every food screen
+    const foot=edit?bcb+'<button class="btn wide" id="qSave">SAVE</button>'
+      :e?bcb+sbi('qEdit',ICO.edit,'Edit',2)+'<button class="btn wide" id="qGo">UPDATE</button>'+sbi('qDel',ICO.bin,'Remove',4)
+      :bcb+sbi('qEdit',ICO.edit,'Edit',2)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
     const was=barSnap(box)||box._barWas||null; box._barWas=null;  // 151: its bar changes smoothly (from the screen beneath, the first time)
     box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="Brand" value="'+esc(food.b||own&&own.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
@@ -4449,10 +4450,12 @@ function openQty(food,o){
     else if(e) arm($('qDel'),()=>{ dropEntries([e.id]); toast('REMOVED');   // by id, so it's the entry in the diary now
       if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); }
       else { closeSheet(); setTimeout(()=>renderMorph(mealOf(e)),220); } });
-    $('qEdit').onclick=()=>{                       // per 100 g is what editing works from
+    const goEdit=()=>{                             // per 100 g is what editing works from
       const w=gramsOf(food.sv), all=Object.assign({},food.x,{k:food.k,p:food.p,c:food.c,f:food.f}); h={}; hs={};
       rows.forEach(([k])=>{ if(k==='kj') return; const x=val(all,k); if(x>0){ if(w) h[k]=x*100/w.n; else hs[k]=x; } });
-      edit=true; draw(); warp(box); };
+      edit=true; };
+    $('qEdit').onclick=()=>{ goEdit(); draw(); warp(box); };
+    $('qBc').onclick=()=>{ goEdit(); scanning=true; draw(); sfx('open'); };      // 156: the barcode from a food's own screen: edit, with the camera on
   };
   draw();
 }
