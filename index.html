@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.161">
+<meta name="app-version" content="2026.10.04.162">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1427,7 +1427,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.161';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.162';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2340,15 +2340,11 @@ function dcClear(){
 }
 function dcStop(){ if(DC.fin){ clearTimeout(DC.tm); DC.fin(); } }     // a new swipe or tap finishes the slide under way
 /* side: 1 into the next day, -1 the previous one, 0 back to where it was */
-/* 160: the page's contents follow the date: they fade away sideways as the date slides, and the new day's slide in */
-function dcOut(side){ DC.out=[...$('main').children].map(el=>el.animate([{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX('+(-side*28)+'px)'}],{duration:170,easing:'ease-in',fill:'forwards'})); }
-function dcIn(side){ [...$('main').children].forEach(el=>el.animate([{opacity:0,transform:'translateX('+(side*28)+'px)'},{opacity:1,transform:'translateX(0)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'})); }
 function dcSettle(side){
   const d=DC.day, to=side?-side*DC.w:0, dist=Math.abs(to-DC.x);
-  const fin=()=>{ DC.fin=null; dcClear(); if(side){ const o=DC.out; DC.out=null; goDay(d); if(o && !calm()){ dcIn(side); o.forEach(a=>a.cancel()); } } };
+  const fin=()=>{ DC.fin=null; dcClear(); if(side) goDay(d); };
   if(calm() || !dist){ return fin(); }
   DC.fin=fin;
-  if(side && $('main').animate) dcOut(side);
   dcPos(to,Math.round(160+dist/DC.w*140)+'ms cubic-bezier(.2,.8,.2,1)');
   DC.x=to; DC.tm=setTimeout(fin,Math.round(160+dist/DC.w*140)+30);
 }
@@ -3624,9 +3620,73 @@ function tune(el,on){
   }
 }
 /* Arrows and Return to Today warp the day; a pick from the calendar brings the full static. */
+/* 162: changing day keeps the screen where it is. What differs changes in place: text fades out and the new text in,
+   the intake numbers roll into their new values, bars and colours blend, a card grows or shrinks and the ones
+   below slide with it, its foods fade over. Nothing else moves. */
+const STY=['fontFamily','fontSize','fontWeight','fontStyle','letterSpacing','textTransform','textAlign','color','fontVariantNumeric','textShadow'];
+const EASE_D='cubic-bezier(.2,.8,.2,1)';
+function leafSnap(root){
+  if(!root) return [];
+  return [...root.querySelectorAll('*')].map(e=>{ const leaf=!e.children.length && e.textContent.trim()!=='', cs=getComputedStyle(e), r=e.getBoundingClientRect();
+    const o={tag:e.tagName, cls:e.getAttribute('class')||'', leaf, text:e.textContent, r, color:cs.color, bg:cs.backgroundColor};
+    if(leaf){ o.sty={}; STY.forEach(k=>o.sty[k]=cs[k]); }
+    return o; });
+}
+function flipText(el,o){
+  const a=parseFloat(String(o.text).replace(/[^\d.\-]/g,'')), b=parseFloat(String(el.textContent).replace(/[^\d.\-]/g,''));
+  const dir=isFinite(a) && isFinite(b) && a!==b?(b>a?1:-1):0, d=dir*.55;
+  const g=document.createElement('span'); g.textContent=o.text; g.setAttribute('aria-hidden','true');
+  Object.assign(g.style,o.sty,{position:'fixed',left:o.r.left+'px',top:o.r.top+'px',width:Math.ceil(o.r.width)+'px',height:o.r.height+'px',lineHeight:o.r.height+'px',margin:0,padding:0,pointerEvents:'none',whiteSpace:'nowrap',zIndex:3,display:'block'});
+  document.body.appendChild(g);
+  g.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY('+(-d)+'em)'}],{duration:240,easing:'ease-in',fill:'forwards'}).onfinish=()=>g.remove();
+  const disp=el.style.display; if(getComputedStyle(el).display==='inline') el.style.display='inline-block';
+  const an=el.animate([{opacity:0,transform:'translateY('+d+'em)'},{opacity:1,transform:'none'}],{duration:320,delay:90,easing:EASE_D,fill:'backwards'});
+  an.onfinish=an.oncancel=()=>{ el.style.display=disp; };
+}
+function morphLeaves(old,root){
+  if(!root) return; const now=[...root.querySelectorAll('*')];
+  for(let i=0;i<old.length && i<now.length;i++){ const o=old[i], el=now[i];
+    if(o.tag!==el.tagName || o.cls.split(' ')[0]!==(el.getAttribute('class')||'').split(' ')[0]) break;       // not the same layout: leave the rest as drawn (a state class like 'over' may differ)
+    if(o.leaf && !el.children.length && el.textContent.trim()!=='' && o.text!==el.textContent){ flipText(el,o); continue; }
+    const cs=getComputedStyle(el);
+    if(o.bg!==cs.backgroundColor) el.animate([{backgroundColor:o.bg},{backgroundColor:cs.backgroundColor}],{duration:340,easing:'ease'});
+    if(o.color!==cs.color) el.animate([{color:o.color},{color:cs.color}],{duration:340,easing:'ease'});
+  }
+}
+function daySnap(){
+  const main=$('main'); if(!main || !$('dfix') || SEL) return null;
+  const cards=new Map();
+  main.querySelectorAll(':scope>.meal').forEach(c=>{ const r=c.getBoundingClientRect(), body=c.querySelector('.mbody'), br=body.getBoundingClientRect(), ex=c.querySelector('.logrow,.swipe');
+    cards.set(c.dataset.m,{top:r.top, h:r.height, left:br.left-r.left, bodyTop:br.top-r.top, w:br.width, rows:[...c.querySelectorAll('.fiw')].map(x=>x.cloneNode(true)),
+      ex:ex?ex.getBoundingClientRect().top-r.top:null, mh:leafSnap(c.querySelector('.mh'))}); });
+  return {dfix:leafSnap($('dfix')), cards};
+}
+function dayAnim(sn){
+  morphLeaves(sn.dfix,$('dfix'));
+  $('main').querySelectorAll(':scope>.meal').forEach(c=>{ const s=sn.cards.get(c.dataset.m); if(!s) return;
+    const r=c.getBoundingClientRect(), opt={duration:340,easing:EASE_D}, done=[];
+    morphLeaves(s.mh,c.querySelector('.mh'));
+    if(Math.abs(s.h-r.height)>1){ c.style.overflow='hidden'; done.push(c.animate([{height:s.h+'px'},{height:r.height+'px'}],opt)); }
+    if(Math.abs(s.top-r.top)>1) done.push(c.animate([{transform:'translateY('+(s.top-r.top)+'px)'},{transform:'none'}],opt));
+    const ex=c.querySelector('.logrow,.swipe');
+    if(ex && s.ex!==null){ const dy=s.ex-(ex.getBoundingClientRect().top-r.top); if(Math.abs(dy)>1) ex.animate([{transform:'translateY('+dy+'px)'},{transform:'none'}],opt); }
+    const rows=[...c.querySelectorAll('.fiw')];
+    if(s.rows.length || rows.length){
+      if(getComputedStyle(c).position==='static') c.style.position='relative';
+      if(s.rows.length){ const g=document.createElement('div'); g.className='mbody rghost'; g.setAttribute('aria-hidden','true');
+        g.style.cssText='position:absolute;left:'+s.left+'px;top:'+s.bodyTop+'px;width:'+s.w+'px;pointer-events:none;overflow:visible;transition:none'; s.rows.forEach(x=>{ x.classList.remove('gone'); x.style.height=''; g.appendChild(x); });
+        c.appendChild(g); g.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=()=>g.remove(); }
+      rows.forEach((x,i)=>x.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:280,delay:90+Math.min(i,6)*22,easing:EASE_D,fill:'backwards'}));
+    }
+    if(done.length) Promise.all(done.map(a=>a.finished)).then(()=>{ c.style.overflow=''; c.style.position=''; }).catch(()=>{ c.style.overflow=''; c.style.position=''; });
+    else setTimeout(()=>{ c.style.position=''; },420);
+  });
+}
 function goDay(d,wash){
+  const snap=!PLAN && !calm() && $('main') && $('main').animate?daySnap():null;
   DAY=d; FOLLOW=d===today(); DB.fold={}; FILLROW.was=null;             // a new day starts with every section open
   dropSelect(); closeSheet(); render();
+  if(snap) dayAnim(snap);
   (wash?panelHit:warp)($('main'),$('dCal'));
 }
 
