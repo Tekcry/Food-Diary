@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.158">
+<meta name="app-version" content="2026.10.04.160">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -203,7 +203,7 @@ body.ibhd header{transform:translateY(-100%)}
 body.ibhz header{z-index:70}                          /* over the dashboard's veil, under the screen coming in */
 .sheet.ibin::before{display:none}
 @media (prefers-reduced-motion: no-preference){
-  html .sheet.sheet.ibin:not(.out){animation:ibin .4s .1s cubic-bezier(.4,0,.2,1) both}
+  html .sheet.sheet.ibin:not(.out){animation:ibin .3s cubic-bezier(.2,.8,.2,1) both}   /* 159: no .1s wait before Add food starts to show */
   html .sheet.sheet.ibin.out{animation:ibout .3s cubic-bezier(.4,0,.2,1) both}
 }
 @keyframes ibin{from{opacity:0;transform:translateY(16px)}}
@@ -640,6 +640,7 @@ html[data-theme=light] .lw.vf .rn::after,html[data-theme=light] .qt.vf>span::aft
 .qamt .mpick{display:contents}
 .qamt .qin{height:30px;margin:0}
 .qamt.one .mpick button{grid-column:span 3}
+.qamt:not(.one){grid-template-columns:repeat(3,calc((100% - 24px) / 4));justify-content:center}   /* 160: the number and its two buttons, the same widths and gaps, centred (there were three buttons) */
 .qctl.off{opacity:.45;pointer-events:none}
 .qname::placeholder,.qsvi::placeholder,.lin::placeholder{color:var(--dimmer);opacity:.75}
 .qctl.off .mpick button,.qctl.off .mpick button.on,.qctl.off .qin{border-color:var(--cardhair);background:none;color:var(--dimmer); box-shadow:none !important;text-shadow:none !important}
@@ -1220,17 +1221,17 @@ html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav>button,html.lg[d
   -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent)}
 .seccar .sct{display:flex;height:100%;will-change:transform}
 .seccar .sci{flex:0 0 33.333%;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;margin:0;padding:0 2px;background:none;border:0;box-shadow:none;
-  font-family:var(--serif);font-size:11px;letter-spacing:.12em;color:var(--dim);white-space:nowrap;overflow:hidden;transform-origin:50% 50%;-webkit-tap-highlight-color:transparent}
-.seccar .sci.on{color:var(--tx);font-weight:600}
+  font-family:var(--serif);font-size:8.5px;font-weight:400;text-transform:uppercase;letter-spacing:.14em;color:var(--dimmer);white-space:nowrap;overflow:hidden;transform-origin:50% 50%;-webkit-tap-highlight-color:transparent}
+.seccar .sci.on{color:var(--tx)}
 /* ======================= 149: one bottom bar, laid out like the dashboard's =======================
    A screen's actions all sit in its bottom bar. Secondary ones are tab-style items, an icon over a label
    (the barcode is just its icon); the main action is centred where LOG is. */
 .sbi{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:0}
-.sbi svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.3;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.sbi i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap}
+.sbi svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sbi i{font-style:normal;font-family:var(--serif);font-size:8.5px;font-weight:400;letter-spacing:.14em;white-space:nowrap}   /* 159: the dashboard tabs' label, not .btn's bold */
 .sbi.on{color:var(--bronze)}
 .sbi.linked{position:relative}
-.sbi.linked::after{content:'\2713';position:absolute;top:5px;left:calc(50% + 9px);font-size:11px;line-height:1;color:var(--ok);pointer-events:none}   /* 156: above the icon's top right; drawn on top, so the icon itself never moves */
+.sbi.linked::after{content:'\2713';position:absolute;top:4px;left:calc(50% + 10px);font-size:11px;line-height:1;color:var(--ok);pointer-events:none}   /* 156: above the icon's top right; drawn on top, so the icon itself never moves */
 /* Light and Dark: the bar is the tab bar's grid: 1, 2, LOG's place (3), 4, the X (5) */
 html.lg[data-theme] .sheet>.sbar>.sbr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);align-items:center;gap:0}
 html.lg[data-theme] .sheet>.sbar>.sbr>.sbf{display:contents}
@@ -1278,8 +1279,8 @@ html:not(.ios) .sbf>.seccar{flex:2.4 1 0}
 html:not(.ios) .seccar .scv{margin:0 20px}
 /* a bar's main action: an icon over its words in the capsule, like LOG */
 html.lg .btn.mainb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-top:0;padding-bottom:0}
-html.lg .btn.mainb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
-html.lg .btn.mainb i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap;font-weight:600}
+html.lg .btn.mainb svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+html.lg .btn.mainb i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap;font-weight:400;color:#fff}
 html.lg[data-theme] .sheet>.sbar>.sbr .btn.mainb:disabled:not(.armed){background:rgba(128,128,128,.3);color:var(--dimmer);box-shadow:none !important;opacity:1}   /* SAVE with no name yet */
 html:not(.ios) .sheet>.sbar>.sbr .btn:not(.ghost):disabled{opacity:.3}
 html.lg[data-theme] .seccar .sct{position:relative;z-index:1}
@@ -1291,8 +1292,8 @@ html.lg[data-theme] .seccar .sci.on{color:#fff}
 @keyframes bfade{from{opacity:0}}
 @keyframes bghost{to{opacity:0}}
 @media (prefers-reduced-motion: no-preference){
-  html.lg[data-theme] #sheetWrap .sheet.pgrow:not(.out)>.sbar>.sbr::before{animation:pgrow .36s cubic-bezier(.2,.8,.2,1) both}
-  html.lg[data-theme] #sheetWrap .sheet.pshrink:not(.out)>.sbar>.sbr:not(:has(>.sbf))::before{animation:pshrink .36s cubic-bezier(.2,.8,.2,1) both}
+  html.lg[data-theme] #sheetWrap .sheet.bargrow:not(.out)>.sbar>.sbr::before{animation:pgrow .36s cubic-bezier(.2,.8,.2,1) both}
+  html.lg[data-theme] #sheetWrap .sheet.barshrink:not(.out)>.sbar>.sbr:not(:has(>.sbf))::before{animation:pshrink .36s cubic-bezier(.2,.8,.2,1) both}
 }
 @keyframes pgrow{from{left:calc(100% - 100% / 10.6 - 28px);right:calc(100% / 10.6 - 28px)}}
 @keyframes pshrink{from{left:-2px;right:-2px}}
@@ -1413,7 +1414,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.158';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.160';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2326,11 +2327,15 @@ function dcClear(){
 }
 function dcStop(){ if(DC.fin){ clearTimeout(DC.tm); DC.fin(); } }     // a new swipe or tap finishes the slide under way
 /* side: 1 into the next day, -1 the previous one, 0 back to where it was */
+/* 160: the page's contents follow the date: they fade away sideways as the date slides, and the new day's slide in */
+function dcOut(side){ DC.out=[...$('main').children].map(el=>el.animate([{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX('+(-side*28)+'px)'}],{duration:170,easing:'ease-in',fill:'forwards'})); }
+function dcIn(side){ [...$('main').children].forEach(el=>el.animate([{opacity:0,transform:'translateX('+(side*28)+'px)'},{opacity:1,transform:'translateX(0)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'})); }
 function dcSettle(side){
   const d=DC.day, to=side?-side*DC.w:0, dist=Math.abs(to-DC.x);
-  const fin=()=>{ DC.fin=null; dcClear(); if(side) goDay(d); };
+  const fin=()=>{ DC.fin=null; dcClear(); if(side){ const o=DC.out; DC.out=null; goDay(d); if(o && !calm()){ dcIn(side); o.forEach(a=>a.cancel()); } } };
   if(calm() || !dist){ return fin(); }
   DC.fin=fin;
+  if(side && $('main').animate) dcOut(side);
   dcPos(to,Math.round(160+dist/DC.w*140)+'ms cubic-bezier(.2,.8,.2,1)');
   DC.x=to; DC.tm=setTimeout(fin,Math.round(160+dist/DC.w*140)+30);
 }
@@ -2683,7 +2688,7 @@ function barMorph(was,sh){
   if(!was || !sh || calm()) return;
   const r=sh.querySelector(':scope>.sbar>.sbr'); if(!r){ sh._barWas=was; return; }   // drawn a moment later (a food): it morphs then
   const x=!r.querySelector(':scope>.sbf');
-  if(was.x!==x){ sh.classList.remove('pgrow','pshrink'); void sh.offsetWidth; sh.classList.add(x?'pshrink':'pgrow'); }
+  if(was.x!==x){ /* 159: not .pgrow, which is the Privacy screen's grid row */ sh.classList.remove('bargrow','barshrink'); void sh.offsetWidth; sh.classList.add(x?'barshrink':'bargrow'); }
   const now=new Set(), rb=r.getBoundingClientRect(), host=r.querySelector(':scope>.sbf')||r;
   r.querySelectorAll(':scope>.sbx, :scope>.sbf>*').forEach(e=>{ const k=BK(e); if(!k) return; now.add(k);
     const w=was.items.get(k); if(!w) bFade(e); else if(w.txt!==e.textContent && k!=='__main') bFade(e.querySelector(':scope>i')||e); });   // 155: a main button changing words stays solid
@@ -3922,7 +3927,7 @@ function secCarousel(box,onPick){
     T.style.transition=e?'transform '+e:'none'; T.style.transform='translateX('+pos+'px)';
     const c=((W()-IW())/2-pos)/IW();                                // which item is in the middle, fractionally
     items.forEach((el,k)=>{ const d=Math.min(1,Math.abs(k-c));
-      el.style.transition=e?'transform '+e:'none'; el.style.transform='scale('+(1-.24*d).toFixed(3)+')';
+      el.style.transition=e?'transform '+e:'none'; el.style.transform='scale('+(1-.1*d).toFixed(3)+')';
       el.classList.toggle('on',k===Math.round(c)); el.setAttribute('aria-pressed',k===Math.round(c)?'true':'false'); });
     const m=Math.round(c); box.querySelector('.scar.l').classList.toggle('end',m<=0); box.querySelector('.scar.r').classList.toggle('end',m>=items.length-1);
   };
