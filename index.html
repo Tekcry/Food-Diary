@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.154">
+<meta name="app-version" content="2026.10.04.155">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1410,7 +1410,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.154';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.155';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -1683,7 +1683,7 @@ const longDate=s=>{ const d=dObj(s); return WD[d.getDay()]+' '+d.getDate()+' '+M
 const shortDay=s=>{ const d=dObj(s); return (WD[d.getDay()].slice(0,3)+' '+d.getDate()+' '+MON[d.getMonth()].slice(0,3)).toUpperCase(); };
 function dayName(s){ const t=today(); return s===t?'Today':s===shift(t,-1)?'Yesterday':s===shift(t,1)?'Tomorrow':WD[dObj(s).getDay()]; }
 /* The day row's two lines for a day: its name, then the date and how long logging has run. */
-function dayLabel(d){ const o=dObj(d); return [dayName(d), WD[o.getDay()].slice(0,3)+' '+o.getDate()+' '+MON[o.getMonth()].slice(0,3)+' \u00b7 '+sinceStart()]; }
+function dayLabel(d){ const o=dObj(d); return [dayName(d), WD[o.getDay()].slice(0,3)+' '+o.getDate()+' '+MON[o.getMonth()].slice(0,3)]; }
 let DAY=today(), FOLLOW=true;          // FOLLOW: roll over to the new day at midnight
 
 /* ---------- targets: calories, plus macros as a share of them or in grams ---------- */
@@ -1737,11 +1737,6 @@ function logStreak(){
   return n;
 }
 function streak(d){ let n=0; while(n<400 && onTarget(d)){ n++; d=shift(d,-1); } return n; }
-function sinceStart(){
-  const k=Object.keys(P().days).sort(); if(!k.length) return 'DAY 1';
-  const days=Math.round((dObj(today())-dObj(k[0]))/864e5)+1;
-  return days<7?'DAY '+days:'WEEK '+(Math.floor((days-1)/7)+1)+' \u00b7 DAY '+days;
-}
 /* ---------- weight: one reading a day ---------- */
 const wOf=d=>{ const w=P().wt[d]; return w && w.v>0 ? w.v : null; };
 function wAvg(end,n){ let s=0,c=0; for(let i=0;i<n;i++){ const v=wOf(shift(end,-i)); if(v){ s+=v; c++; } } return c?{a:s/c,c}:null; }
@@ -2672,7 +2667,8 @@ const xBtn=(back,id)=>'<button class="btn ghost shx sbx'+(back?' back':'')+'"'+(
    fade out where they were, a changed label fades over, and the pill opens out or draws in when one side
    has only the X. Opacity only (and the pill's width); with Reduce Motion it simply changes. */
 let BARPREV=null;                                  // the bar just popped, for a screen that replaces it in the same moment
-const BK=e=>e.classList.contains('sbx')?'__x':e.id;   // the X is the X, whatever its id
+const isMain=e=>e.matches('.btn:not(.ghost):not(.sbx)');
+const BK=e=>e.classList.contains('sbx')?'__x':isMain(e)?'__main':e.id;   // 155: the blue main button is one item whatever it says   // the X is the X, whatever its id
 function barSnap(sh){
   const r=sh && sh.querySelector(':scope>.sbar>.sbr'); if(!r) return null;
   const items=new Map();
@@ -2687,8 +2683,8 @@ function barMorph(was,sh){
   if(was.x!==x){ sh.classList.remove('pgrow','pshrink'); void sh.offsetWidth; sh.classList.add(x?'pshrink':'pgrow'); }
   const now=new Set(), rb=r.getBoundingClientRect(), host=r.querySelector(':scope>.sbf')||r;
   r.querySelectorAll(':scope>.sbx, :scope>.sbf>*').forEach(e=>{ const k=BK(e); if(!k) return; now.add(k);
-    const w=was.items.get(k); if(!w) bFade(e); else if(w.txt!==e.textContent) bFade(e.querySelector(':scope>i')||e); });
-  was.items.forEach((w,k)=>{ if(now.has(k)) return;
+    const w=was.items.get(k); if(!w) bFade(e); else if(w.txt!==e.textContent && k!=='__main') bFade(e.querySelector(':scope>i')||e); });   // 155: a main button changing words stays solid
+  was.items.forEach((w,k)=>{ if(now.has(k) || k==='__main') return;     // 155: a gone main button leaves with its screen, no blue ghost left behind
     const t=document.createElement('div'); t.innerHTML=w.html; const g=t.firstElementChild; if(!g) return;
     g.removeAttribute('id'); g.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id')); g.setAttribute('aria-hidden','true'); g.classList.add('bghost');
     g.style.cssText+=';position:absolute;grid-area:auto;margin:0;left:'+(w.rect.left-rb.left)+'px;top:'+(w.rect.top-rb.top)+'px;width:'+w.rect.width+'px;height:'+w.rect.height+'px;pointer-events:none';
@@ -4287,9 +4283,9 @@ function openQty(food,o){
     mf:'1.2', c:'0', su:'0', fi:'0', na:'74', ch:'85'};
   const hint=k=>o.create?EX[k]:'\u2014';
   const units=()=>{ const s=g && g.n===100;                     // a serving of exactly 100 g is no serving of its own
-    return [['s','SERVINGS',s],['h','100 '+(g?g.u:'g').toUpperCase(),!g],['g',g&&g.u==='ml'?'ML':'GRAMS',!g]]; };
+    return [['s','SERVINGS',s],['g',g&&g.u==='ml'?'ML':'GRAMS',!g]]; };   // 155: no 100 g choice
   const st={q:e?e.q:(o.q||1), m:e?mealOf(e):ADD.meal, w:e?e.w:(o.w||'g')};
-  const fix=()=>{ if(!g) st.w='s'; else if(st.w==='s' && g.n===100) st.w='g'; };
+  const fix=()=>{ if(!g) st.w='s'; else if(st.w==='h' || (st.w==='s' && g.n===100)) st.w='g'; };   // 155: an old entry kept per 100 g shows in grams
   const cell=(v,u)=>v>0?(u==='g'?r1(v):fmt(v))+' '+u:'\u2014';
   const rows=NP.flatMap(r=>r[0]==='k'?[r,['kj','\u2013 kilojoules','kJ',1]]:[r]);
   const val=(src,k)=>k==='kj'?(src.k||0)*4.184:(src[k]||0);
