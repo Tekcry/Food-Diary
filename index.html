@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.153">
+<meta name="app-version" content="2026.10.04.154">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1189,9 +1189,12 @@ html.lg body:has(#sheetWrap .sheet:not(.out)) header.hx{visibility:hidden}   /* 
 /* 146: the day row is a carousel. The middle of the row is its window: the date slides across it and
    fades at its edges; the day coming in is drawn exactly like the date. */
 html header.hx{touch-action:pan-y}
-html header.hx .hdate{justify-self:stretch;position:relative;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent)}
-html header.hx .hdate>#hdrT,html header.hx .hdate>#hdrS{will-change:transform}
+html header.hx .hdate{justify-self:stretch;position:relative}
+/* 154: the edge fade and the transform layers exist only while the date is sliding. Kept on all the time, they
+   made the date's text come back late after a screen closed (the layers are dropped while the row is hidden
+   and drawn again afterwards); now it comes back with the tabs. */
+html header.hx .hdate.sliding{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 16px),transparent)}
+html header.hx .hdate.sliding>#hdrT,html header.hx .hdate.sliding>#hdrS{will-change:transform}
 html header.hx .dpeek{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 6px;white-space:nowrap;overflow:hidden;pointer-events:none}
 /* 147: every screen's bottom bar looks like the dashboard's (Light and Dark). Its buttons sit in the same
    floating pill, in exactly the same place: the main action is a blue capsule like LOG, the rest plain
@@ -1407,7 +1410,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.153';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.154';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2317,11 +2320,11 @@ function dcPeek(side){
   const box=$('dCal'), d=shift(DAY,side), l=dayLabel(d), p=document.createElement('div');
   p.className='dpeek'; p.setAttribute('aria-hidden','true');
   p.innerHTML='<h1>'+esc(l[0])+'</h1><div class="sub">'+esc(l[1])+'</div>';
-  box.appendChild(p); DC.peek=p; DC.side=side; DC.day=d; DC.w=box.clientWidth;
+  box.classList.add('sliding'); box.appendChild(p); DC.peek=p; DC.side=side; DC.day=d; DC.w=box.clientWidth;
 }
 function dcClear(){
   [$('hdrT'),$('hdrS')].forEach(e=>{ e.style.transition=''; e.style.transform=''; });
-  if(DC.peek) DC.peek.remove(); DC.peek=null; DC.side=0; DC.x=0;
+  if(DC.peek) DC.peek.remove(); DC.peek=null; DC.side=0; DC.x=0; $('dCal').classList.remove('sliding');
 }
 function dcStop(){ if(DC.fin){ clearTimeout(DC.tm); DC.fin(); } }     // a new swipe or tap finishes the slide under way
 /* side: 1 into the next day, -1 the previous one, 0 back to where it was */
