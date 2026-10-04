@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.159">
+<meta name="app-version" content="2026.10.04.160">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -640,6 +640,7 @@ html[data-theme=light] .lw.vf .rn::after,html[data-theme=light] .qt.vf>span::aft
 .qamt .mpick{display:contents}
 .qamt .qin{height:30px;margin:0}
 .qamt.one .mpick button{grid-column:span 3}
+.qamt:not(.one){grid-template-columns:repeat(3,calc((100% - 24px) / 4));justify-content:center}   /* 160: the number and its two buttons, the same widths and gaps, centred (there were three buttons) */
 .qctl.off{opacity:.45;pointer-events:none}
 .qname::placeholder,.qsvi::placeholder,.lin::placeholder{color:var(--dimmer);opacity:.75}
 .qctl.off .mpick button,.qctl.off .mpick button.on,.qctl.off .qin{border-color:var(--cardhair);background:none;color:var(--dimmer); box-shadow:none !important;text-shadow:none !important}
@@ -1413,7 +1414,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.159';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.160';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2326,11 +2327,15 @@ function dcClear(){
 }
 function dcStop(){ if(DC.fin){ clearTimeout(DC.tm); DC.fin(); } }     // a new swipe or tap finishes the slide under way
 /* side: 1 into the next day, -1 the previous one, 0 back to where it was */
+/* 160: the page's contents follow the date: they fade away sideways as the date slides, and the new day's slide in */
+function dcOut(side){ DC.out=[...$('main').children].map(el=>el.animate([{opacity:1,transform:'translateX(0)'},{opacity:0,transform:'translateX('+(-side*28)+'px)'}],{duration:170,easing:'ease-in',fill:'forwards'})); }
+function dcIn(side){ [...$('main').children].forEach(el=>el.animate([{opacity:0,transform:'translateX('+(side*28)+'px)'},{opacity:1,transform:'translateX(0)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'})); }
 function dcSettle(side){
   const d=DC.day, to=side?-side*DC.w:0, dist=Math.abs(to-DC.x);
-  const fin=()=>{ DC.fin=null; dcClear(); if(side) goDay(d); };
+  const fin=()=>{ DC.fin=null; dcClear(); if(side){ const o=DC.out; DC.out=null; goDay(d); if(o && !calm()){ dcIn(side); o.forEach(a=>a.cancel()); } } };
   if(calm() || !dist){ return fin(); }
   DC.fin=fin;
+  if(side && $('main').animate) dcOut(side);
   dcPos(to,Math.round(160+dist/DC.w*140)+'ms cubic-bezier(.2,.8,.2,1)');
   DC.x=to; DC.tm=setTimeout(fin,Math.round(160+dist/DC.w*140)+30);
 }
