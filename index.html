@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.156">
+<meta name="app-version" content="2026.10.04.157">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1230,7 +1230,7 @@ html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav>button,html.lg[d
 .sbi i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap}
 .sbi.on{color:var(--bronze)}
 .sbi.linked{position:relative}
-.sbi.linked::after{content:'\2713';position:absolute;top:8px;left:calc(50% + 9px);font-size:11px;line-height:1;color:var(--ok);pointer-events:none}   /* 156: above the icon's top right; drawn on top, so the icon itself never moves */
+.sbi.linked::after{content:'\2713';position:absolute;top:5px;left:calc(50% + 9px);font-size:11px;line-height:1;color:var(--ok);pointer-events:none}   /* 156: above the icon's top right; drawn on top, so the icon itself never moves */
 /* Light and Dark: the bar is the tab bar's grid: 1, 2, LOG's place (3), 4, the X (5) */
 html.lg[data-theme] .sheet>.sbar>.sbr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);align-items:center;gap:0}
 html.lg[data-theme] .sheet>.sbar>.sbr>.sbf{display:contents}
@@ -1257,30 +1257,33 @@ html.lg[data-theme] .sheet>.sbar>.sbr:not(:has(>.sbf))::before{left:calc(100% - 
 @keyframes xpillout{to{left:-2px;right:-2px}}
 /* Add food's sections: the carousel runs the bar's width, the section in LOG's place inside the
    dashboard's selection pill (the pill stays put; the names slide through it), fading out before the X */
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/1/2/6;height:50px}
-html.lg[data-theme] .seccar .scv{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%)}
-html.lg[data-theme] .seccar .sci{flex:0 0 calc(100% / 5.3 * 1.3)}
-html.lg[data-theme] .seccar::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:calc(100% / 5.3 * 1.3 - 4px);transform:translateX(-50%);
-  border-radius:999px;background:var(--clear);box-shadow:var(--rim-ctl) !important;pointer-events:none}
-html[data-theme=dark].lg .seccar::before{background:rgba(255,255,255,.1)}
-/* 153: the barcode is in slot 1 of every bar that scans (an icon, lit while the camera's on); on SAVED it folds
-   away. The section carousel is back across the bar with a small arrow either side. */
+html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/2/2/5;height:50px}   /* between the barcode and the X */
+html.lg[data-theme] .seccar .scv{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 22%,#000 78%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 22%,#000 78%,transparent)}
+html.lg[data-theme] .seccar .sci{flex:0 0 calc(100% / 3.3 * 1.3)}
+html.lg[data-theme] .seccar::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:calc(100% / 3.3 * 1.3 - 8px);transform:translateX(-50%);
+  border-radius:22px;background:var(--accent);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 .5px rgba(0,0,0,.25);pointer-events:none}   /* LOG's capsule */
+/* 153/157: the barcode (an icon over its words) is first in every bar that scans; on SAVED it folds away. The
+   section carousel runs between the barcode and the X (never under either), the section in LOG's blue capsule,
+   a small arrow either side. */
 .sbi.nosc{opacity:0;pointer-events:none}
 .sbi{transition:opacity .2s ease}
-html.lg[data-theme] .sheet>.sbar>.sbr .sbi.s1i{grid-column:1;justify-self:center;width:44px}   /* narrow, so the carousel's arrow beside it stays tappable */
 html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.sbi{position:relative;z-index:3}
-html:not(.ios) .sbf>.sbi.s1i{flex:0 0 18%}
-html:not(.ios) .sbf>.seccar{flex:2.8 1 0}
+html:not(.ios) .sbf>.sbi.bcb{flex:0 0 22%}
+html:not(.ios) .sbf>.seccar{flex:2.4 1 0}
 .seccar .scar{position:absolute;top:0;bottom:0;width:18px;margin:0;padding:0;background:none;border:0;box-shadow:none;display:flex;align-items:center;justify-content:center;
   color:var(--dimmer);z-index:2;-webkit-tap-highlight-color:transparent;transition:opacity .2s ease}
 .seccar .scar svg{width:9px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .seccar .scar.end{opacity:.22;pointer-events:none}
 .seccar .scar.l{left:0}.seccar .scar.r{right:0}
 html:not(.ios) .seccar .scv{margin:0 20px}
-html.lg[data-theme] .seccar .scar.l{left:calc(17% - 9px)}
-html.lg[data-theme] .seccar .scar.r{left:calc(80.1% - 9px);right:auto}
+/* a bar's main action: an icon over its words in the capsule, like LOG */
+html.lg .btn.mainb{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-top:0;padding-bottom:0}
+html.lg .btn.mainb svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+html.lg .btn.mainb i{font-style:normal;font-family:var(--serif);font-size:8.5px;letter-spacing:.14em;white-space:nowrap;font-weight:600}
+html.lg[data-theme] .sheet>.sbar>.sbr .btn.mainb:disabled:not(.armed){background:rgba(128,128,128,.3);color:var(--dimmer);box-shadow:none !important;opacity:1}   /* SAVE with no name yet */
+html:not(.ios) .sheet>.sbar>.sbr .btn:not(.ghost):disabled{opacity:.3}
 html.lg[data-theme] .seccar .sct{position:relative;z-index:1}
-html.lg[data-theme] .seccar .sci.on{color:var(--bronze)}
+html.lg[data-theme] .seccar .sci.on{color:#fff}
 /* 151: bars change smoothly (see barMorph) */
 .sheet>.sbar>.sbr{position:relative}
 .bfade{animation:bfade .24s ease both}
@@ -1410,7 +1413,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.156';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.157';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2703,9 +2706,15 @@ const ICO={edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19
   split:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h6l4 10h6M4 17h6l1.5-3.8M14 7h6"/></svg>',
   add:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   bin:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>',
+  check:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  copy:'<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></svg>',
   cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8.5A1.5 1.5 0 0 1 5 7h2.5l1.5-2h6l1.5 2H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z"/><circle cx="12" cy="13" r="3.6"/></svg>'};
-const sbi=(id,icon,label,slot,extra)=>'<button class="btn ghost sbi s'+slot+(extra?' '+extra:'')+'" id="'+id+'" aria-label="'+label+'">'+icon+(label&&!/i$/.test(slot)?'<i>'+label.toUpperCase()+'</i>':'')+'</button>';
-const sbar=(x,inner,above)=>'<div class="sbar">'+(above||'')+'<div class="sbr">'+(inner?'<div class="sbf">'+inner+'</div>':'')+(x||'')+'</div></div>';
+const sbi=(id,icon,label,slot,extra,vis)=>'<button class="btn ghost sbi s'+slot+(extra?' '+extra:'')+'" id="'+id+'" aria-label="'+label+'">'+icon+(label&&!/i$/.test(slot)?'<i>'+(vis||label).toUpperCase()+'</i>':'')+'</button>';
+/* 157: in Light and Dark a bar's main action is an icon over its words, like the dashboard's LOG; Terminal keeps its brackets */
+const MAINICO={'LOG FOOD':'add','LOG MEAL':'add','ADD ITEM':'add','SAVE':'check','UPDATE':'check','ACKNOWLEDGED':'check','COPY ALL':'copy','ADD BY HAND':'edit'};
+const mainBtn=(id,label,cls,attr)=>{ const ic=document.documentElement.classList.contains('lg') && MAINICO[label];
+  return '<button class="btn'+(cls?' '+cls:'')+(ic?' mainb':'')+'" id="'+id+'"'+(attr||'')+'>'+(ic?ICO[ic]+'<i>'+label+'</i>':label)+'</button>'; };
+const sbar=(x,inner,above)=>'<div class="sbar">'+(above||'')+'<div class="sbr">'+(inner?'<div class="sbf">'+inner.replace(/<button class="btn( wide)?" id="(\w+)"([^>]*)>([A-Z ]+)<\/button>/g,(m,w,id,at,t)=>mainBtn(id,t,w?'wide':'',at))+'</div>':'')+(x||'')+'</div></div>';
 function panel(title,body,back,foot){
   return '<div class="veil" id="veil"></div><div class="sheet fit full scroll"><h3>'+title+'</h3>'+
     '<div class="pgbody">'+body+'</div>'+sbar(xBtn(back,'pnX'),foot)+'</div>';
@@ -3957,7 +3966,7 @@ function openAdd(meal,group,into,tab,over){
     picker('adTabs',[['search','SEARCH'],['saved','SAVED']],ADD.tab)+
     '<div class="srch bar" id="adBar"><input class="fld" id="osQ" type="search" enterkeyhint="search" placeholder="Search foods" autocomplete="off">'+
       '<button class="btn plus" id="nfAdd" aria-label="New food">+</button></div>'+
-    '<div id="adBody"></div>',!!(into||over),sbi('adScan',BARCODE,'Scan barcode','1i')+(secBtn||'<span class="sbgap" aria-hidden="true"></span>')),!!(into||over));   // 152: ADD FOOD and the barcode are in the bottom bar      // over a meal being built or a combined item: back returns to it
+    '<div id="adBody"></div>',!!(into||over),sbi('adScan',BARCODE,'Scan barcode',1,'bcb','Barcode')+(secBtn||'<span class="sbgap" aria-hidden="true"></span>')),!!(into||over));   // 152: ADD FOOD and the barcode are in the bottom bar      // over a meal being built or a combined item: back returns to it
   const back=into||over?()=>{ ADD.into=null; ADD.group=null; popSheet(); const up=topSheet(); if(up && up.refresh) up.refresh(); }:closeSheet;
   if(into||over){ lastVeil().onclick=back; topSheet().querySelector('#pnX').onclick=back; } else bindPanel(back);   // stacked: its own back button, not one beneath
   topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
@@ -3992,7 +4001,7 @@ function paintSaved(){ savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo,''
    the scanner, so after logging it you're back in Add food. */
 function openScanner(){
   setSheet('<div class="veil"></div><div class="sheet fit full scanfull"><h3>Scan barcode</h3><div id="scHost" class="scanfs"></div>'+
-    sbar(xBtn(true,'scBack'),'<span class="sbgap" aria-hidden="true"></span>')+'</div>',true);   // 150: SAVE's place kept, empty; 152: no barcode button while scanning
+    sbar(xBtn(true,'scBack'),'')+'</div>',true);   // 150: SAVE's place kept, empty; 152: no barcode button while scanning
   const back=()=>{ stopScan(); popSheet(); };
   lastVeil().onclick=back; $('scBack').onclick=back;
   scanView($('scHost'),lookupCode,'',true,true);
@@ -4296,10 +4305,10 @@ function openQty(food,o){
     /* Secondary actions under the heading; the amount and the main action (LOG FOOD, UPDATE, SAVE)
        in a bar at the bottom, where the thumb already is. */
     const top=edit&&scanning?'<div class="qscan scanfs" id="qSc"></div>':'';   // 151: the camera fills the screen behind the bar           // the camera, while scanning; every button is in the bar (149)
-    const bcb=sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','1i',(hasBc?'linked':'')+(scanning?' on':''));   // 156: the barcode is first in the bar on every food screen
-    const foot=edit?bcb+'<button class="btn wide" id="qSave">SAVE</button>'
-      :e?bcb+sbi('qEdit',ICO.edit,'Edit',2)+'<button class="btn wide" id="qGo">UPDATE</button>'+sbi('qDel',ICO.bin,'Remove',4)
-      :bcb+sbi('qEdit',ICO.edit,'Edit',2)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
+    const bcb=sbi('qBc',BARCODE,hasBc?'Barcode linked':'Scan barcode',1,'bcb'+(hasBc?' linked':''),'Barcode');   // 157: only while editing, first in the bar, an icon over its words
+    const foot=edit?(scanning?'':bcb+'<button class="btn wide" id="qSave"'+(food.n && String(food.n).trim()?'':' disabled')+'>SAVE</button>')   // scanning: the bar draws in to the X, like Settings
+      :e?sbi('qEdit',ICO.edit,'Edit',1)+sbi('qDel',ICO.bin,'Remove',2)+'<button class="btn wide" id="qGo">UPDATE</button>'
+      :sbi('qEdit',ICO.edit,'Edit',1)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
     const was=barSnap(box)||box._barWas||null; box._barWas=null;  // 151: its bar changes smoothly (from the screen beneath, the first time)
     box.innerHTML='<h3 class="qt'+(!edit&&own&&own.vf?' vf':'')+'">'+(edit?'<span class="qtw"><input class="qname qbi" id="qB" maxlength="40" autocomplete="off" enterkeyhint="done" placeholder="Brand" value="'+esc(food.b||own&&own.b||'')+'"><input class="qname qni" id="qN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="'+(o.create?EX.n:'Name')+'" value="'+esc(food.n)+'"></span>'
@@ -4355,7 +4364,7 @@ function openQty(food,o){
       const col=[...$('qX').querySelectorAll('.lin')];
       col.forEach((f,i)=>{                                 // Return goes down the column; the last one saves
         f.enterKeyHint=i<col.length-1?'next':'done';
-        f.onkeydown=ev=>{ if(ev.key!=='Enter') return; ev.preventDefault(); const nx=col.slice(i+1).find(x=>!x.disabled); if(nx) nx.focus(); else { f.blur(); $('qSave').click(); } };
+        f.onkeydown=ev=>{ if(ev.key!=='Enter') return; ev.preventDefault(); const nx=col.slice(i+1).find(x=>!x.disabled); if(nx) nx.focus(); else { f.blur(); if($('qSave')) $('qSave').click(); } };
         f.oninput=()=>{ setK(h,f.dataset.k,Math.max(0,+f.value||0)); sync(f); update(); };
         f.closest('.lrow').onclick=ev=>{ if(ev.target.closest('input')) return;   // the whole row is the box
           if(f.disabled){ sfx('nope'); return toast('ADD THE WEIGHT TO THE SERVING, E.G. 1 BAR (45 G)'); } f.focus(); };
@@ -4373,7 +4382,11 @@ function openQty(food,o){
       $('qS').oninput=()=>{ $('qU').value=parseSv($('qS').value).u; reserve(); };
       $('qU').onchange=()=>{ const u=$('qU').value; if(u){ $('qS').value=svCompose(parseSv($('qS').value),u); sfx('tap'); } reserve(); };
       const keep=()=>{ food=Object.assign({},food,{n:$('qN').value, sv:$('qS').value, b:$('qB').value}); };    // typed text survives a redraw
-      $('qCancel').onclick=()=>{ if(scanning){ stopScan(); scanning=false; } if(o.create) return back(); bc=null; edit=false; draw(); warp(box); };
+      $('qCancel').onclick=()=>{ if(scanning){ stopScan(); scanning=false; keep(); draw(); sfx('tap'); return; }   // 157: the X from the scanner returns to the food
+        if(o.create) return back(); bc=null; edit=false; draw(); warp(box); };
+      /* 157: SAVE is grey until the food has a name (the brand doesn't count) */
+      const named=()=>{ const sv=$('qSave'); if(sv) sv.disabled=!$('qN').value.trim(); };
+      $('qN').addEventListener('input',named); named();
       /* The barcode in the bar opens the camera in place, just above the bar; START (the camera, slot 1)
          joins the bar, the barcode lights up and a second tap stops scanning. The nutrition moves up. */
       const gotBc=code=>{                                       // attach a barcode, so a later scan finds this food
@@ -4386,9 +4399,8 @@ function openQty(food,o){
         const host=$('qSc'), use=code=>{ code=String(code).replace(/\D/g,''); if(code.length<6){ sfx('nope'); return toast('THAT DOESN\u2019T LOOK LIKE A BARCODE'); }
           stopScan(); scanning=false; keep(); gotBc(code); };
         scanView(host,use,'TRY AGAIN',false,true); startScan();   // 151: the same view as Add food's scanner, the camera on at once
-        $('qBc').onclick=()=>{ stopScan(); scanning=false; keep(); draw(); sfx('tap'); };
       } else $('qBc').onclick=()=>{ keep(); scanning=true; draw(); sfx('open'); };
-      $('qSave').onclick=()=>{ try{ saveIt(); }catch(err){ diag('ERROR food save',String(err&&err.stack||err).slice(0,600)); sfx('nope'); toast('SAVE FAILED \u00b7 '+String(err&&err.message||err).slice(0,60).toUpperCase()); } };
+      if($('qSave')) $('qSave').onclick=()=>{ try{ saveIt(); }catch(err){ diag('ERROR food save',String(err&&err.stack||err).slice(0,600)); sfx('nope'); toast('SAVE FAILED \u00b7 '+String(err&&err.message||err).slice(0,60).toUpperCase()); } };
       const saveIt=()=>{
         if(saved) saved=P().foods.find(x=>x.id===saved.id)||null;   // the saved food as it is now; gone if deleted on the other phone
         const n=$('qN').value.trim().replace(/\s+/g,' ');
@@ -4455,7 +4467,6 @@ function openQty(food,o){
       rows.forEach(([k])=>{ if(k==='kj') return; const x=val(all,k); if(x>0){ if(w) h[k]=x*100/w.n; else hs[k]=x; } });
       edit=true; };
     $('qEdit').onclick=()=>{ goEdit(); draw(); warp(box); };
-    $('qBc').onclick=()=>{ goEdit(); scanning=true; draw(); sfx('open'); };      // 156: the barcode from a food's own screen: edit, with the camera on
   };
   draw();
 }
@@ -4534,15 +4545,16 @@ function loadZX(){
 /* The scanner's main action, in the bar's middle (SAVE's place): ADD BY HAND after a miss; null puts the
    empty place back. It fades in and out. */
 function scMain(label,fn){
-  const bar=SCAN.bar && SCAN.host && SCAN.host.closest('.sheet') && SCAN.host.closest('.sheet').querySelector(':scope>.sbar>.sbr>.sbf'); if(!bar) return;
-  const cur=bar.querySelector('#scAdd'), gap=bar.querySelector('.sbgap');
-  if(!label){ if(cur){ const g=document.createElement('span'); g.className='sbgap'; g.setAttribute('aria-hidden','true'); cur.replaceWith(g);
-      if(!calm() && cur.animate){ const r=cur.getBoundingClientRect(), b=bar.closest('.sbr').getBoundingClientRect(); cur.removeAttribute('id'); cur.classList.add('bghost');
-        cur.style.cssText+=';position:absolute;grid-area:auto;margin:0;left:'+(r.left-b.left)+'px;top:'+(r.top-b.top)+'px;width:'+r.width+'px;height:'+r.height+'px;pointer-events:none'; bar.appendChild(cur); setTimeout(()=>cur.remove(),280); } }
-    return; }
+  const sh=SCAN.bar && SCAN.host && SCAN.host.closest('.sheet'), r=sh && sh.querySelector(':scope>.sbar>.sbr'); if(!r) return;
+  let bar=r.querySelector(':scope>.sbf'); const cur=bar && bar.querySelector('#scAdd');
+  if(!label){ if(!cur) return;                                          // 157: the bar is the X alone (like Settings) until there's something to offer
+    if(!calm() && cur.animate){ const q=cur.getBoundingClientRect(), b=r.getBoundingClientRect(); cur.removeAttribute('id'); cur.classList.add('bghost');
+      cur.style.cssText+=';position:absolute;grid-area:auto;margin:0;left:'+(q.left-b.left)+'px;top:'+(q.top-b.top)+'px;width:'+q.width+'px;height:'+q.height+'px;pointer-events:none'; r.appendChild(cur); setTimeout(()=>cur.remove(),280); }
+    else cur.remove();
+    bar.remove(); sh.classList.remove('pgrow'); void sh.offsetWidth; sh.classList.add('pshrink'); return; }
   if(cur){ cur.onclick=fn; return; }
-  const b=document.createElement('button'); b.className='btn wide'; b.id='scAdd'; b.textContent=label; b.onclick=fn;
-  if(gap) gap.replaceWith(b); else bar.appendChild(b);
+  if(!bar){ bar=document.createElement('div'); bar.className='sbf'; r.insertBefore(bar,r.firstChild); sh.classList.remove('pshrink'); void sh.offsetWidth; sh.classList.add('pgrow'); }
+  const t=document.createElement('div'); t.innerHTML=mainBtn('scAdd',label,'wide'); const b=t.firstChild; b.onclick=fn; bar.appendChild(b);
   bFade(b);
 }
 function scStat(t,err){ const el=sq('.stat'); if(!el) return; if(el.textContent===t){ el.classList.toggle('err',!!err); return; }
