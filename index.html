@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.152">
+<meta name="app-version" content="2026.10.04.153">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1212,7 +1212,8 @@ html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav,html.lg[data-the
 html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) .bnav>button,html.lg[data-theme] body:has(#sheetWrap .sheet:not(.out)) header.hx>.hnav{opacity:0}
 /* 148: Add food's section carousel. Three to a row: the section in the middle in full, its neighbours
    smaller and grey, the rest fading off the ends. */
-.seccar{position:relative;height:100%;overflow:hidden;touch-action:pan-y;cursor:pointer;
+.seccar{position:relative;height:100%;touch-action:pan-y;cursor:pointer}
+.seccar .scv{height:100%;overflow:hidden;
   -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent)}
 .seccar .sct{display:flex;height:100%;will-change:transform}
 .seccar .sci{flex:0 0 33.333%;min-width:0;height:100%;display:flex;align-items:center;justify-content:center;margin:0;padding:0 2px;background:none;border:0;box-shadow:none;
@@ -1253,22 +1254,28 @@ html.lg[data-theme] .sheet>.sbar>.sbr:not(:has(>.sbf))::before{left:calc(100% - 
 @keyframes xpillout{to{left:-2px;right:-2px}}
 /* Add food's sections: the carousel runs the bar's width, the section in LOG's place inside the
    dashboard's selection pill (the pill stays put; the names slide through it), fading out before the X */
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/1/2/6;height:50px;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%)}
+html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/1/2/6;height:50px}
+html.lg[data-theme] .seccar .scv{-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%);mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 73%,transparent 80.5%)}
 html.lg[data-theme] .seccar .sci{flex:0 0 calc(100% / 5.3 * 1.3)}
 html.lg[data-theme] .seccar::before{content:'';position:absolute;top:4px;bottom:4px;left:50%;width:calc(100% / 5.3 * 1.3 - 4px);transform:translateX(-50%);
   border-radius:999px;background:var(--clear);box-shadow:var(--rim-ctl) !important;pointer-events:none}
 html[data-theme=dark].lg .seccar::before{background:rgba(255,255,255,.1)}
-/* 152: Add food's bar also holds ADD FOOD (slot 1) and the barcode (slot 4); the carousel is now LOG's place
-   alone, one section wide, the others slide in as it's dragged. The barcode folds away on SAVED. */
-.sbf>.seccar{flex:1.6 1 0}
-.seccar .sci{flex:0 0 100% !important}
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.seccar{grid-area:1/3;
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent 0,#000 12%,#000 88%,transparent)}
-html.lg[data-theme] .seccar::before{width:calc(100% - 4px)}
-html.lg[data-theme] .sheet>.sbar>.sbr .sbi.nosc,.sbi.nosc{opacity:0;pointer-events:none}
+/* 153: the barcode is in slot 1 of every bar that scans (an icon, lit while the camera's on); on SAVED it folds
+   away. The section carousel is back across the bar with a small arrow either side. */
+.sbi.nosc{opacity:0;pointer-events:none}
 .sbi{transition:opacity .2s ease}
-html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.sbi{position:relative;z-index:2}
+html.lg[data-theme] .sheet>.sbar>.sbr .sbi.s1i{grid-column:1;justify-self:center;width:44px}   /* narrow, so the carousel's arrow beside it stays tappable */
+html.lg[data-theme] .sheet>.sbar>.sbr>.sbf>.sbi{position:relative;z-index:3}
+html:not(.ios) .sbf>.sbi.s1i{flex:0 0 18%}
+html:not(.ios) .sbf>.seccar{flex:2.8 1 0}
+.seccar .scar{position:absolute;top:0;bottom:0;width:18px;margin:0;padding:0;background:none;border:0;box-shadow:none;display:flex;align-items:center;justify-content:center;
+  color:var(--dimmer);z-index:2;-webkit-tap-highlight-color:transparent;transition:opacity .2s ease}
+.seccar .scar svg{width:9px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.seccar .scar.end{opacity:.22;pointer-events:none}
+.seccar .scar.l{left:0}.seccar .scar.r{right:0}
+html:not(.ios) .seccar .scv{margin:0 20px}
+html.lg[data-theme] .seccar .scar.l{left:calc(17% - 9px)}
+html.lg[data-theme] .seccar .scar.r{left:calc(80.1% - 9px);right:auto}
 html.lg[data-theme] .seccar .sct{position:relative;z-index:1}
 html.lg[data-theme] .seccar .sci.on{color:var(--bronze)}
 /* 151: bars change smoothly (see barMorph) */
@@ -1400,7 +1407,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.152';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.153';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2698,7 +2705,7 @@ const ICO={edit:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19
   add:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   bin:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg>',
   cam:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8.5A1.5 1.5 0 0 1 5 7h2.5l1.5-2h6l1.5 2H19a1.5 1.5 0 0 1 1.5 1.5V18a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 18z"/><circle cx="12" cy="13" r="3.6"/></svg>'};
-const sbi=(id,icon,label,slot,extra)=>'<button class="btn ghost sbi s'+slot+(extra?' '+extra:'')+'" id="'+id+'" aria-label="'+label+'">'+icon+(label&&slot!=='4i'?'<i>'+label.toUpperCase()+'</i>':'')+'</button>';
+const sbi=(id,icon,label,slot,extra)=>'<button class="btn ghost sbi s'+slot+(extra?' '+extra:'')+'" id="'+id+'" aria-label="'+label+'">'+icon+(label&&!/i$/.test(slot)?'<i>'+label.toUpperCase()+'</i>':'')+'</button>';
 const sbar=(x,inner,above)=>'<div class="sbar">'+(above||'')+'<div class="sbr">'+(inner?'<div class="sbf">'+inner+'</div>':'')+(x||'')+'</div></div>';
 function panel(title,body,back,foot){
   return '<div class="veil" id="veil"></div><div class="sheet fit full scroll"><h3>'+title+'</h3>'+
@@ -3909,6 +3916,7 @@ function secCarousel(box,onPick){
     items.forEach((el,k)=>{ const d=Math.min(1,Math.abs(k-c));
       el.style.transition=e?'transform '+e:'none'; el.style.transform='scale('+(1-.24*d).toFixed(3)+')';
       el.classList.toggle('on',k===Math.round(c)); el.setAttribute('aria-pressed',k===Math.round(c)?'true':'false'); });
+    const m=Math.round(c); box.querySelector('.scar.l').classList.toggle('end',m<=0); box.querySelector('.scar.r').classList.toggle('end',m>=items.length-1);
   };
   const go=k=>{ k=Math.max(0,Math.min(items.length-1,k)); const ch=k!==i; i=k; x=off(k); paint(x,ease()); if(ch){ sfx('tap'); onPick(ms[k].id); } };
   box.to=id=>{ const k=ms.findIndex(m=>m.id===id); if(k>=0) go(k); };
@@ -3930,6 +3938,7 @@ function secCarousel(box,onPick){
     go(k); });
   box.addEventListener('pointercancel',()=>{ if(s && s.on) go(i); s=null; });
   box.addEventListener('click',e=>{ if(Date.now()-at<400) return;   // the end of a drag isn't a tap
+    const ar=e.target.closest('.scar'); if(ar) return go(i+(ar.classList.contains('l')?-1:1));   // 153: the arrows move one
     const b=e.target.closest('.sci'), k=b?items.indexOf(b):i;
     if(k!==i) go(k);                                                 // a neighbour slides in; the middle does nothing (149: no list)
   });
@@ -3943,13 +3952,13 @@ function openAdd(meal,group,into,tab,over){
   const secTitle=()=>esc(mealById(ADD.meal)?mealById(ADD.meal).n:'food')+(PLAN?' \u00b7 Plan':'');
   const bySec=!into && !ADD.group;                     // logging into a section: its name is a button to change it
   const title=bySec?'<span id="adT">'+secTitle()+'</span>':esc((into?(into.n||'meal'):ADD.group.gn)+(PLAN && !into?' \u00b7 Plan':''));
-  const secBtn=bySec?'<div class="seccar" id="adSec" role="group" aria-label="Section to log to"><div class="sct">'+
-    P().meals.map(m=>'<button class="sci" data-v="'+esc(m.id)+'" aria-label="Log to '+esc(m.n)+'">'+esc(m.n.toUpperCase())+'</button>').join('')+'</div></div>':'';   // 148: a carousel
+  const secBtn=bySec?'<div class="seccar" id="adSec" role="group" aria-label="Section to log to"><div class="scv"><div class="sct">'+
+    P().meals.map(m=>'<button class="sci" data-v="'+esc(m.id)+'" aria-label="Log to '+esc(m.n)+'">'+esc(m.n.toUpperCase())+'</button>').join('')+'</div></div><button class="scar l" tabindex="-1" aria-label="Previous section"><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M7 1.5L2 7l5 5.5"/></svg></button><button class="scar r" tabindex="-1" aria-label="Next section"><svg viewBox="0 0 9 14" aria-hidden="true"><path d="M2 1.5L7 7l-5 5.5"/></svg></button></div>':'';   // 148: a carousel; 153: arrows
   setSheet(panel(title,
     picker('adTabs',[['search','SEARCH'],['saved','SAVED']],ADD.tab)+
     '<div class="srch bar" id="adBar"><input class="fld" id="osQ" type="search" enterkeyhint="search" placeholder="Search foods" autocomplete="off">'+
-      '</div>'+
-    '<div id="adBody"></div>',!!(into||over),sbi('adNew',ICO.add,'Add food',1)+(secBtn||'<span class="sbgap" aria-hidden="true"></span>')+sbi('adScan',BARCODE,'Scan barcode','4i')),!!(into||over));   // 152: ADD FOOD and the barcode are in the bottom bar      // over a meal being built or a combined item: back returns to it
+      '<button class="btn plus" id="nfAdd" aria-label="New food">+</button></div>'+
+    '<div id="adBody"></div>',!!(into||over),sbi('adScan',BARCODE,'Scan barcode','1i')+(secBtn||'<span class="sbgap" aria-hidden="true"></span>')),!!(into||over));   // 152: ADD FOOD and the barcode are in the bottom bar      // over a meal being built or a combined item: back returns to it
   const back=into||over?()=>{ ADD.into=null; ADD.group=null; popSheet(); const up=topSheet(); if(up && up.refresh) up.refresh(); }:closeSheet;
   if(into||over){ lastVeil().onclick=back; topSheet().querySelector('#pnX').onclick=back; } else bindPanel(back);   // stacked: its own back button, not one beneath
   topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
@@ -3957,7 +3966,7 @@ function openAdd(meal,group,into,tab,over){
   const Q=$('osQ');
   Q.oninput=()=>{ if(ADD.tab==='search'){ ADD.sq=Q.value; paintRecent(Q.value); queueSearch(Q.value); } else { ADD.q=Q.value; paintSaved(); } };
   searchKey(Q);
-  $('adNew').onclick=()=>ADD.tab==='saved' && !ADD.into ? openMealEdit(null,Q.value.trim())
+  $('nfAdd').onclick=()=>ADD.tab==='saved' && !ADD.into ? openMealEdit(null,Q.value.trim())
     : openQty({id:'', n:Q.value.trim(), sv:'', k:0, p:0, c:0, f:0, x:{}, bc:''},{create:true});
   $('adScan').onclick=openScanner;
   onPick('adTabs',v=>{ ADD.tab=v; paintTab(); const B=$('adBody'); B.classList.remove('tabin'); void B.offsetWidth; B.classList.add('tabin'); warp(B); });
@@ -3969,9 +3978,7 @@ function paintTab(){
   Q.dispatchEvent(new Event('clear'));                // the clear button follows the value
   $('adScan').classList.toggle('nosc',!s);            // the barcode button folds away on SAVED
   $('adScan').tabIndex=s?0:-1;
-  const nb=$('adNew'), nl=nb.querySelector(':scope>i'), nt=s || ADD.into?'ADD FOOD':'NEW MEAL';
-  nb.setAttribute('aria-label',s || ADD.into?'Add food':'New meal');
-  if(nl.textContent!==nt) swapText(nl,()=>{ nl.textContent=nt; });
+  $('nfAdd').setAttribute('aria-label',s || ADD.into?'New food':'New meal');
   if(s){
     b.innerHTML='<div class="rlist" id="rcList"></div><div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
       '<div class="src">DATA: OPEN FOOD FACTS \u00b7 FOOD STANDARDS AUSTRALIA NEW ZEALAND (AFCD)</div>';
@@ -3986,10 +3993,10 @@ function paintSaved(){ savedList($('sfList'),ADD.q,f=>openQty(f,{}),openCombo,''
    the scanner, so after logging it you're back in Add food. */
 function openScanner(){
   setSheet('<div class="veil"></div><div class="sheet fit full scanfull"><h3>Scan barcode</h3><div id="scHost" class="scanfs"></div>'+
-    sbar(xBtn(true,'scBack'),sbi('scGo',ICO.cam,'Start',1)+'<span class="sbgap" aria-hidden="true"></span>')+'</div>',true);   // 150: SAVE's place kept, empty; 152: no barcode button while scanning
+    sbar(xBtn(true,'scBack'),'<span class="sbgap" aria-hidden="true"></span>')+'</div>',true);   // 150: SAVE's place kept, empty; 152: no barcode button while scanning
   const back=()=>{ stopScan(); popSheet(); };
   lastVeil().onclick=back; $('scBack').onclick=back;
-  scanView($('scHost'),lookupCode,'',$('scGo'),true);
+  scanView($('scHost'),lookupCode,'',true,true);
   startScan();
 }
 /* P, C and F in fixed columns on totals, lined up with the section heading's. Food rows show name,
@@ -4290,7 +4297,7 @@ function openQty(food,o){
     /* Secondary actions under the heading; the amount and the main action (LOG FOOD, UPDATE, SAVE)
        in a bar at the bottom, where the thumb already is. */
     const top=edit&&scanning?'<div class="qscan scanfs" id="qSc"></div>':'';   // 151: the camera fills the screen behind the bar           // the camera, while scanning; every button is in the bar (149)
-    const foot=edit?(scanning?sbi('qCam',ICO.cam,'Start',1):'')+'<button class="btn wide" id="qSave">SAVE</button>'+sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','4i',(hasBc?'linked':'')+(scanning?' on':''))
+    const foot=edit?sbi('qBc',BARCODE,hasBc?'Barcode linked':scanning?'Stop scanning':'Scan barcode','1i',(hasBc?'linked':'')+(scanning?' on':''))+'<button class="btn wide" id="qSave">SAVE</button>'
       :e?sbi('qEdit',ICO.edit,'Edit',1)+sbi('qDel',ICO.bin,'Remove',2)+'<button class="btn wide" id="qGo">UPDATE</button>'
       :sbi('qEdit',ICO.edit,'Edit',1)+'<button class="btn wide" id="qGo">LOG FOOD</button>';
     box.classList.toggle('nonut',!edit && noNut(food));
@@ -4378,7 +4385,7 @@ function openQty(food,o){
       if(scanning){
         const host=$('qSc'), use=code=>{ code=String(code).replace(/\D/g,''); if(code.length<6){ sfx('nope'); return toast('THAT DOESN\u2019T LOOK LIKE A BARCODE'); }
           stopScan(); scanning=false; keep(); gotBc(code); };
-        scanView(host,use,'TRY AGAIN',$('qCam'),true); startScan();   // 151: the same view as Add food's scanner, the camera on at once
+        scanView(host,use,'TRY AGAIN',false,true); startScan();   // 151: the same view as Add food's scanner, the camera on at once
         $('qBc').onclick=()=>{ stopScan(); scanning=false; keep(); draw(); sfx('tap'); };
       } else $('qBc').onclick=()=>{ keep(); scanning=true; draw(); sfx('open'); };
       $('qSave').onclick=()=>{ try{ saveIt(); }catch(err){ diag('ERROR food save',String(err&&err.stack||err).slice(0,600)); sfx('nope'); toast('SAVE FAILED \u00b7 '+String(err&&err.message||err).slice(0,60).toUpperCase()); } };
@@ -4505,13 +4512,12 @@ const sq=s=>SCAN.host && SCAN.host.querySelector(s);
 /* The camera view, drawn into host; every barcode read goes to cb. One camera at a time. */
 /* The camera box; its START / STOP is the camera in the screen's bottom bar (go, slot 1: 150), the same
    on both scanners. credit: the Open Food Facts line, where the lookup uses it. */
-function scanView(host,cb,alt,go,credit){
+function scanView(host,cb,alt,bar,credit){
   stopScan(); SCAN.alt=alt||'';
   host.innerHTML='<div class="scanbox"><video playsinline muted autoplay></video><div class="sfr"></div><div class="sln"></div>'+
     '<div class="sidle">[ CAMERA OFF ]</div></div><div class="stat"></div><div class="scres"></div>'+
     (credit?'<div class="src">DATA: OPEN FOOD FACTS</div>':'');
-  SCAN.host=host; SCAN.cb=cb; SCAN.go=go;
-  go.onclick=()=>{ SCAN.on?stopScan():startScan(); };
+  SCAN.host=host; SCAN.cb=cb; SCAN.bar=bar;                      // bar: this scanner's bar takes ADD BY HAND (153: no START/STOP, the camera starts by itself)
   sq('video').onplaying=()=>{ if(SCAN.on) sq('.scanbox').classList.add('live'); };   // label clears only on real frames
 }
 let ZXP=null;
@@ -4526,7 +4532,7 @@ function loadZX(){
 /* The scanner's main action, in the bar's middle (SAVE's place): ADD BY HAND after a miss; null puts the
    empty place back. It fades in and out. */
 function scMain(label,fn){
-  const bar=SCAN.go && SCAN.go.closest('.sbf'); if(!bar) return;
+  const bar=SCAN.bar && SCAN.host && SCAN.host.closest('.sheet') && SCAN.host.closest('.sheet').querySelector(':scope>.sbar>.sbr>.sbf'); if(!bar) return;
   const cur=bar.querySelector('#scAdd'), gap=bar.querySelector('.sbgap');
   if(!label){ if(cur){ const g=document.createElement('span'); g.className='sbgap'; g.setAttribute('aria-hidden','true'); cur.replaceWith(g);
       if(!calm() && cur.animate){ const r=cur.getBoundingClientRect(), b=bar.closest('.sbr').getBoundingClientRect(); cur.removeAttribute('id'); cur.classList.add('bghost');
@@ -4540,9 +4546,6 @@ function scMain(label,fn){
 function scStat(t,err){ const el=sq('.stat'); if(!el) return; if(el.textContent===t){ el.classList.toggle('err',!!err); return; }
   swapText(el,()=>{ el.textContent=t; el.classList.toggle('err',!!err); }); }
 function scPaint(on){
-  const g=SCAN.go; if(!g || !g.isConnected) return;
-  g.classList.toggle('on',on); g.setAttribute('aria-label',on?'Stop camera':'Start camera');
-  const l=g.querySelector(':scope>i'), t=on?'STOP':'START'; if(l && l.textContent!==t) swapText(l,()=>{ l.textContent=t; });
   if(!on && sq('.scanbox')) sq('.scanbox').classList.remove('live');
 }
 const CAM={video:{facingMode:{ideal:'environment'}},audio:false};
