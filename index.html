@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.164">
+<meta name="app-version" content="2026.10.04.165">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1434,7 +1434,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.164';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.165';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3642,10 +3642,9 @@ function leafSnap(root){
 /* where a leaf element's text really is (its box can be wider, with padding or alignment) */
 function textNode(el){ return el.childNodes.length===1 && el.firstChild.nodeType===3?el.firstChild:null; }
 function textRect(el){ const t=textNode(el); if(!t) return null; const r=document.createRange(); r.selectNodeContents(t); const q=r.getBoundingClientRect(); return {left:q.left,right:q.right,top:q.top,bottom:q.bottom,width:q.width,height:q.height}; }
-/* 163: a changed text or number flips like a split-flap board, a character at a time: the old character's top half
-   falls away to show the new top, then the new bottom half falls into place. Only the characters that differ move,
-   the text is never blank, and there's no background to it: a ghost of the characters sits over the element while
-   the element's own text waits (transparent) until the last has landed. */
+/* 165: a changed text or number changes a character at a time: each old character lifts away and fades while the new one
+   rises in from below and fades in. Only the characters that differ move, nothing has a background, and a ghost of the
+   characters sits exactly over the element while the element's own text waits (transparent) until the last has landed. */
 const CVX=document.createElement('canvas').getContext('2d');
 function splitFlap(el,o){
   const tn=textNode(el), nr=textRect(el);
@@ -3662,19 +3661,19 @@ function splitFlap(el,o){
   const h=nr.height, g=document.createElement('span'); g.setAttribute('aria-hidden','true'); g.setAttribute('data-sf','1');
   STY.forEach(k=>g.style[k]=cs[k]);
   Object.assign(g.style,{position:'fixed',left:0,top:0,width:0,height:0,whiteSpace:'pre',margin:0,padding:0,pointerEvents:'none',zIndex:60,textAlign:'left',lineHeight:h+'px',fontKerning:cs.fontKerning});
-  const half=(ch,top)=>{ const x=document.createElement('span'); x.textContent=ch; x.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;text-align:left;line-height:'+h+'px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-origin:50% 50%;'+
-    (top===null?'':'clip-path:inset('+(top?'0 0 50% 0':'50% 0 0 0')+');'); return x; };
+  const glyph=ch=>{ const x=document.createElement('span'); x.textContent=ch; x.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;text-align:left;line-height:'+h+'px;will-change:transform,opacity'; return x; };
   let last=0;
   for(let i=0;i<n;i++){
     if(a[i]===' ' && b[i]===' ') continue;
-    const cell=document.createElement('span'); cell.style.cssText='position:absolute;left:'+X[i]+'px;top:'+nr.top+'px;width:'+W[i]+'px;height:'+h+'px;perspective:'+(h*5)+'px;-webkit-perspective:'+(h*5)+'px';
-    if(a[i]===b[i]) cell.appendChild(half(b[i],null));
+    const cell=document.createElement('span'); cell.style.cssText='position:absolute;left:'+X[i]+'px;top:'+nr.top+'px;width:'+W[i]+'px;height:'+h+'px';
+    if(a[i]===b[i]) cell.appendChild(glyph(b[i]));
     else{
-      const st=half(b[i],true), sb=half(a[i],false), f1=half(a[i],true), f2=half(b[i],false), dl=(rt?(n-1-i):i)*26;
-      cell.append(st,sb,f1,f2);
-      f1.animate([{transform:'rotateX(0deg)'},{transform:'rotateX(-90deg)'}],{duration:150,delay:dl,easing:'ease-in',fill:'both'});
-      f2.animate([{transform:'rotateX(90deg)'},{transform:'rotateX(0deg)'}],{duration:170,delay:dl+150,easing:'cubic-bezier(.2,.9,.3,1.1)',fill:'both'});
-      last=Math.max(last,dl+320);
+      /* each changed character: the old one lifts away and fades, the new one rises in from below and fades in */
+      const out=glyph(a[i]), inn=glyph(b[i]), dl=(rt?(n-1-i):i)*28, up=h*.55;
+      cell.append(out,inn);
+      if(a[i]!==' ') out.animate([{opacity:1,transform:'translateY(0)',filter:'blur(0)'},{opacity:0,transform:'translateY('+(-up)+'px)',filter:'blur(2px)'}],{duration:300,delay:dl,easing:'cubic-bezier(.4,0,.8,.6)',fill:'both'});
+      if(b[i]!==' ') inn.animate([{opacity:0,transform:'translateY('+up+'px)',filter:'blur(2px)'},{opacity:1,transform:'translateY(0)',filter:'blur(0)'}],{duration:340,delay:dl+60,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'});
+      last=Math.max(last,dl+400);
     }
     g.appendChild(cell);
   }
