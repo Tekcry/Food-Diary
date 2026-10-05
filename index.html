@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.168">
+<meta name="app-version" content="2026.10.04.169">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1457,7 +1457,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.168';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.169';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3685,6 +3685,10 @@ function textRect(el){ const t=textNode(el); if(!t) return null; const r=documen
    rises in from below and fades in. Only the characters that differ move, nothing has a background, and a ghost of the
    characters sits exactly over the element while the element's own text waits (transparent) until the last has landed. */
 const CVX=document.createElement('canvas').getContext('2d');
+/* 169: the flip is drawn inside the card (or the intake block) the number is in, so it moves with it when the card slides, grows
+   or the page scrolls; it used to be fixed to the screen, and a number in a sliding card was drawn where the card would end up */
+function holdRel(h){ if(!h._rel && getComputedStyle(h).position==='static'){ h.style.position='relative'; h._relSet=1; } h._rel=(h._rel||0)+1; }
+function releaseRel(h){ if(--h._rel<=0){ h._rel=0; if(h._relSet){ h.style.position=''; h._relSet=0; } } }
 function splitFlap(el,o){
   const tn=textNode(el), nr=textRect(el);
   if(!tn || !nr || !o.tr){ el.animate([{opacity:0},{opacity:1}],{duration:260,delay:90,easing:'ease-out',fill:'backwards'}); return; }
@@ -3699,12 +3703,15 @@ function splitFlap(el,o){
   else for(let i=nt.length;i<n;i++){ W[i]=cw(a[i]); X[i]=X[i-1]+W[i-1]; }
   const h=nr.height, g=document.createElement('span'); g.setAttribute('aria-hidden','true'); g.setAttribute('data-sf','1');
   STY.forEach(k=>g.style[k]=cs[k]);
-  Object.assign(g.style,{position:'fixed',left:0,top:0,width:0,height:0,whiteSpace:'pre',margin:0,padding:0,pointerEvents:'none',zIndex:60,textAlign:'left',lineHeight:h+'px',fontKerning:cs.fontKerning});
+  const host=el.closest('.meal')||el.closest('#dfix'), hr=host?host.getBoundingClientRect():null;
+  if(host) holdRel(host);
+  const ox=host?hr.left+host.clientLeft-host.scrollLeft:0, oy=host?hr.top+host.clientTop-host.scrollTop:0;
+  Object.assign(g.style,{position:host?'absolute':'fixed',left:0,top:0,width:0,height:0,whiteSpace:'pre',margin:0,padding:0,pointerEvents:'none',zIndex:60,textAlign:'left',lineHeight:h+'px',fontKerning:cs.fontKerning});
   const glyph=ch=>{ const x=document.createElement('span'); x.textContent=ch; x.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;text-align:left;line-height:'+h+'px;will-change:transform,opacity'; return x; };
   let last=0;
   for(let i=0;i<n;i++){
     if(a[i]===' ' && b[i]===' ') continue;
-    const cell=document.createElement('span'); cell.style.cssText='position:absolute;left:'+X[i]+'px;top:'+nr.top+'px;width:'+W[i]+'px;height:'+h+'px';
+    const cell=document.createElement('span'); cell.style.cssText='position:absolute;left:'+(X[i]-ox)+'px;top:'+(nr.top-oy)+'px;width:'+W[i]+'px;height:'+h+'px';
     if(a[i]===b[i]) cell.appendChild(glyph(b[i]));
     else{
       /* each changed character: the old one lifts away and fades, the new one rises in from below and fades in */
@@ -3717,8 +3724,8 @@ function splitFlap(el,o){
     g.appendChild(cell);
   }
   const col=el.style.color, sh=el.style.textShadow; el.style.color='transparent'; el.style.textShadow='none';
-  document.body.appendChild(g);
-  setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; },last+60);     // the ghost goes and the real text shows in the same moment, in the same place
+  (host||document.body).appendChild(g);
+  setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; if(host) releaseRel(host); },last+60);     // the ghost goes and the real text shows in the same moment, in the same place
 }
 function morphLeaves(old,root){
   if(!root) return; const now=[...root.querySelectorAll('*')];
@@ -3752,7 +3759,7 @@ function dayAnim(sn){
     if(ex && s.ex!==null){ const dy=s.ex-(ex.getBoundingClientRect().top-r.top); if(Math.abs(dy)>1) ex.animate([{transform:'translateY('+dy+'px)'},{transform:'none'}],opt); }
     const rows=[...c.querySelectorAll('.fiw')];
     if(s.rows.length || rows.length){
-      if(getComputedStyle(c).position==='static') c.style.position='relative';
+      holdRel(c); c._held=1;
       /* 163: a row that stays keeps its box; only its words fade over. The old words are drawn once more, without their box,
          and fade out as the new ones come in. Rows that are new fade in whole, rows that go leave with the card shrinking. */
       if(s.rows.length){ const g=document.createElement('div'); g.className='mbody rghost'; g.setAttribute('aria-hidden','true');
@@ -3769,8 +3776,9 @@ function dayAnim(sn){
         else x.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:280,delay:90,easing:EASE_D,fill:'backwards'});
       });
     }
-    if(done.length) Promise.all(done.map(a=>a.finished)).then(()=>{ c.style.overflow=''; c.style.position=''; }).catch(()=>{ c.style.overflow=''; c.style.position=''; });
-    else setTimeout(()=>{ c.style.position=''; },420);
+    const fin=()=>{ c.style.overflow=''; if(c._held){ c._held=0; releaseRel(c); } };
+    if(done.length) Promise.all(done.map(a=>a.finished)).then(fin).catch(fin);
+    else setTimeout(fin,420);
   });
 }
 function goDay(d,wash){
