@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.165">
+<meta name="app-version" content="2026.10.04.167">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -317,7 +317,7 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .kof{font-family:var(--serif);font-size:11px;letter-spacing:.14em;color:var(--dimmer);padding-bottom:3px}
 .krem{margin-left:auto;text-align:right}
 .krem .rv{display:block;font-family:var(--serif);font-size:19px;line-height:1.1;color:var(--tx);font-variant-numeric:tabular-nums}
-.krem .rl{display:block;font-family:var(--serif);font-size:9px;letter-spacing:.2em;color:var(--dimmer);margin-top:3px}
+.krem .rl{display:block;font-family:var(--serif);font-size:10px;letter-spacing:.2em;color:var(--dimmer);margin-top:3px}
 .krem.over .rv,.krem.over .rl{color:var(--alert)}
 .mseg{display:flex;gap:2px;height:6px}
 .mseg b{flex:1;background:var(--cardhair);border-radius:1px;transition:background .3s ease}
@@ -328,7 +328,7 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .krem.hit .rv,.krem.hit .rl,.ibr.hit,.ibr.hit b{color:var(--ok)}
 .macros{border-top:1px solid var(--cardhair);padding-top:3px}
 .mac{display:grid;grid-template-columns:62px 1fr auto;align-items:center;gap:10px}
-.mac .ml{font-family:var(--serif);font-size:10px;letter-spacing:.18em;color:var(--dim)}
+.mac .ml{font-family:var(--serif);font-size:10.5px;letter-spacing:.18em;color:var(--dim)}
 .mac .mv{display:grid;grid-template-columns:3ch 1.8ch 3ch 1.6ch;font-family:var(--serif);font-size:12px;color:var(--champ); font-variant-numeric:tabular-nums;white-space:nowrap}
 .mac .mv b{font-weight:400;text-align:right}
 .mac .mv i{font-style:normal;color:var(--dimmer);text-align:right}
@@ -349,7 +349,7 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .swipe::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--dx,0);background:var(--tint)}
 .swipe:not(.drag)::before,.swipe:not(.drag) .swk{transition:width .25s ease,transform .25s ease}
 .swk{position:absolute;left:12px;font-family:var(--serif);font-size:18px;color:var(--bronze);transform:translateX(var(--dx,0))}
-.swt{font-family:var(--serif);font-size:9.5px;letter-spacing:.14em;color:var(--dimmer);pointer-events:none}
+.swt{font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--dimmer);pointer-events:none}
 .swipe.ready{border-style:solid;border-color:var(--bronze)}
 .swipe.ready .swt{color:var(--champ)}
 .fiw{position:relative;border-radius:5px;overflow:hidden;touch-action:pan-y; user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -426,7 +426,7 @@ html .cal button.now{box-shadow:0 0 10px -4px var(--bronze)}
 .mk{flex:none;margin-left:auto;padding-right:11px;min-width:5ch;text-align:right;font-family:var(--serif);font-size:14px;color:var(--champ);font-variant-numeric:tabular-nums}
 .msel{flex:none;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
 .logrow{display:flex;align-items:center;width:100%;height:32px;margin-top:4px;padding:0 3px 0 12px; border:1px dashed var(--cardline);border-radius:5px;background:transparent;font-family:var(--serif)}
-.logrow span{flex:1;text-align:left;font-size:9.5px;letter-spacing:.14em;color:var(--dimmer)}
+.logrow span{flex:1;text-align:left;font-size:10.5px;letter-spacing:.14em;color:var(--dimmer)}
 .logrow b{flex:none;width:32px;height:26px;display:flex;align-items:center;justify-content:center;font-weight:400;font-size:21px;line-height:1;color:var(--bronze)}
 .logrow:active{border-style:solid;border-color:var(--bronze)}
 .logrow:active span{color:var(--champ)}
@@ -500,7 +500,7 @@ html.resumed.booted header,html.resumed.booted #main{animation:none}
 .wcard h3{display:flex;align-items:center}
 .wline{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:14px;margin-top:6px}
 .wa{text-align:right;font-family:var(--serif)}
-.wa span{display:block;font-size:9px;letter-spacing:.16em;color:var(--dimmer)}
+.wa span{display:block;font-size:10px;letter-spacing:.16em;color:var(--dimmer)}
 .wa b{display:block;font-weight:400;font-size:14px;color:var(--champ);margin:2px 0;font-variant-numeric:tabular-nums}
 .wg{display:block;width:100%;height:auto;overflow:visible}
 .wg .ln{fill:none;stroke:var(--bronze);stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
@@ -511,19 +511,19 @@ html.resumed.booted header,html.resumed.booted #main{animation:none}
 .wg .gr{stroke:var(--hair);stroke-width:1}
 .wg .vg{stroke:var(--dimmer);stroke-width:.6;stroke-dasharray:1 3;stroke-linecap:round;opacity:.35}   /* very faint, dotted: under each date or month */
 .wg .guide{stroke:var(--cardline);stroke-width:1}
-.wg text{font-family:var(--serif);font-size:9px;fill:var(--dimmer)}
+.wg text{font-family:var(--serif);font-size:10px;fill:var(--dimmer)}
 .wg text.now{fill:var(--dim)}
 .wg text.on{fill:var(--bronze)}
 .wg text.avgt{fill:var(--dim);letter-spacing:.1em}
 .wg text.thin{visibility:hidden}                      /* a name left out where the points crowd; shown when chosen */
 .wg text.thin.on{visibility:visible}
-.wg text.pv{font-size:7.5px;fill:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:0;pointer-events:none}   /* a point's weight */
+.wg text.pv{font-size:9px;fill:var(--dim);font-variant-numeric:tabular-nums;letter-spacing:0;pointer-events:none}   /* a point's weight */
 .wg text.pv.on{fill:var(--champ);font-weight:600}
 .wnav{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;text-align:center;font-family:var(--serif);font-size:11px;letter-spacing:.14em;color:var(--dim)}
 .wnav .harr{width:48px;height:44px;font-size:26px}
 .wnav .harr:disabled{color:var(--cardhair)}
 .wstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
-.wstats span{display:block;font-family:var(--serif);font-size:9px;letter-spacing:.14em;color:var(--dimmer)}
+.wstats span{display:block;font-family:var(--serif);font-size:10px;letter-spacing:.14em;color:var(--dimmer)}
 .wstats b{display:block;margin-top:4px;font-weight:400;font-family:var(--serif);font-size:15px;color:var(--champ);font-variant-numeric:tabular-nums}
 .wgbox{touch-action:none;cursor:pointer}
 .wsel{margin:10px 0 4px;text-align:center;font-family:var(--serif);font-size:10.5px;letter-spacing:.16em;color:var(--bronze)}
@@ -531,7 +531,7 @@ html.resumed.booted header,html.resumed.booted #main{animation:none}
 .wone{display:flex;justify-content:center}
 .wone .btn{width:calc(50% - 4px);margin:0}
 .mpick{display:flex;flex-wrap:wrap}
-.mpick button{flex:1 1 64px;padding:0 4px;border:1px solid var(--cardhair);border-radius:4px; font-family:var(--serif);font-size:9.5px;letter-spacing:.12em;color:var(--dimmer); white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mpick button{flex:1 1 64px;padding:0 4px;border:1px solid var(--cardhair);border-radius:4px; font-family:var(--serif);font-size:10.5px;letter-spacing:.12em;color:var(--dimmer); white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mpick:has(>:nth-child(5)) button{font-size:8.5px;letter-spacing:.04em}
 #adBody.hit>*,#bdBody.hit>*,.pct.hit,.tot.hit{filter:url(#uiwarp)}
 .mpick button.on{border-color:var(--bronze);color:var(--champ);background:var(--tint); box-shadow:inset 0 0 12px -6px var(--bronze)}
@@ -558,13 +558,13 @@ html.standalone:not(.tall) .sheet.fit:not(.full){max-height:calc(100% - 14px)}
 .sheet.fit.full.scroll .pgbody{padding-bottom:28px}
 .stat{margin-top:10px;font-family:var(--serif);font-size:10.5px;letter-spacing:.14em;color:var(--dim); text-align:center;min-height:1.5em;text-transform:uppercase}
 .stat.err{color:var(--alert)}
-.src{margin-top:12px;font-family:var(--serif);font-size:9px;letter-spacing:.16em;color:var(--dimmer);text-align:center}
+.src{margin-top:12px;font-family:var(--serif);font-size:10px;letter-spacing:.16em;color:var(--dimmer);text-align:center}
 .rlist{margin-top:4px}
 .ri{display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--hair)}
 .ri:last-child{border-bottom:none}
 .rm{flex:1;min-width:0;display:block;text-align:left;padding:11px 0}
 .rn{display:block;font-size:14px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rs{display:block;font-family:var(--serif);font-size:10px;letter-spacing:.06em;color:var(--dimmer);margin-top:3px; white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs{display:block;font-family:var(--serif);font-size:11px;letter-spacing:.06em;color:var(--dimmer);margin-top:3px; white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rk{flex:none;font-family:var(--serif);font-size:13px;color:var(--champ);font-variant-numeric:tabular-nums}
 .ri .rx{flex:none;width:42px;height:42px;font-size:20px}
 .ri .rx+.rx{margin-left:2px}
@@ -667,6 +667,13 @@ html[data-theme=light] .lw.vf .rn::after,html[data-theme=light] .qt.vf>span::aft
 .lw:not(.drag) .ri{transition:transform .25s ease}
 .qadd{flex:none;width:32px;height:30px;margin:0 3px 0 0;display:flex;align-items:center;justify-content:center;font-size:21px;line-height:1; color:var(--champ);border:1px solid var(--bronze);border-radius:6px;background:var(--tint2);box-shadow:inset 0 0 7px -5px var(--bronze)}
 .qadd:active{background:var(--bronze);color:var(--on)}
+/* 166: a touch box of 44 x 48 around the + (it looks the same), a tick when it has just logged, a count after the second tap */
+.qadd{position:relative}
+.qadd::before{content:'';position:absolute;top:-9px;bottom:-9px;left:-6px;right:-6px}
+.qadd.done{color:var(--ok)}
+.qadd[data-n]:not([data-n="1"])::after{content:'\00d7' attr(data-n);position:absolute;top:-5px;right:-4px;min-width:14px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:var(--accent,#0a84ff);color:#fff;font:600 9px/14px var(--serif);text-align:center}
+.mpick button{position:relative}
+.mpick button::before{content:'';position:absolute;left:0;right:0;top:-7px;bottom:-7px}
 .sbox{position:relative;display:flex;align-self:stretch;flex:1;min-width:0}
 .sbox .fld{width:100%;height:auto;align-self:stretch;margin:0;padding-right:40px}
 .sbox .fld::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
@@ -684,7 +691,7 @@ html[data-theme=light] .lw.vf .rn::after,html[data-theme=light] .qt.vf>span::aft
 .qrow{display:grid;grid-template-columns:54px 1fr 54px;gap:8px}
 .qrow button{font-size:32px}
 .qrow .bignum{margin:0;padding:12px 6px}
-.qunit{text-align:center;font-family:var(--serif);font-size:9.5px;letter-spacing:.2em;color:var(--dimmer)}
+.qunit{text-align:center;font-family:var(--serif);font-size:10px;letter-spacing:.2em;color:var(--dimmer)}
 .pct{display:grid;grid-template-columns:1fr 44px 70px 44px;align-items:center;gap:8px;padding:6px 0}
 .pct button{height:42px;font-size:26px}
 .pin{height:42px;padding:0 4px;text-align:center;font-family:var(--serif);font-size:18px}
@@ -815,6 +822,22 @@ html header.hx .harr{width:48px;height:44px;font-size:22px;position:relative}
 /* 163: the arrows' touch boxes reach further (up, out to the screen's edge, in towards the date) without the arrows or the bar changing size */
 html header.hx .harr::before{content:'';position:absolute;top:-10px;bottom:0;left:-8px;right:-22px}
 html header.hx #dNext::before{left:-22px;right:-8px}
+/* 166: the weight's \u2212 value + in the day row's place, the same size and the same arrows' touch boxes */
+.wadj{flex:none;position:relative;display:grid;grid-template-columns:48px 1fr 48px;align-items:center;height:44px;box-sizing:border-box;padding:0 8px;background:var(--bg);transition:transform .2s ease}
+.sheet.fit.full>.wadj{margin:0 calc(-1 * var(--gut))}
+.wadj::before{content:'';position:absolute;left:0;right:0;top:-1px;border-top:1px solid var(--line);pointer-events:none}
+.wadj[hidden]{display:none}
+html.lg[data-theme] .wadj{background:transparent}
+html.lg[data-theme] .wadj::before{border-top-color:transparent}
+html.lg[data-theme] .wadj.lift{background:var(--bg)}
+.wadj .harr{position:relative;width:48px;height:44px;font-size:22px}
+.wadj .harr::before{content:'';position:absolute;top:-10px;bottom:0;left:-8px;right:-22px;border:0}
+.wadj #wUp::before{left:-22px;right:-8px}
+.wmid{display:flex;align-items:center;justify-content:center;gap:6px;height:44px;min-width:0}
+.wnum{width:4.2em;height:34px;border:0;background:transparent;text-align:right;font:inherit;font-size:17px;color:var(--tx);padding:0;margin:0;-moz-appearance:textfield;appearance:textfield;outline:none}
+.wnum::-webkit-inner-spin-button,.wnum::-webkit-outer-spin-button{display:none;-webkit-appearance:none}
+.wnum::placeholder{color:var(--dimmer)}
+.wkg{font-family:var(--serif);font-size:11px;letter-spacing:.14em;color:var(--dimmer)}
 html header.hx .hdate{pointer-events:none}                       /* 163: only the words take a touch (so the arrows' boxes reach in past the date's area) */
 html header.hx .hdate>#hdrT,html header.hx .hdate>#hdrS{pointer-events:auto}
 html header.hx .hdate{display:flex;align-items:center;justify-content:center;gap:6px;height:44px;white-space:nowrap;overflow:hidden}
@@ -832,19 +855,19 @@ html :is(#dfix,#ib) .intake{padding:8px 12px 5px}
 html :is(#dfix,#ib) .card h3{font-size:12.5px;line-height:17px}
 html :is(#dfix,#ib) .kline{margin-top:4px}
 html :is(#dfix,#ib) .kc{font-size:30px}
-html :is(#dfix,#ib) .kof{font-size:10px;padding-bottom:2px}
+html :is(#dfix,#ib) .kof{font-size:11px;padding-bottom:2px}
 html :is(#dfix,#ib) .krem .rv{font-size:16px;line-height:17px}
-html :is(#dfix,#ib) .krem .rl{margin-top:2px;font-size:8.5px;line-height:12px}
+html :is(#dfix,#ib) .krem .rl{margin-top:2px;font-size:9.5px;line-height:12px}
 html :is(#dfix,#ib) .intake>.mseg{margin:6px 0 2px;height:5px}
 html :is(#dfix,#ib) .macros{margin-top:4px;padding-top:1px}
 html :is(#dfix,#ib) .mac{padding:2px 0;line-height:16px}
-html :is(#dfix,#ib) .mac .ml{font-size:9px}
+html :is(#dfix,#ib) .mac .ml{font-size:10px}
 html :is(#dfix,#ib) .mac .mv{font-size:11px}
 html :is(#dfix,#ib) .mac .mseg{height:4px}
 html :is(#dfix,#ib) .wcard{padding:5px 12px}
 html :is(#dfix,#ib) .wline{margin:0;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;height:100%}
 html :is(#dfix,#ib) .wline h3{margin:0}
-html :is(#dfix,#ib) .wa span{font-size:8.5px;line-height:1.2}
+html :is(#dfix,#ib) .wa span{font-size:9.5px;line-height:1.2}
 html :is(#dfix,#ib) .wa b{font-size:13px;line-height:1.2}
 html :is(#dfix,#ib) .wg.mini{height:26px}
 html #main>.dfix .wcard,html #main>.dfix .plancard{box-sizing:border-box;height:52px}   /* weight and plan cards: one size */
@@ -927,7 +950,7 @@ html #main .fi .fnm{display:block;font-size:14px;line-height:1.2}
 /* Meals (in the diary and the planner), saved meals and saved plans: a long name takes two lines,
    then ends in an ellipsis. */
 html #main .fi.grp .fnm,.fiw.mn .rn{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow:hidden;overflow-wrap:anywhere}
-html #main .fi .fsb{display:block;margin-top:1px;font-size:10px;letter-spacing:.06em}
+html #main .fi .fsb{display:block;margin-top:1px;font-size:11px;letter-spacing:.06em}
 html #main .fi .fk{font-size:13px;min-width:0}
 html:not(.ios) #main .fi .rn{text-shadow:0 0 4px rgba(0,255,102,.3)}   /* the glow text has outside buttons, as in Add food */
 /* the section's macros in fixed columns, so they line up from section to section */
@@ -1434,7 +1457,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.165';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.167';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3835,7 +3858,7 @@ function openWeight(){
   sfx('open');
   const t=today();
   WT.mode='d'; WT.sel=WT.end=t; WT.mend=WT.msel=t.slice(0,7); WT.lsel='';   // always opens on today
-  setSheet(panel('Weight',picker('wMode',[['d','14 DAYS'],['m','MONTHLY'],['l','YEARLY']],'d')+'<div id="wtBody"></div>'));
+  setSheet(panel('Weight',picker('wMode',[['d','14 DAYS'],['m','MONTHLY'],['l','YEARLY']],'d')+'<div id="wtBody"></div>').replace('<div class="sbar">','<div class="wadj" id="wAdj" hidden></div><div class="sbar">'));   // 166: the weight's \u2212 value + sit where the dashboard's day row does
   bindPanel();
   onPick('wMode',v=>{ WT.mode=v; drawWeight(); warp($('wtBody')); });
   topSheet()._live=()=>{ const a=document.activeElement; if(!WT.drag && !(a && a.id==='wV')) drawWeight(); };   // the other phone's readings, unless one is being typed
@@ -3843,8 +3866,23 @@ function openWeight(){
 }
 /* Everything for the current range; selecting a point later only touches the graph marks,
    the stats and the controls below it. */
+/* 166: the weight screen's bar: SAVE (or UPDATE) in the capsule and REMOVE beside it for a logged day; just the X in the other views */
+function wBar(inner){
+  const sh=topSheet(), r=sh && sh.querySelector(':scope>.sbar>.sbr'); if(!r) return;
+  let f=r.querySelector(':scope>.sbf');
+  if(!inner){ if(f) f.remove(); return; }
+  if(!f){ f=document.createElement('div'); f.className='sbf'; r.insertBefore(f,r.firstChild); }
+  f.innerHTML=inner;
+}
+/* with the keyboard up, the adjuster rides just above it (the bar and the day row are behind the keyboard) */
+function wLift(){
+  const a=document.getElementById('wAdj'); if(!a || a.hidden) return;
+  const v=window.visualViewport, on=document.activeElement && document.activeElement.id==='wV', gap=v && on?Math.max(0,innerHeight-(v.offsetTop+v.height)):0;
+  a.style.transform=gap?'translateY(-'+gap+'px)':''; a.classList.toggle('lift',!!gap);
+}
 function drawWeight(){
   const m=WT.mode==='m', L=WT.mode==='l', t=today(), life=L?lifetime():null;
+  if(WT.mode!=='d'){ const a=$('wAdj'); if(a) a.hidden=true; wBar(''); }
   if(L && !life.pts.length){ $('wtBody').innerHTML='<div class="stat">NO WEIGHTS LOGGED YET \u2014 LOG ONE UNDER 14 DAYS</div>'; return; }
   if(L && !life.pts.some(p=>p.k===WT.lsel)) WT.lsel=life.pts[life.pts.length-1].k;     // opens on the latest
   const pts=L?life.pts:m?months(WT.mend):fortnight(WT.end), last=L||(m?WT.mend>=t.slice(0,7):WT.end>=t);
@@ -3897,19 +3935,19 @@ function paintW(){
   }
   const end=WT.end, sel=WT.sel, avg=wAvg(end,14), v=wOf(sel), start=v||wNear(sel);   // a starting weight to nudge
   $('wtStats').innerHTML=stat('14-DAY AVG',avg?avg.a.toFixed(1)+' KG':'\u2014')+stat('VS PREVIOUS 14',signed(wChange(end)))+stat('LOGGED',(avg?avg.c:0)+' / 14');
-  $('wtCtl').innerHTML='<div class="wsel">'+longDate(sel).toUpperCase()+(v?'':' \u00b7 NOT LOGGED')+'</div>'+
-    '<div class="qrow"><button id="wDn" aria-label="Less">\u2212</button>'+
-      '<input class="bignum" id="wV" type="number" enterkeyhint="done" step="0.1" placeholder="kg" value="'+(start?start.toFixed(1):'')+'">'+
-      '<button id="wUp" aria-label="More">+</button></div><div class="qunit">KG</div>'+
-    '<div id="wBtns" class="'+(v?'duo':'wone')+'"><button class="btn" id="wGo">'+(v?'[ UPDATE ]':'[ SAVE ]')+'</button>'+
-      (v?'<button class="btn ghost" id="wDel">[ REMOVE ]</button>':'')+'</div>';
+  $('wtCtl').innerHTML='<div class="wsel">'+longDate(sel).toUpperCase()+(v?'':' \u00b7 NOT LOGGED')+'</div>';
+  const adj=$('wAdj'); adj.hidden=false;
+  adj.innerHTML='<button class="harr" id="wDn" aria-label="Less">\u2212</button><div class="wmid">'+
+    '<input class="wnum" id="wV" type="number" enterkeyhint="done" inputmode="decimal" step="0.1" placeholder="kg" value="'+(start?start.toFixed(1):'')+'"><span class="wkg">KG</span></div>'+
+    '<button class="harr" id="wUp" aria-label="More">+</button>';
+  wBar((v?sbi('wDel',ICO.bin,'Remove',1):'')+mainBtn('wGo',v?'UPDATE':'SAVE','wide'));
   const V=$('wV'), step=d=>{ const n=r1((+V.value||start||0)+d*0.1); if(n>0) V.value=n.toFixed(1); };
   $('wDn').onclick=()=>step(-1); $('wUp').onclick=()=>step(1);
   V.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('wGo').click(); } };   // the keyboard's Done saves
-  const set=val=>{ const had=!!v; P().wt[sel]={v:val,e:later(P().wt[sel]&&P().wt[sel].e)}; touch(); render(); drawWeight();
-    if(had!==!!val) warp($('wBtns')); };                    // SAVE <-> UPDATE / REMOVE: only the buttons warp
+  V.addEventListener('focus',()=>{ selectAll(V); setTimeout(wLift,60); setTimeout(wLift,350); }); V.addEventListener('blur',()=>setTimeout(wLift,60));
+  const set=val=>{ P().wt[sel]={v:val,e:later(P().wt[sel]&&P().wt[sel].e)}; touch(); render(); drawWeight(); };
   $('wGo').onclick=()=>{ const n=num(V.value,20,400); if(n===null){ sfx('nope'); return toast('ENTER A WEIGHT IN KG'); }
-    V.blur(); set(r1(n)); sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); };
+    V.blur(); set(r1(n)); sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); if(sel===today()) closeSheet(); };   // today's weight: saved, and back to the diary
   if(v) arm($('wDel'),()=>{ set(0); toast('WEIGHT REMOVED'); });
 }
 
@@ -4082,7 +4120,7 @@ function secCarousel(box,onPick){
 }
 addEventListener('resize',()=>{ const b=document.getElementById('adSec'); if(b && b.repaint) b.repaint(); });
 function openAdd(meal,group,into,tab,over){
-  ADD.meal=meal; ADD.group=group||null; ADD.into=into||null;
+  ADD.meal=meal; ADD.group=group||null; ADD.into=into||null; Object.keys(TICK).forEach(k=>delete TICK[k]);
   ADD.tab=tab||'search';
   ADD.q=ADD.sq=''; ADD.results=[];
   sfx('open');
@@ -4099,7 +4137,9 @@ function openAdd(meal,group,into,tab,over){
   const back=into||over?()=>{ ADD.into=null; ADD.group=null; popSheet(); const up=topSheet(); if(up && up.refresh) up.refresh(); }:closeSheet;
   if(into||over){ lastVeil().onclick=back; topSheet().querySelector('#pnX').onclick=back; } else bindPanel(back);   // stacked: its own back button, not one beneath
   topSheet().refresh=paintTab;                        // back from logging a food: Recent shows it
-  if(bySec) secCarousel($('adSec'),id=>{ ADD.meal=id; const t=$('adT'); swapText(t,()=>{ t.innerHTML=secTitle(); }); });
+  if(bySec) secCarousel($('adSec'),id=>{ ADD.meal=id; const t=$('adT'); swapText(t,()=>{ t.innerHTML=secTitle(); });
+    if(ADD.tab==='search' && !$('osQ').value.trim()) paintRecent('');                      // 166: Usual follows the section
+  });
   const Q=$('osQ');
   Q.oninput=()=>{ if(ADD.tab==='search'){ ADD.sq=Q.value; paintRecent(Q.value); queueSearch(Q.value); } else { ADD.q=Q.value; paintSaved(); } };
   searchKey(Q);
@@ -4159,11 +4199,24 @@ const nutRow=(i,e)=>noNut(e)?foodListRow(i,e.n,brandOf(e)+esc(qtyTxt(e))+' \u00b
 const foodRow=(f,i)=>noNut(f)?foodListRow(i,f.n,brandOf(f)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(f)?' vf':''))
   :foodListRow(i,f.n,brandOf(f)+esc(f.sv)+(f.src==='afcd'?' \u00b7 AFCD':''),f.k,true,isVf(f)?'vf':'');
 /* Wire a list: open on tap, + to add, and optionally swipe to delete. */
+/* 166: the + shows a tick for a moment when it has logged something, and a count when it's been tapped again */
+const TICK={};                                    // by the row's food name: how many times + has logged it in this Add food, and when last
+function tickKey(b){ const w=b.closest('.lw'), n=w && w.querySelector('.rn'); return n?n.textContent:''; }
+function paintTick(b){
+  const k=tickKey(b), t=TICK[k]; if(!t) return;
+  b.dataset.n=t.n; clearTimeout(b._tt);
+  const left=950-(Date.now()-t.at);
+  if(left>0){ b.classList.add('done'); b.textContent='\u2713'; b._tt=setTimeout(()=>{ b.classList.remove('done'); b.textContent='+'; },left); }
+}
+function tickPlus(b){
+  const k=tickKey(b); TICK[k]={n:((TICK[k]||{}).n||0)+1, at:Date.now()};      // the list is redrawn after logging; bindRows paints it again from this
+  document.querySelectorAll('#sheetWrap .qadd').forEach(paintTick);        // and the list as it is now
+}
 function bindRows(L,open,add,del){
   L.querySelectorAll('.lw').forEach(w=>{
     const i=+w.dataset.i, row=w.querySelector('.ri'), plus=w.querySelector('.qadd');
     row.onclick=ev=>{ if(!ev.target.closest('.qadd')) open(i,w); };
-    if(plus) plus.onclick=ev=>{ ev.stopPropagation(); add(i); warp(row); };
+    if(plus){ plus.onclick=ev=>{ ev.stopPropagation(); add(i); warp(row); tickPlus(plus); }; paintTick(plus); }
     if(del) bindSwipe(w,-1,0.5,()=>{
       w.style.setProperty('--dx',w.offsetWidth+'px'); w.style.height=w.offsetHeight+'px'; void w.offsetHeight;
       w.classList.add('gone'); sfx('close'); setTimeout(()=>del(i),300);
@@ -4297,9 +4350,31 @@ function foldLog(es){
     else out.push(e); });
   return out;
 }
+/* 167: saved meals take part in Recent and Usual beside foods. A meal is a row of its own (its items and calories), + logs it
+   as it is saved, and the foods it put in the diary are not listed again one by one. */
+const comboFor=gn=>P().combos.find(c=>normS(c.n)===normS(gn));
+const mealKey=e=>e.meal?'m:'+e.c.id:logKey(e);
+/* What you usually log in a section: up to 4 foods and 2 meals logged there most often in the last 60 days (at least twice), each
+   at its last amount, most often first. They go above Recent, and follow the section picker. */
+function usualFor(mid){
+  if(!mid) return [];
+  const from=shift(today(),-60), cnt=new Map(), last=new Map(), grp=new Map();
+  Object.keys(P().days).filter(d=>d>=from && d<=today()).forEach(d=>P().days[d].forEach(e=>{
+    if(mealOf(e)!==mid) return;
+    if(e.g){ const c=comboFor(e.gn); if(!c) return; const k='m:'+c.id, gs=grp.get(k)||new Set(); gs.add(e.g); grp.set(k,gs); cnt.set(k,gs.size); if(!last.has(k) || e.t>last.get(k).t) last.set(k,{meal:true,c,t:e.t}); return; }
+    const k=logKey(e); cnt.set(k,(cnt.get(k)||0)+1); if(!last.has(k) || e.t>last.get(k).t) last.set(k,e); }));
+  const foods=foldLog([...last.values()].filter(e=>!e.meal)), meals=[...last.values()].filter(e=>e.meal && !(P().rh['m:'+e.c.id]>=e.t));
+  const by=(x,y)=>cnt.get(mealKey(y))-cnt.get(mealKey(x)) || y.t-x.t, top=l=>l.filter(e=>cnt.get(mealKey(e))>=2).sort(by);
+  return [...top(foods).slice(0,4),...top(meals).slice(0,2)].sort(by);       // up to 4 foods and 2 meals, so a meal logged less often than a coffee still shows
+}
 function recentFoods(){
-  const out=[]; Object.keys(P().days).filter(d=>d<=today()).forEach(d=>P().days[d].forEach(e=>out.push(e)));
+  const out=[]; Object.keys(P().days).filter(d=>d<=today()).forEach(d=>P().days[d].forEach(e=>{ if(!(e.g && comboFor(e.gn))) out.push(e); }));   // not the foods a saved meal put there
   return foldLog(out).slice(0,11);
+}
+/* the last 11 things you logged: foods, and saved meals by when you last used them */
+function recentMix(){
+  const meals=P().combos.filter(c=>c.u && !(P().rh['m:'+c.id]>=c.u)).map(c=>({meal:true,c,t:c.u}));
+  return [...recentFoods(),...meals].sort((x,y)=>y.t-x.t).slice(0,11);
 }
 /* Saved meals and foods as one list. Tap opens one; hold opens its editor in place: rename,
    share with another profile, or delete with a second tap. byTime (Add food's SAVED): meals only,
@@ -4408,6 +4483,7 @@ function barcodeTaken(other,code,move){
    and the serving and the amount are worked out from per 100 g. Only foods edited are saved. */
 function openQty(food,o){
   if(!o.entry && !o.create && food && !P().foods.some(x=>x.id===food.id)){ const mine=savedFor(food); if(mine) food=mine; }   // one source: yours
+  if(o.create && food && !String(food.sv||'').trim()) food=Object.assign({},food,{sv:'100 g'});     // 166: a new food starts at 100 g, so its nutrition can be typed at once (labels are per 100 g)
   const e=o.entry, stack=!!topSheet();
   setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
   const box=topSheet(), back=stack?()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); }:closeSheet;   // back to the list: it shows any change just saved
@@ -4942,17 +5018,21 @@ function paintResults(){
    from the last 30 days first, then saved foods, each at the amount you last had it. */
 function paintRecent(q){
   const s=q.trim(), L=$('rcList');
-  const mine=s.length>=2?yourFoods(s):null, list=mine?[...mine.hist,...mine.saved]:recentFoods();
-  const lastRow=(e,i)=>e.m===undefined?foodRow(e,i):noNut(e)?foodListRow(i,e.n,brandOf(e)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(e)?' vf':''))   // as last logged: its amount and calories
+  const mine=s.length>=2?yourFoods(s):null, usual=!mine && !ADD.into && !ADD.group?usualFor(ADD.meal):[], uk=new Set(usual.map(mealKey));
+  const list=mine?[...mine.hist,...mine.saved]:[...usual,...(ADD.group?recentFoods():recentMix()).filter(e=>!uk.has(mealKey(e)))];
+  const lastRow=(e,i)=>e.meal?foodListRow(i,e.c.n,items(e.c.items.length),macroSum(e.c.items).k,true,'mn'):e.m===undefined?foodRow(e,i):noNut(e)?foodListRow(i,e.n,brandOf(e)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(e)?' vf':''))   // as last logged: its amount and calories
     :foodListRow(i,e.n,brandOf(e)+esc(qtyTxt(e)),e.k*e.q,true,isVf(e)?'vf':'');
-  L.innerHTML=list.length?'<div class="lh">'+(mine?'Your foods':'Recent')+'</div>'+list.map((e,i)=>lastRow(e,i)).join('')
+  const rows=list.map((e,i)=>lastRow(e,i)), mn=mealById(ADD.meal);
+  L.innerHTML=list.length?(usual.length?'<div class="lh">Usual for '+esc(mn?mn.n:'now')+'</div>'+rows.slice(0,usual.length).join('')+'<div class="lh">Recent</div>'+rows.slice(usual.length).join('')
+      :'<div class="lh">'+(mine?'Your foods':'Recent')+'</div>'+rows.join(''))
     :!s && !historyFoods().length?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
-  const logged=e=>e.m!==undefined;                   // a diary entry, rather than a saved food
+  const logged=e=>!e.meal && e.m!==undefined;        // a diary entry, rather than a saved food or meal
   const food=e=>logged(e)?(P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, ...(e.b?{b:e.b}:{}), sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''}):e;
-  bindRows(L,i=>openQty(food(list[i]),logged(list[i])?{q:list[i].q, w:list[i].w}:{}),
-    i=>{ const e=list[i], f=food(e); logged(e)?quickAdd(f,e.q,e.w,P().foods.includes(f)?f.id:''):quickAdd(f,1,'',f.id); },
+  bindRows(L,i=>list[i].meal?openCombo(list[i].c):openQty(food(list[i]),logged(list[i])?{q:list[i].q, w:list[i].w}:{}),
+    i=>{ const e=list[i]; if(e.meal) return quickMeal(e.c); const f=food(e); logged(e)?quickAdd(f,e.q,e.w,P().foods.includes(f)?f.id:''):quickAdd(f,1,'',f.id); },
     i=>{ const e=list[i];                           // swipe a logged food away (Recent or Your foods); saved foods are deleted in Settings
-      if(logged(e)){ P().rh[logKey(e)]=Date.now(); touch(); toast('REMOVED FROM '+(mine?'YOUR FOODS':'RECENT')); }
+      if(e.meal){ P().rh['m:'+e.c.id]=Date.now(); touch(); toast('REMOVED FROM RECENT'); }
+      else if(logged(e)){ P().rh[logKey(e)]=Date.now(); touch(); toast('REMOVED FROM '+(mine?'YOUR FOODS':'RECENT')); }
       else toast('DELETE SAVED FOODS IN SETTINGS \u203a SAVED FOODS & MEALS');
       paintRecent($('osQ').value); });
 }
@@ -5587,7 +5667,7 @@ const kbGo=()=>{ const t=KBIN || (Date.now()-KBLT<800 ? KBLAST : null), sh=t && 
   t.blur(); const b=sh.querySelector('#qGo')||sh.querySelector('#cGo'); if(b) b.click(); };   // found again after the blur: the screen may redraw on it
 document.addEventListener('focusin',ev=>{ const t=ev.target; if(t && t.matches && t.matches('input.qin') && !t.disabled && kbLog(t)){ KBIN=t; kbPlace(); KBT.classList.add('on'); } });
 document.addEventListener('focusout',ev=>{ if(ev.target!==KBIN) return; KBLAST=KBIN; KBLT=Date.now(); setTimeout(()=>{ if(KBIN && document.activeElement!==KBIN){ KBT.classList.remove('on'); KBIN=null; } },250); });
-if(window.visualViewport){ visualViewport.addEventListener('resize',kbPlace); visualViewport.addEventListener('scroll',kbPlace); }
+if(window.visualViewport){ visualViewport.addEventListener('resize',kbPlace); visualViewport.addEventListener('scroll',kbPlace); visualViewport.addEventListener('resize',wLift); visualViewport.addEventListener('scroll',wLift); }
 KBT.addEventListener('pointerdown',ev=>ev.preventDefault());   // the box keeps its focus until the tap lands
 KBT.onclick=kbGo;
 function startApp(){
