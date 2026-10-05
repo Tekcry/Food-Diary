@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.162">
+<meta name="app-version" content="2026.10.04.164">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -305,7 +305,7 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .hdate h1{margin-top:0;font-size:22px}
 .hdate .sub{margin-top:2px;font-size:11.5px}
 .hdate.hit>*,#hdrK.hit,#bolt.hit{filter:url(#uiwarp)}
-.hdate:not(.drag):active h1{color:var(--bronze)}
+.hdate:not(.drag) h1:active{color:var(--bronze)}
 .intake{cursor:pointer;transition:border-color .2s ease}
 .intake:active{border-color:var(--bronze)}
 .intake h3{display:flex;align-items:center;gap:8px}
@@ -342,6 +342,8 @@ html,body,.pgbody,.qlab{overscroll-behavior:none}
 .shut .mfold{transform:rotate(-90deg)}
 .mfold{transition:transform .3s ease}
 .mbody{overflow:hidden;transition:height .3s ease,opacity .3s ease}
+.rghost .fiw.tx,.rghost .fiw.tx *{background:transparent !important;border-color:transparent !important;box-shadow:none !important}
+.rghost .fiw.tx .bin{display:none}
 .shut .mbody{height:0;opacity:0}
 .swipe{position:relative;display:flex;align-items:center;justify-content:center; border:1px dashed var(--cardline);border-radius:6px;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .swipe::before{content:'';position:absolute;left:0;top:0;bottom:0;width:var(--dx,0);background:var(--tint)}
@@ -809,7 +811,12 @@ html header.hx .eyebrow{margin:0}
 html header.hx .bolt{position:static;transform:none;height:auto}
 html header.hx .rtt{top:calc(env(safe-area-inset-top) + 9px);padding:6px 10px}
 html header.hx .hnav{grid-template-columns:48px 1fr 48px;margin:0 8px;height:44px}
-html header.hx .harr{width:48px;height:44px;font-size:22px}
+html header.hx .harr{width:48px;height:44px;font-size:22px;position:relative}
+/* 163: the arrows' touch boxes reach further (up, out to the screen's edge, in towards the date) without the arrows or the bar changing size */
+html header.hx .harr::before{content:'';position:absolute;top:-10px;bottom:0;left:-8px;right:-22px}
+html header.hx #dNext::before{left:-22px;right:-8px}
+html header.hx .hdate{pointer-events:none}                       /* 163: only the words take a touch (so the arrows' boxes reach in past the date's area) */
+html header.hx .hdate>#hdrT,html header.hx .hdate>#hdrS{pointer-events:auto}
 html header.hx .hdate{display:flex;align-items:center;justify-content:center;gap:6px;height:44px;white-space:nowrap;overflow:hidden}
 html header.hx h1{margin:0;font-size:17px;letter-spacing:0;flex:none}
 html header.hx .sub{margin:0;font-size:11px;min-width:0;overflow:hidden;text-overflow:ellipsis}   /* a long plan name ends in \2026; the title never moves */
@@ -1427,7 +1434,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.162';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.164';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3629,25 +3636,57 @@ function leafSnap(root){
   if(!root) return [];
   return [...root.querySelectorAll('*')].map(e=>{ const leaf=!e.children.length && e.textContent.trim()!=='', cs=getComputedStyle(e), r=e.getBoundingClientRect();
     const o={tag:e.tagName, cls:e.getAttribute('class')||'', leaf, text:e.textContent, r, color:cs.color, bg:cs.backgroundColor};
-    if(leaf){ o.sty={}; STY.forEach(k=>o.sty[k]=cs[k]); }
+    if(leaf){ o.sty={}; STY.forEach(k=>o.sty[k]=cs[k]); o.tr=textRect(e); }
     return o; });
 }
-function flipText(el,o){
-  const a=parseFloat(String(o.text).replace(/[^\d.\-]/g,'')), b=parseFloat(String(el.textContent).replace(/[^\d.\-]/g,''));
-  const dir=isFinite(a) && isFinite(b) && a!==b?(b>a?1:-1):0, d=dir*.55;
-  const g=document.createElement('span'); g.textContent=o.text; g.setAttribute('aria-hidden','true');
-  Object.assign(g.style,o.sty,{position:'fixed',left:o.r.left+'px',top:o.r.top+'px',width:Math.ceil(o.r.width)+'px',height:o.r.height+'px',lineHeight:o.r.height+'px',margin:0,padding:0,pointerEvents:'none',whiteSpace:'nowrap',zIndex:3,display:'block'});
+/* where a leaf element's text really is (its box can be wider, with padding or alignment) */
+function textNode(el){ return el.childNodes.length===1 && el.firstChild.nodeType===3?el.firstChild:null; }
+function textRect(el){ const t=textNode(el); if(!t) return null; const r=document.createRange(); r.selectNodeContents(t); const q=r.getBoundingClientRect(); return {left:q.left,right:q.right,top:q.top,bottom:q.bottom,width:q.width,height:q.height}; }
+/* 163: a changed text or number flips like a split-flap board, a character at a time: the old character's top half
+   falls away to show the new top, then the new bottom half falls into place. Only the characters that differ move,
+   the text is never blank, and there's no background to it: a ghost of the characters sits over the element while
+   the element's own text waits (transparent) until the last has landed. */
+const CVX=document.createElement('canvas').getContext('2d');
+function splitFlap(el,o){
+  const tn=textNode(el), nr=textRect(el);
+  if(!tn || !nr || !o.tr){ el.animate([{opacity:0},{opacity:1}],{duration:260,delay:90,easing:'ease-out',fill:'backwards'}); return; }
+  const cs=getComputedStyle(el), nt=el.textContent, ot=o.text, isNum=t=>/^[+\-]?[\d.,\s]+$/.test(t.trim());
+  const rt=(isNum(nt) && isNum(ot)) || (Math.abs(o.tr.right-nr.right)<2 && Math.abs(o.tr.left-nr.left)>2);   // numbers, and text that ends where it did, line up at their right end
+  const n=Math.max(nt.length,ot.length), a=rt?ot.padStart(n,' '):ot.padEnd(n,' '), b=rt?nt.padStart(n,' '):nt.padEnd(n,' '), off=rt?n-nt.length:0;
+  const rg=document.createRange(), real=k=>{ rg.setStart(tn,k); rg.setEnd(tn,k+1); const q=rg.getBoundingClientRect(); return {l:q.left,w:q.width}; };   // the new characters: exactly where the real ones are
+  CVX.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily; const ls=parseFloat(cs.letterSpacing)||0, cw=ch=>CVX.measureText(ch).width+ls;
+  const X=new Array(n), W=new Array(n);
+  for(let i=0;i<n;i++){ const k=i-off; if(k>=0 && k<nt.length){ const q=real(k); X[i]=q.l; W[i]=q.w; } }
+  if(rt) for(let i=off-1;i>=0;i--){ W[i]=cw(a[i]); X[i]=(i+1<n?X[i+1]:nr.left)-W[i]; }          // old characters beyond the new text
+  else for(let i=nt.length;i<n;i++){ W[i]=cw(a[i]); X[i]=X[i-1]+W[i-1]; }
+  const h=nr.height, g=document.createElement('span'); g.setAttribute('aria-hidden','true'); g.setAttribute('data-sf','1');
+  STY.forEach(k=>g.style[k]=cs[k]);
+  Object.assign(g.style,{position:'fixed',left:0,top:0,width:0,height:0,whiteSpace:'pre',margin:0,padding:0,pointerEvents:'none',zIndex:60,textAlign:'left',lineHeight:h+'px',fontKerning:cs.fontKerning});
+  const half=(ch,top)=>{ const x=document.createElement('span'); x.textContent=ch; x.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;text-align:left;line-height:'+h+'px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-origin:50% 50%;'+
+    (top===null?'':'clip-path:inset('+(top?'0 0 50% 0':'50% 0 0 0')+');'); return x; };
+  let last=0;
+  for(let i=0;i<n;i++){
+    if(a[i]===' ' && b[i]===' ') continue;
+    const cell=document.createElement('span'); cell.style.cssText='position:absolute;left:'+X[i]+'px;top:'+nr.top+'px;width:'+W[i]+'px;height:'+h+'px;perspective:'+(h*5)+'px;-webkit-perspective:'+(h*5)+'px';
+    if(a[i]===b[i]) cell.appendChild(half(b[i],null));
+    else{
+      const st=half(b[i],true), sb=half(a[i],false), f1=half(a[i],true), f2=half(b[i],false), dl=(rt?(n-1-i):i)*26;
+      cell.append(st,sb,f1,f2);
+      f1.animate([{transform:'rotateX(0deg)'},{transform:'rotateX(-90deg)'}],{duration:150,delay:dl,easing:'ease-in',fill:'both'});
+      f2.animate([{transform:'rotateX(90deg)'},{transform:'rotateX(0deg)'}],{duration:170,delay:dl+150,easing:'cubic-bezier(.2,.9,.3,1.1)',fill:'both'});
+      last=Math.max(last,dl+320);
+    }
+    g.appendChild(cell);
+  }
+  const col=el.style.color, sh=el.style.textShadow; el.style.color='transparent'; el.style.textShadow='none';
   document.body.appendChild(g);
-  g.animate([{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY('+(-d)+'em)'}],{duration:240,easing:'ease-in',fill:'forwards'}).onfinish=()=>g.remove();
-  const disp=el.style.display; if(getComputedStyle(el).display==='inline') el.style.display='inline-block';
-  const an=el.animate([{opacity:0,transform:'translateY('+d+'em)'},{opacity:1,transform:'none'}],{duration:320,delay:90,easing:EASE_D,fill:'backwards'});
-  an.onfinish=an.oncancel=()=>{ el.style.display=disp; };
+  setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; },last+60);     // the ghost goes and the real text shows in the same moment, in the same place
 }
 function morphLeaves(old,root){
   if(!root) return; const now=[...root.querySelectorAll('*')];
   for(let i=0;i<old.length && i<now.length;i++){ const o=old[i], el=now[i];
     if(o.tag!==el.tagName || o.cls.split(' ')[0]!==(el.getAttribute('class')||'').split(' ')[0]) break;       // not the same layout: leave the rest as drawn (a state class like 'over' may differ)
-    if(o.leaf && !el.children.length && el.textContent.trim()!=='' && o.text!==el.textContent){ flipText(el,o); continue; }
+    if(o.leaf && !el.children.length && el.textContent.trim()!=='' && o.text!==el.textContent){ splitFlap(el,o); continue; }
     const cs=getComputedStyle(el);
     if(o.bg!==cs.backgroundColor) el.animate([{backgroundColor:o.bg},{backgroundColor:cs.backgroundColor}],{duration:340,easing:'ease'});
     if(o.color!==cs.color) el.animate([{color:o.color},{color:cs.color}],{duration:340,easing:'ease'});
@@ -3658,6 +3697,8 @@ function daySnap(){
   const cards=new Map();
   main.querySelectorAll(':scope>.meal').forEach(c=>{ const r=c.getBoundingClientRect(), body=c.querySelector('.mbody'), br=body.getBoundingClientRect(), ex=c.querySelector('.logrow,.swipe');
     cards.set(c.dataset.m,{top:r.top, h:r.height, left:br.left-r.left, bodyTop:br.top-r.top, w:br.width, rows:[...c.querySelectorAll('.fiw')].map(x=>x.cloneNode(true)),
+      rt:[...c.querySelectorAll('.fiw')].map(x=>({'.fnm':(x.querySelector('.fnm')||{}).textContent, '.fsb':(x.querySelector('.fsb')||{}).textContent})),
+      fk:[...c.querySelectorAll('.fiw')].map(x=>{ const f=x.querySelector('.fk'); if(!f) return null; const cs=getComputedStyle(f), o={text:f.textContent, tr:textRect(f), sty:{}}; STY.forEach(k=>o.sty[k]=cs[k]); return o; }),
       ex:ex?ex.getBoundingClientRect().top-r.top:null, mh:leafSnap(c.querySelector('.mh'))}); });
   return {dfix:leafSnap($('dfix')), cards};
 }
@@ -3673,10 +3714,21 @@ function dayAnim(sn){
     const rows=[...c.querySelectorAll('.fiw')];
     if(s.rows.length || rows.length){
       if(getComputedStyle(c).position==='static') c.style.position='relative';
+      /* 163: a row that stays keeps its box; only its words fade over. The old words are drawn once more, without their box,
+         and fade out as the new ones come in. Rows that are new fade in whole, rows that go leave with the card shrinking. */
       if(s.rows.length){ const g=document.createElement('div'); g.className='mbody rghost'; g.setAttribute('aria-hidden','true');
-        g.style.cssText='position:absolute;left:'+s.left+'px;top:'+s.bodyTop+'px;width:'+s.w+'px;pointer-events:none;overflow:visible;transition:none'; s.rows.forEach(x=>{ x.classList.remove('gone'); x.style.height=''; g.appendChild(x); });
-        c.appendChild(g); g.animate([{opacity:1},{opacity:0}],{duration:200,easing:'ease-in',fill:'forwards'}).onfinish=()=>g.remove(); }
-      rows.forEach((x,i)=>x.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:280,delay:90+Math.min(i,6)*22,easing:EASE_D,fill:'backwards'}));
+        g.style.cssText='position:absolute;left:'+s.left+'px;top:'+s.bodyTop+'px;width:'+s.w+'px;pointer-events:none;overflow:visible;transition:none';
+        s.rows.forEach((x,i)=>{ x.classList.remove('gone'); x.style.height=''; if(i<rows.length){ x.classList.add('tx'); const f=x.querySelector('.fk'); if(f && s.fk[i] && rows[i].querySelector('.fk')) f.style.visibility='hidden';
+            ['.fnm','.fsb'].forEach(q=>{ const e=x.querySelector(q), nw=rows[i].querySelector(q); if(e && nw && nw.textContent===s.rt[i][q]) e.style.visibility='hidden'; }); } g.appendChild(x); });   // words that didn't change aren't touched
+        c.appendChild(g); g.animate([{opacity:1},{opacity:0}],{duration:220,easing:'ease-in',fill:'forwards'}).onfinish=()=>g.remove(); }
+      rows.forEach((x,i)=>{
+        if(i<s.rows.length){
+          const f=x.querySelector('.fk'), fo=s.fk[i], flip=f && fo && fo.text!==f.textContent;
+          if(flip) splitFlap(f,fo);                                                       // the calories flip like the rest
+          [...x.querySelectorAll(flip?'.fnm,.fsb':'.fnm,.fsb,.fk')].filter(t=>!(t.matches('.fnm') && t.textContent===s.rt[i]['.fnm']) && !(t.matches('.fsb') && t.textContent===s.rt[i]['.fsb']) && !(t.matches('.fk') && fo && fo.text===t.textContent)).forEach(t=>t.animate([{opacity:0},{opacity:1}],{duration:280,delay:110,easing:'ease-out',fill:'backwards'}));
+        }
+        else x.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:280,delay:90,easing:EASE_D,fill:'backwards'});
+      });
     }
     if(done.length) Promise.all(done.map(a=>a.finished)).then(()=>{ c.style.overflow=''; c.style.position=''; }).catch(()=>{ c.style.overflow=''; c.style.position=''; });
     else setTimeout(()=>{ c.style.position=''; },420);
@@ -5454,7 +5506,7 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{ if(DB
 $('dPrev').onclick=()=>slideDay(-1);
 dayCarousel(document.querySelector('header')); swipeDays($('main'),'#dfix');   // the day row drags; the cards swipe (not the food rows: they swipe to delete)
 $('dNext').onclick=()=>slideDay(1);
-$('dCal').onclick=()=>{ if(!PLAN) openCalendar(); };
+$('dCal').onclick=ev=>{ if(PLAN) return; if(ev.detail!==0 && !ev.target.closest('#hdrT,#hdrS')) return; openCalendar(); };   // 163: only on the words (a keyboard press still works)
 /* LOG: straight into Add food for the section of the moment (the heading changes it). */
 function sectionNow(){
   const ms=P().meals, d=new Date(), h=d.getHours()+d.getMinutes()/60, by=w=>ms.find(m=>m.n.toLowerCase().includes(w));
