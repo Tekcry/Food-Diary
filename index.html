@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.169">
+<meta name="app-version" content="2026.10.05.170">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1332,6 +1332,8 @@ html:not(.ios) .sheet>.sbar>.sbr>.sbf>#scAdd{flex:1.6 1 0}
 /* 151: the camera fills the screen behind the bottom bar, the same in both scanners: the picture edge to
    edge, CAMERA OFF in the middle, what it's doing just above the bar */
 .scanfs{position:fixed;inset:0;z-index:1;margin:0;padding:0;display:block;background:#000}
+.scanfs .scanbox video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .2s ease}   /* 170: the picture shows only once it is playing, full screen from its first frame */
+.scanfs .scanbox.live video{opacity:1}
 .scanfs .scanbox{position:absolute;inset:0;width:auto;height:auto;max-height:none;aspect-ratio:auto;border:0;border-radius:0;margin:0;background:#000}
 html.ios .scanfs .scanbox{background:#000;border-radius:0}
 .scanfs .stat,.scanfs .scres,.scanfs .src{position:absolute;left:var(--gut);right:var(--gut);margin:0;z-index:2}
@@ -1457,7 +1459,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.169';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.05.170';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3215,9 +3217,14 @@ function openMealEdit(c,name,o){
    plan card saves it under a name, loads a saved one, or clears it; the groceries card adds up
    what to buy. Plans belong to each profile, and a saved plan can be shared with another. */
 function togglePlan(){
-  PLAN=!PLAN; FILLROW.was=null; dropSelect(); closeSheet(); document.body.scrollTop=0;
+  FILLROW.was=null; dropSelect(); closeSheet(); document.body.scrollTop=0;
+  const snap=!calm() && $('main') && $('main').animate?daySnap(true):null;     // 170: to and from the planner changes in place, the way changing day does
+  PLAN=!PLAN;
   $('plan').classList.toggle('on',PLAN); $('bnDiary').classList.toggle('on',!PLAN);
-  sfx(PLAN?'open':'close'); render(); panelHit($('main'),$('hdrT'),$('hdrS'));
+  sfx(PLAN?'open':'close'); render();
+  if(snap){ dayAnim(snap); const ex=$('dfix')&&$('dfix').lastElementChild, g=$('main').querySelector(':scope>.card:not(.meal)');   // the plan / weight card and the groceries: their words fade in
+    [ex,g].forEach(c=>c&&c.querySelectorAll('*').forEach(e=>{ if(!e.children.length && e.textContent.trim()) e.animate([{opacity:0},{opacity:1}],{duration:260,delay:90,easing:'ease-out',fill:'backwards'}); })); }
+  else panelHit($('main'),$('hdrT'),$('hdrS'));
 }
 function planCard(){
   const pl=P().plan;
@@ -3715,7 +3722,7 @@ function splitFlap(el,o){
     if(a[i]===b[i]) cell.appendChild(glyph(b[i]));
     else{
       /* each changed character: the old one lifts away and fades, the new one rises in from below and fades in */
-      const out=glyph(a[i]), inn=glyph(b[i]), dl=(rt?(n-1-i):i)*28, up=h*.55;
+      const out=glyph(a[i]), inn=glyph(b[i]), dl=(rt?(n-1-i):i)*Math.min(28,360/n), up=h*.55;
       cell.append(out,inn);
       if(a[i]!==' ') out.animate([{opacity:1,transform:'translateY(0)',filter:'blur(0)'},{opacity:0,transform:'translateY('+(-up)+'px)',filter:'blur(2px)'}],{duration:300,delay:dl,easing:'cubic-bezier(.4,0,.8,.6)',fill:'both'});
       if(b[i]!==' ') inn.animate([{opacity:0,transform:'translateY('+up+'px)',filter:'blur(2px)'},{opacity:1,transform:'translateY(0)',filter:'blur(0)'}],{duration:340,delay:dl+60,easing:'cubic-bezier(.2,.8,.2,1)',fill:'both'});
@@ -3723,9 +3730,15 @@ function splitFlap(el,o){
     }
     g.appendChild(cell);
   }
-  const col=el.style.color, sh=el.style.textShadow; el.style.color='transparent'; el.style.textShadow='none';
+  /* 170: a second flip on text still flipping must not take 'transparent' as its own colour (the profile name stayed invisible) */
+  const pend=el._sf; let col,sh;
+  if(pend){ clearTimeout(pend.t); pend.g.remove(); if(pend.host) releaseRel(pend.host); col=pend.col; sh=pend.sh; }
+  else { col=el.style.color; sh=el.style.textShadow; }
+  if(col==='transparent') col='';
+  el.style.color='transparent'; el.style.textShadow='none';
   (host||document.body).appendChild(g);
-  setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; if(host) releaseRel(host); },last+60);     // the ghost goes and the real text shows in the same moment, in the same place
+  const t=setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; el._sf=null; if(host) releaseRel(host); },last+60);
+  el._sf={t,g,host,col,sh};     // the ghost goes and the real text shows in the same moment, in the same place
 }
 function morphLeaves(old,root){
   if(!root) return; const now=[...root.querySelectorAll('*')];
@@ -3887,14 +3900,14 @@ function openWeight(){
   bindPanel();
   onPick('wMode',v=>{ WT.mode=v; drawWeight(); warp($('wtBody')); });
   topSheet()._live=()=>{ if(!WT.drag) drawWeight(); };   // the other phone's readings, unless one is being typed
-  drawWeight();
+  topSheet()._wFirst=1; drawWeight(); topSheet()._wFirst=0;
 }
 /* Everything for the current range; selecting a point later only touches the graph marks,
    the stats and the controls below it. */
 /* 166: the weight screen's bar: SAVE (or UPDATE) in the capsule and REMOVE beside it for a logged day; just the X in the other views */
 function wBar(inner){
   const sh=topSheet(), r=sh && sh.querySelector(':scope>.sbar>.sbr'); if(!r) return;
-  const was=barSnap(sh);                               // 168: the bar changes smoothly (the pill draws in and out, buttons fade) as every other bar does
+  const was=sh._wFirst?null:barSnap(sh);               // 170: the first draw as the screen opens is its bar from the start, so the pill doesn't grow; 168: the bar changes smoothly (the pill draws in and out, buttons fade) as every other bar does
   let f=r.querySelector(':scope>.sbf');
   if(!inner){ if(f) f.remove(); }
   else { if(!f){ f=document.createElement('div'); f.className='sbf'; r.insertBefore(f,r.firstChild); } f.innerHTML=inner; }
