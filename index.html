@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.167">
+<meta name="app-version" content="2026.10.04.168">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -833,10 +833,10 @@ html.lg[data-theme] .wadj.lift{background:var(--bg)}
 .wadj .harr{position:relative;width:48px;height:44px;font-size:22px}
 .wadj .harr::before{content:'';position:absolute;top:-10px;bottom:0;left:-8px;right:-22px;border:0}
 .wadj #wUp::before{left:-22px;right:-8px}
-.wmid{display:flex;align-items:center;justify-content:center;gap:6px;height:44px;min-width:0}
-.wnum{width:4.2em;height:34px;border:0;background:transparent;text-align:right;font:inherit;font-size:17px;color:var(--tx);padding:0;margin:0;-moz-appearance:textfield;appearance:textfield;outline:none}
-.wnum::-webkit-inner-spin-button,.wnum::-webkit-outer-spin-button{display:none;-webkit-appearance:none}
-.wnum::placeholder{color:var(--dimmer)}
+.wtape{position:relative;height:44px;min-width:0;overflow:hidden;touch-action:none;cursor:grab;color:var(--dimmer);user-select:none;-webkit-user-select:none;outline:none}
+.wtape canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.wnumc{position:absolute;left:50%;top:4px;transform:translateX(-50%);display:flex;align-items:baseline;gap:6px;pointer-events:none}
+.wnumc b{font-weight:400;font-size:17px;color:var(--tx);font-variant-numeric:tabular-nums}
 .wkg{font-family:var(--serif);font-size:11px;letter-spacing:.14em;color:var(--dimmer)}
 html header.hx .hdate{pointer-events:none}                       /* 163: only the words take a touch (so the arrows' boxes reach in past the date's area) */
 html header.hx .hdate>#hdrT,html header.hx .hdate>#hdrS{pointer-events:auto}
@@ -1457,7 +1457,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.167';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.168';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -2412,7 +2412,7 @@ function pullToClose(wrap){
   const closer=sh=>{ const x=sh.querySelector(':scope>.sbar .shx, :scope>h3 .shx'); return x && getComputedStyle(x).visibility!=='hidden'?x:null; };
   wrap.addEventListener('touchstart',e=>{ d=null;
     const sh=e.target.closest('.sheet.full'); if(!sh || sh!==topSheet() || e.touches.length>1 || !closer(sh)) return;
-    if(e.target.closest('input,textarea,select,.wgbox,.sort,.fiw,.lw,.swipe,.fillrow')) return;
+    if(e.target.closest('input,textarea,select,.wgbox,.wtape,.sort,.fiw,.lw,.swipe,.fillrow')) return;
     if(scrolled(e.target,sh)) return;
     d={sh, x:e.touches[0].clientX, y:e.touches[0].clientY, on:false, dy:0};
   },{passive:true});
@@ -3145,32 +3145,37 @@ function foldSections(box,open){
 /* Make or change a saved meal: its name, its ingredients (one portion) and its recipe, in
    sections that fold. Ingredients are added with the same search as logging food. Nothing is
    kept until SAVE. */
-function openMealEdit(c,name,o){
-  o=o||{};
-  let replace=false;
-  const then=o.reopen;                                  // opened from a meal: cancel or save goes back to it
-  if(document.querySelector('#sheetWrap .sheet:not(.out) #adBody')){   // started from Add food: the editor swaps in its place, and back again after
-    const m=ADD.meal; replace=true; o.after=()=>{ openAdd(m,null,null,'saved'); if(then) then(); };
-  } else if(then) o.after=()=>{ popSheet(); then(); };
+/* 168: a meal, viewed and edited, is one screen. The heading, the portion line, the amount row (greyed while editing), the
+   foods and their total are in the same places in both, so Edit changes only what can be changed and nothing moves. */
+function textW(el,t){ const c=getComputedStyle(el), cv=textW.cv||(textW.cv=document.createElement('canvas').getContext('2d'));
+  cv.font=c.fontStyle+' '+c.fontWeight+' '+c.fontSize+' '+c.fontFamily; return cv.measureText(t).width+(parseFloat(c.letterSpacing)||0)*[...t].length; }
+function mealSkel(edit,d,q){
+  return '<h3 class="qt">'+(edit?'<span class="qtw"><input class="qname qni" id="meN" maxlength="80" autocomplete="off" enterkeyhint="done" placeholder="Meal name" value="'+esc(d.n)+'"></span>':'<span>'+esc(d.n)+'</span>')+'</h3>'+
+    '<div class="qper" id="cPer">'+(q===1?'1 SERVING':r1(q)+' SERVINGS')+'</div>'+
+    '<div class="qctl'+(edit?' off':'')+'"><div class="qamt one"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="'+(edit?'1':q)+'" enterkeyhint="done"'+(edit?' disabled':'')+'>'+picker('cUnit',[['s','SERVINGS']],'s')+'</div></div>'+
+    '<div class="qlh">Foods in this meal \u00b7 '+d.items.length+'</div>';
+}
+/* the editor, drawn into box. back: where Cancel and a save go (from a meal's view it is that view, in the same screen) */
+function meEdit(box,c,name,back){
   let tg=c?mealTime(c):'';                             // a new meal takes its meal time where it's first logged
   const d={n:c?c.n:(name||''), rc:c&&c.rc||'', items:(c?c.items:[]).map(e=>Object.assign({},e,{id:uid(), x:Object.assign({},e.x)}))};
-  const open={i:true, r:!!d.rc}, stack=!replace && !!topSheet();
-  setSheet('<div class="veil"></div><div class="sheet fit full qty cmv"></div>',stack);
-  const box=topSheet(), back=()=>{ if(o.after) return o.after();
-    stack?popSheet():closeSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); };
+  const open={r:!!d.rc};
   const keep=()=>{ if($('meN')) d.n=$('meN').value; if($('meR')) d.rc=$('meR').value; };
-  const sec=(k,title,inner)=>'<div class="msec'+(open[k]?'':' shut')+'"><button class="msh" data-sec="'+k+'">'+title+'<span class="mfold">\u25be</span></button><div class="msb">'+inner+'</div></div>';
   const draw=()=>{
-    const t=macroSum(d.items);
-    box.innerHTML='<h3 class="qt"><input class="qname" id="meN" maxlength="80" autocomplete="off" placeholder="Meal name" value="'+esc(d.n)+'"></h3>'+
-      '<div class="qper">ONE PORTION \u00b7 '+fmt(t.k)+' KCAL \u00b7 P'+Math.round(t.p)+' C'+Math.round(t.c)+' F'+Math.round(t.f)+'</div>'+
-      timeRow('meT',tg)+
-      '<div class="cscr">'+sec('i','Ingredients \u00b7 '+d.items.length,'<div class="rlist" id="meList">'+(d.items.length?d.items.map((e,i)=>nutRow(i,e)).join('')
-        :'<div class="stat">NO FOODS YET \u2014 TAP ADD FOOD</div>')+'</div>')+
-      sec('r','Recipe','<textarea class="fld rcp" id="meR" rows="8" maxlength="6000" placeholder="Method, steps and notes">'+esc(d.rc)+'</textarea>')+'</div>'+   // ingredients and recipe scroll together
-      sbar('<button class="btn ghost sbx" id="meCancel" aria-label="Cancel">'+XI+'</button>',sbi('meAdd',ICO.add,'Add food',1)+'<button class="btn" id="meSave">SAVE</button>');
-    const sc=box.querySelector('.cscr'); sc.scrollTop=box._st||0; sc.onscroll=()=>{ box._st=sc.scrollTop; };   // kept across redraws
+    const t=macroSum(d.items), was=barSnap(box)||box._barWas||null; box._barWas=null;
+    box._pv=null; ibSync();
+    box.innerHTML=mealSkel(true,d,1)+
+      '<div class="rlist qlab"><div id="meList">'+(d.items.length?d.items.map((e,i)=>nutRow(i,e)).join(''):'<div class="stat">NO FOODS YET \u2014 TAP ADD FOOD</div>')+'</div>'+
+      '<div class="xled"><div class="xsum" id="cS">'+totRow('Meal',t)+'</div></div>'+
+      '<div class="msec'+(open.r?'':' shut')+'"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><textarea class="fld rcp" id="meR" rows="8" maxlength="6000" placeholder="Method, steps and notes">'+esc(d.rc)+'</textarea></div></div>'+
+      timeRow('meT',tg)+'</div>'+
+      sbar('<button class="btn ghost sbx" id="meCancel" aria-label="Cancel">'+XI+'</button>',sbi('meAdd',ICO.add,'Add food',1)+'<button class="btn wide" id="meSave">SAVE</button>');
+    barMorph(was,box);
+    const sc=box.querySelector('.qlab'); sc.scrollTop=box._st||0; sc.onscroll=()=>{ box._st=sc.scrollTop; };   // kept across redraws
     foldSections(box,open); onPick('meT',v=>{ tg=v; sfx('tap'); });
+    const N=$('meN'), fit=()=>{ const w=Math.ceil(textW(N,N.value||N.placeholder))+2; N.style.width=w+'px'; N.style.marginRight='-2px'; };   // sized to its text, centred, as the view's heading is
+    N.addEventListener('input',fit); fit();
+    N.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); N.blur(); } };
     bindRows($('meList'),i=>{ keep(); openQty(d.items[i],{entry:d.items[i], item:{remove:()=>d.items.splice(i,1)}}); },null,
       i=>{ keep(); d.items.splice(i,1); draw(); });
     $('meCancel').onclick=back;
@@ -3192,6 +3197,17 @@ function openMealEdit(c,name,o){
   };
   box.refresh=()=>{ keep(); draw(); };                 // back from adding or changing an ingredient
   draw();
+}
+function openMealEdit(c,name,o){
+  o=o||{};
+  let replace=false;
+  if(document.querySelector('#sheetWrap .sheet:not(.out) #adBody')){   // started from Add food: the editor swaps in its place, and back again after
+    const m=ADD.meal; replace=true; o.after=()=>openAdd(m,null,null,'saved');
+  }
+  const stack=!replace && !!topSheet();
+  setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
+  const box=topSheet();
+  meEdit(box,c,name,()=>{ if(o.after) return o.after(); stack?popSheet():closeSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); });
 }
 /* ---------- the week planner ----------
    The planner icon turns the dashboard into the Week Planner: the same banner, intake card and
@@ -3714,7 +3730,7 @@ function morphLeaves(old,root){
     if(o.color!==cs.color) el.animate([{color:o.color},{color:cs.color}],{duration:340,easing:'ease'});
   }
 }
-function daySnap(){
+function daySnap(withHead){
   const main=$('main'); if(!main || !$('dfix') || SEL) return null;
   const cards=new Map();
   main.querySelectorAll(':scope>.meal').forEach(c=>{ const r=c.getBoundingClientRect(), body=c.querySelector('.mbody'), br=body.getBoundingClientRect(), ex=c.querySelector('.logrow,.swipe');
@@ -3722,10 +3738,11 @@ function daySnap(){
       rt:[...c.querySelectorAll('.fiw')].map(x=>({'.fnm':(x.querySelector('.fnm')||{}).textContent, '.fsb':(x.querySelector('.fsb')||{}).textContent})),
       fk:[...c.querySelectorAll('.fiw')].map(x=>{ const f=x.querySelector('.fk'); if(!f) return null; const cs=getComputedStyle(f), o={text:f.textContent, tr:textRect(f), sty:{}}; STY.forEach(k=>o.sty[k]=cs[k]); return o; }),
       ex:ex?ex.getBoundingClientRect().top-r.top:null, mh:leafSnap(c.querySelector('.mh'))}); });
-  return {dfix:leafSnap($('dfix')), cards};
+  return {dfix:leafSnap($('dfix')), cards, ...(withHead?{head:leafSnap($('pbar')), date:leafSnap($('dCal'))}:{})};
 }
 function dayAnim(sn){
   morphLeaves(sn.dfix,$('dfix'));
+  if(sn.head){ morphLeaves(sn.head,$('pbar')); morphLeaves(sn.date,$('dCal')); }       // a profile change: its name and streak change the same way
   $('main').querySelectorAll(':scope>.meal').forEach(c=>{ const s=sn.cards.get(c.dataset.m); if(!s) return;
     const r=c.getBoundingClientRect(), opt={duration:340,easing:EASE_D}, done=[];
     morphLeaves(s.mh,c.querySelector('.mh'));
@@ -3861,7 +3878,7 @@ function openWeight(){
   setSheet(panel('Weight',picker('wMode',[['d','14 DAYS'],['m','MONTHLY'],['l','YEARLY']],'d')+'<div id="wtBody"></div>').replace('<div class="sbar">','<div class="wadj" id="wAdj" hidden></div><div class="sbar">'));   // 166: the weight's \u2212 value + sit where the dashboard's day row does
   bindPanel();
   onPick('wMode',v=>{ WT.mode=v; drawWeight(); warp($('wtBody')); });
-  topSheet()._live=()=>{ const a=document.activeElement; if(!WT.drag && !(a && a.id==='wV')) drawWeight(); };   // the other phone's readings, unless one is being typed
+  topSheet()._live=()=>{ if(!WT.drag) drawWeight(); };   // the other phone's readings, unless one is being typed
   drawWeight();
 }
 /* Everything for the current range; selecting a point later only touches the graph marks,
@@ -3869,16 +3886,11 @@ function openWeight(){
 /* 166: the weight screen's bar: SAVE (or UPDATE) in the capsule and REMOVE beside it for a logged day; just the X in the other views */
 function wBar(inner){
   const sh=topSheet(), r=sh && sh.querySelector(':scope>.sbar>.sbr'); if(!r) return;
+  const was=barSnap(sh);                               // 168: the bar changes smoothly (the pill draws in and out, buttons fade) as every other bar does
   let f=r.querySelector(':scope>.sbf');
-  if(!inner){ if(f) f.remove(); return; }
-  if(!f){ f=document.createElement('div'); f.className='sbf'; r.insertBefore(f,r.firstChild); }
-  f.innerHTML=inner;
-}
-/* with the keyboard up, the adjuster rides just above it (the bar and the day row are behind the keyboard) */
-function wLift(){
-  const a=document.getElementById('wAdj'); if(!a || a.hidden) return;
-  const v=window.visualViewport, on=document.activeElement && document.activeElement.id==='wV', gap=v && on?Math.max(0,innerHeight-(v.offsetTop+v.height)):0;
-  a.style.transform=gap?'translateY(-'+gap+'px)':''; a.classList.toggle('lift',!!gap);
+  if(!inner){ if(f) f.remove(); }
+  else { if(!f){ f=document.createElement('div'); f.className='sbf'; r.insertBefore(f,r.firstChild); } f.innerHTML=inner; }
+  barMorph(was,sh);
 }
 function drawWeight(){
   const m=WT.mode==='m', L=WT.mode==='l', t=today(), life=L?lifetime():null;
@@ -3937,18 +3949,63 @@ function paintW(){
   $('wtStats').innerHTML=stat('14-DAY AVG',avg?avg.a.toFixed(1)+' KG':'\u2014')+stat('VS PREVIOUS 14',signed(wChange(end)))+stat('LOGGED',(avg?avg.c:0)+' / 14');
   $('wtCtl').innerHTML='<div class="wsel">'+longDate(sel).toUpperCase()+(v?'':' \u00b7 NOT LOGGED')+'</div>';
   const adj=$('wAdj'); adj.hidden=false;
-  adj.innerHTML='<button class="harr" id="wDn" aria-label="Less">\u2212</button><div class="wmid">'+
-    '<input class="wnum" id="wV" type="number" enterkeyhint="done" inputmode="decimal" step="0.1" placeholder="kg" value="'+(start?start.toFixed(1):'')+'"><span class="wkg">KG</span></div>'+
+  adj.innerHTML='<button class="harr" id="wDn" aria-label="Less">\u2212</button>'+
+    '<div class="wtape" id="wTape" role="slider" tabindex="0" aria-label="Weight in kilograms" aria-valuemin="20" aria-valuemax="400"><canvas></canvas>'+
+      '<div class="wnumc"><b id="wVal"></b><span class="wkg">KG</span></div></div>'+
     '<button class="harr" id="wUp" aria-label="More">+</button>';
   wBar((v?sbi('wDel',ICO.bin,'Remove',1):'')+mainBtn('wGo',v?'UPDATE':'SAVE','wide'));
-  const V=$('wV'), step=d=>{ const n=r1((+V.value||start||0)+d*0.1); if(n>0) V.value=n.toFixed(1); };
-  $('wDn').onclick=()=>step(-1); $('wUp').onclick=()=>step(1);
-  V.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); $('wGo').click(); } };   // the keyboard's Done saves
-  V.addEventListener('focus',()=>{ selectAll(V); setTimeout(wLift,60); setTimeout(wLift,350); }); V.addEventListener('blur',()=>setTimeout(wLift,60));
+  /* 168: the weight is set on a measuring tape: swipe it to the weight (it carries on after a flick) or use the arrows (hold to
+     keep going). There's no keyboard; the number is the one under the centre mark. */
+  const tape=weightTape($('wTape'),start||70);
+  $('wGo').onclick=()=>{ const n=tape.value();
+    sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); set(r1(n)); if(sel===today()) closeSheet(); };   // today's weight: saved, and back to the diary
   const set=val=>{ P().wt[sel]={v:val,e:later(P().wt[sel]&&P().wt[sel].e)}; touch(); render(); drawWeight(); };
-  $('wGo').onclick=()=>{ const n=num(V.value,20,400); if(n===null){ sfx('nope'); return toast('ENTER A WEIGHT IN KG'); }
-    V.blur(); set(r1(n)); sfx('confirm'); toast('WEIGHT SAVED \u00b7 '+n.toFixed(1)+' KG'); if(sel===today()) closeSheet(); };   // today's weight: saved, and back to the diary
   if(v) arm($('wDel'),()=>{ set(0); toast('WEIGHT REMOVED'); });
+  const hold=(b,d)=>{ let t=0,iv=0,fired=false; const stop=()=>{ clearTimeout(t); clearInterval(iv); };
+    b.onpointerdown=ev=>{ fired=true; tape.step(d); t=setTimeout(()=>{ iv=setInterval(()=>tape.step(d),70); },420); };
+    b.onpointerup=b.onpointerleave=b.onpointercancel=stop;
+    b.onclick=()=>{ if(fired){ fired=false; return; } tape.step(d); }; };            // a keyboard or assistive press
+  hold($('wDn'),-1); hold($('wUp'),1);
+}
+/* the tape: ticks every 0.1 kg (longer at each half and whole kg) moving under a fixed mark; value() is what's under it */
+function weightTape(el,start){
+  const cv=el.querySelector('canvas'), cx=cv.getContext('2d'), out=el.querySelector('#wVal'), PX=10, LO=200, HI=4000;
+  let pos=Math.round(start*10), raf=0, dragging=false;
+  const clamp=x=>Math.max(LO,Math.min(HI,x));
+  const css=n=>getComputedStyle(el).getPropertyValue(n).trim();
+  const draw=()=>{
+    const dpr=window.devicePixelRatio||1, W=el.clientWidth, H=el.clientHeight; if(!W) return;
+    if(cv.width!==Math.round(W*dpr) || cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+    cx.setTransform(dpr,0,0,dpr,0,0); cx.clearRect(0,0,W,H);
+    const col=getComputedStyle(el).color, acc=css('--accent')||css('--bronze')||'#0a84ff';
+    const k0=Math.floor(pos-W/2/PX)-1, k1=Math.ceil(pos+W/2/PX)+1;
+    cx.lineCap='round';
+    for(let k=k0;k<=k1;k++){
+      if(k<LO || k>HI) continue;
+      const x=W/2+(k-pos)*PX, dx=Math.abs(x-W/2), len=k%10===0?14:k%5===0?10:6;
+      const a=Math.min(1,Math.max(0,(dx-26)/26))*Math.min(1,Math.max(0,(W/2-dx)/30));            // fades round the number and at the ends
+      if(a<=0) continue;
+      cx.globalAlpha=a*(k%10===0?1:.7); cx.strokeStyle=col; cx.lineWidth=k%10===0?1.6:1.2;
+      cx.beginPath(); cx.moveTo(x,H-2); cx.lineTo(x,H-2-len); cx.stroke();
+    }
+    cx.globalAlpha=1; cx.strokeStyle=acc; cx.lineWidth=2.4; cx.beginPath(); cx.moveTo(W/2,H-1); cx.lineTo(W/2,H-17); cx.stroke();      // the mark
+  };
+  const show=()=>{ const t=Math.round(pos), s=(t/10).toFixed(1); if(out.textContent!==s){ out.textContent=s; el.setAttribute('aria-valuenow',s); el.setAttribute('aria-valuetext',s+' kilograms'); } };
+  const set=(x,tick)=>{ const o=Math.round(pos); pos=clamp(x); show(); draw(); if(tick && Math.round(pos)!==o && Math.round(pos)%5===0) sfx('tap'); };
+  let s0=null;
+  el.addEventListener('pointerdown',ev=>{ cancelAnimationFrame(raf); dragging=true; WT.drag=true; try{ el.setPointerCapture(ev.pointerId); }catch(_){} s0={x:ev.clientX,p:pos,lx:ev.clientX,lt:ev.timeStamp,v:0}; });
+  el.addEventListener('pointermove',ev=>{ if(!dragging) return; const dt=Math.max(1,ev.timeStamp-s0.lt); s0.v=.8*s0.v+.2*((ev.clientX-s0.lx)/dt); s0.lx=ev.clientX; s0.lt=ev.timeStamp; set(s0.p-(ev.clientX-s0.x)/PX,true); });
+  const end=()=>{ if(!dragging) return; dragging=false; WT.drag=false;
+    let v=-s0.v/PX*16;                                   // tenths per frame
+    if(calm() || Math.abs(v)<.15){ set(Math.round(pos)); return; }
+    const run=()=>{ v*=.94; set(pos+v,true); if(Math.abs(v)>.04 && pos>LO && pos<HI) raf=requestAnimationFrame(run); else set(Math.round(pos)); };
+    raf=requestAnimationFrame(run); };
+  el.addEventListener('pointerup',end); el.addEventListener('pointercancel',end);
+  el.addEventListener('keydown',ev=>{ if(ev.key==='ArrowLeft'||ev.key==='ArrowDown'){ ev.preventDefault(); set(pos-1,true); } else if(ev.key==='ArrowRight'||ev.key==='ArrowUp'){ ev.preventDefault(); set(pos+1,true); } });
+  const api={ value:()=>Math.round(pos)/10, step:d=>{ cancelAnimationFrame(raf); set(pos+d,true); }, set:v=>{ cancelAnimationFrame(raf); set(Math.round(v*10)); } };
+  el._tape=api; show(); draw(); requestAnimationFrame(draw);
+  if(window.ResizeObserver) new ResizeObserver(draw).observe(el);
+  return api;
 }
 
 /* ---------- nutrition breakdown ---------- */
@@ -4153,8 +4210,6 @@ function paintTab(){
   const b=$('adBody'), Q=$('osQ'), s=ADD.tab==='search';
   Q.value=s?ADD.sq:ADD.q; Q.placeholder=s?'Search foods':'Search meals';
   Q.dispatchEvent(new Event('clear'));                // the clear button follows the value
-  $('adScan').classList.toggle('nosc',!s);            // the barcode button folds away on SAVED
-  $('adScan').tabIndex=s?0:-1;
   $('nfAdd').setAttribute('aria-label',s || ADD.into?'New food':'New meal');
   if(s){
     b.innerHTML='<div class="rlist" id="rcList"></div><div class="stat" id="osSt"></div><div class="rlist" id="osList"></div>'+
@@ -4691,38 +4746,42 @@ function openQty(food,o){
 function openCombo(c){
   const st={q:1, m:ADD.meal||P().meals[0].id}, stack=!!topSheet();
   const sum=q=>macroSum(c.items,q);
-  setSheet('<div class="veil"></div><div class="sheet fit full qty"><h3 class="qt"><span>'+esc(c.n)+'</span></h3>'+
-    '<div class="qper" id="cPer"></div>'+                                       // how many servings, as typed
-    '<div class="qctl"><div class="qamt one"><input class="fld qin" id="cV" type="number" inputmode="decimal" step="any" value="1" enterkeyhint="done">'+picker('cUnit',[['s','SERVINGS']],'s')+'</div></div>'+
-    '<div class="qlh">Foods in this meal \u00b7 '+c.items.length+'</div><div class="rlist qlab"><div id="cX"></div><div class="xled"><div class="xsum" id="cS"></div></div>'+
-    (c.rc?'<div class="msec"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><div class="rcv">'+esc(c.rc)+'</div></div></div>':'')+
-    '</div>'+sbar(xBtn(stack),sbi('cEd',ICO.edit,'Edit meal',1)+'<button class="btn wide" id="cGo">LOG MEAL</button>')+'</div>',stack);
-  const box=topSheet(), back=stack?()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); }:closeSheet, V=$('cV');   // the list beneath shows any change
-  lastVeil().onclick=box.querySelector('.shx').onclick=back;
-  foldSections(box);
-  $('cEd').onclick=()=>{ popSheet(); openMealEdit(c,null,{reopen:()=>openCombo(P().combos.find(x=>x.id===c.id)||c)}); };   // in the same moment, so what's beneath never shows
-  const paint=()=>{ const t=sum(st.q);
-    box._pv=ADD.into?null:t; ibSync();
-    $('cX').innerHTML=c.items.map((e,i)=>nutRow(i,Object.assign({},e,{q:e.q*st.q}))).join('');
-    $('cS').innerHTML=totRow('Meal',t);
-    $('cPer').textContent=(st.q===1?'1 SERVING':r1(st.q)+' SERVINGS'); };
-  V.oninput=()=>{ st.q=Math.max(0,+V.value||0); paint(); };
-  V.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); V.blur(); $('cGo').click(); } };
-  paint();
-  $('cGo').onclick=()=>{
-    if(V.value!=='') st.q=Math.max(0,+V.value||0);      // what's in the box is what's logged
-    if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
-    if(ADD.into){ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); intoMeal(c.items.map(e=>Object.assign({},e,{q:e.q*st.q}))); return; }
-    const es=mealEntries(c,st.q,st.m);
-    dayPush(...es);
-    FRESH=new Set(es.map(e=>e.id));
-    usedMeal(c,st.m);
-    const hit=checkHits();
-    touch();
-    if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); nextFood(); }
-    else { closeSheet(); setTimeout(()=>renderMorph(st.m),220); }
-    if(!hit){ sfx('confirm'); toast('LOGGED '+c.n.toUpperCase()+' \u00b7 '+fmt(sum(st.q).k)+' KCAL'); }
+  setSheet('<div class="veil"></div><div class="sheet fit full qty"></div>',stack);
+  const box=topSheet(), back=stack?()=>{ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); }:closeSheet;   // the list beneath shows any change
+  lastVeil().onclick=back;
+  const view=()=>{
+    const was=barSnap(box)||box._barWas||null; box._barWas=null; box.refresh=null;
+    box.innerHTML=mealSkel(false,c,st.q)+
+      '<div class="rlist qlab"><div id="cX"></div><div class="xled"><div class="xsum" id="cS"></div></div>'+
+      (c.rc?'<div class="msec"><button class="msh" data-sec="r">Recipe<span class="mfold">\u25be</span></button><div class="msb"><div class="rcv">'+esc(c.rc)+'</div></div></div>':'')+'</div>'+
+      sbar(xBtn(stack),sbi('cEd',ICO.edit,'Edit meal',1)+'<button class="btn wide" id="cGo">LOG MEAL</button>');
+    barMorph(was,box);
+    const V=$('cV'); box.querySelector('.shx').onclick=back; foldSections(box);
+    $('cEd').onclick=()=>{ box._st=0; meEdit(box,c,null,view); };      // edit it in this same screen
+    const paint=()=>{ const t=sum(st.q);
+      box._pv=ADD.into?null:t; ibSync();
+      $('cX').innerHTML=c.items.map((e,i)=>nutRow(i,Object.assign({},e,{q:e.q*st.q}))).join('');
+      $('cS').innerHTML=totRow('Meal',t);
+      $('cPer').textContent=(st.q===1?'1 SERVING':r1(st.q)+' SERVINGS'); };
+    V.oninput=()=>{ st.q=Math.max(0,+V.value||0); paint(); };
+    V.onkeydown=ev=>{ if(ev.key==='Enter'){ ev.preventDefault(); V.blur(); $('cGo').click(); } };
+    paint();
+    $('cGo').onclick=()=>{
+      if(V.value!=='') st.q=Math.max(0,+V.value||0);      // what's in the box is what's logged
+      if(!(st.q>0)){ sfx('nope'); return toast('ENTER AN AMOUNT'); }
+      if(ADD.into){ popSheet(); const u=topSheet(); if(u && u.refresh) u.refresh(); intoMeal(c.items.map(e=>Object.assign({},e,{q:e.q*st.q}))); return; }
+      const es=mealEntries(c,st.q,st.m);
+      dayPush(...es);
+      FRESH=new Set(es.map(e=>e.id));
+      usedMeal(c,st.m);
+      const hit=checkHits();
+      touch();
+      if(stack){ popSheet(); render(); const up=topSheet(); if(up && up.refresh) up.refresh(); nextFood(); }
+      else { closeSheet(); setTimeout(()=>renderMorph(st.m),220); }
+      if(!hit){ sfx('confirm'); toast('LOGGED '+c.n.toUpperCase()+' \u00b7 '+fmt(sum(st.q).k)+' KCAL'); }
+    };
   };
+  view();
 }
 /* Select mode: the chosen foods are saved as a meal, and, when there are several, combined on
    the dashboard as that meal, in the first one's section. */
@@ -5049,7 +5108,7 @@ function openSettings(){
     row('stMl','Food sections',P().meals.map(m=>m.n).join(' \u00b7 '))+
     row('stFd','Saved foods & meals',P().foods.length+' foods \u00b7 '+P().combos.length+' meals')+
     row('stSy','Sync and backup',ghWhen())+
-    row('stPv','Privacy',privSum())+
+    row('stPv','Account',privSum())+
     row('stDp','Display & audio',THEMES[DB.theme]+' \u00b7 sound '+(soundOn()?'on':'off'))+
     row('stFb','Feedback',fbLive().length?fbLive().length+' note'+(fbLive().length===1?'':'s'):'none yet')+
     '</div><div class="tiny">v'+APP_VERSION+'</div>'));
@@ -5077,14 +5136,14 @@ function accPush(){ clearTimeout(ACCT); ACCT=setTimeout(async()=>{ ACCT=0; if(AL
   await ghSyncAll(); render(); paintPrivacy(); },900); }
 function openPrivacy(){
   sfx('open'); PVX={};
-  setSheet(panel('Privacy','<div id="pvBody"></div>',true));
+  setSheet(panel('Account','<div id="pvBody"></div>',true));
   bindPanel(openSettings);
   paintPrivacy();
   if(ghOn()){ const was=JSON.stringify(DB.acc); ghSyncAll().then(()=>{ render(); if(JSON.stringify(DB.acc)!==was) paintPrivacy(); }); }   // the latest owners and sharing
 }
 function paintPrivacy(){
   const B=$('pvBody'); if(!B) return;
-  if(!ghOn()){ B.innerHTML='<div class="card pgcard"><div class="pgnote">Privacy works through sync. Connect GitHub in Sync and backup first.</div></div>'; return; }
+  if(!ghOn()){ B.innerHTML='<div class="card pgcard"><div class="pgnote">Account settings work through sync. Connect GitHub in Sync and backup first.</div></div>'; return; }
   const typed={}; ['pvP1','pvP2','pvR'].forEach(id=>{ if($(id)) typed[id]=$(id).value; });   // kept through a redraw
   const W=DB.acc.who, ids=accLive(), own=ids.filter(pid=>W[pid].h===DB.dev), claim=ids.filter(pid=>!W[pid].h && W[pid].rb!==DB.dev);
   const adm=DB.acc.adm, isAdm=!!adm && adm.h===DB.dev, others=ids.filter(pid=>W[pid].h && W[pid].h!==DB.dev);
@@ -5424,11 +5483,13 @@ function openProfiles(back,ed){
 /* From Profiles the change takes the full static; the dashboard's swap button just warps. */
 function switchProfile(n,quick){
   ghFlush();
-  const changed=n!==DB.cur;
+  const changed=n!==DB.cur, smooth=changed && !PLAN && !calm() && $('main') && $('main').animate;
+  const snap=smooth?daySnap(true):null;               // 168: switching profile changes what differs in place, as changing day does
   DB.cur=n; save();
   ADD.q=''; ADD.results=[]; FILLROW.was=null;       // same day as before: switching compares like with like
   dropSelect(); closeSheet(); render(); document.body.scrollTop=0;
-  if(changed){ sfx('start'); (quick?warp:panelHit)($('main'),$('hdrK'),$('bolt'),$('dCal')); }
+  if(snap) dayAnim(snap);
+  if(changed){ sfx('start'); if(!snap) (quick?warp:panelHit)($('main'),$('hdrK'),$('bolt'),$('dCal')); }
   if(ghOn()) ghSync(n);
 }
 function openFoods(){
@@ -5667,7 +5728,7 @@ const kbGo=()=>{ const t=KBIN || (Date.now()-KBLT<800 ? KBLAST : null), sh=t && 
   t.blur(); const b=sh.querySelector('#qGo')||sh.querySelector('#cGo'); if(b) b.click(); };   // found again after the blur: the screen may redraw on it
 document.addEventListener('focusin',ev=>{ const t=ev.target; if(t && t.matches && t.matches('input.qin') && !t.disabled && kbLog(t)){ KBIN=t; kbPlace(); KBT.classList.add('on'); } });
 document.addEventListener('focusout',ev=>{ if(ev.target!==KBIN) return; KBLAST=KBIN; KBLT=Date.now(); setTimeout(()=>{ if(KBIN && document.activeElement!==KBIN){ KBT.classList.remove('on'); KBIN=null; } },250); });
-if(window.visualViewport){ visualViewport.addEventListener('resize',kbPlace); visualViewport.addEventListener('scroll',kbPlace); visualViewport.addEventListener('resize',wLift); visualViewport.addEventListener('scroll',wLift); }
+if(window.visualViewport){ visualViewport.addEventListener('resize',kbPlace); visualViewport.addEventListener('scroll',kbPlace); }
 KBT.addEventListener('pointerdown',ev=>ev.preventDefault());   // the box keeps its focus until the tap lands
 KBT.onclick=kbGo;
 function startApp(){
