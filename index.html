@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.166">
+<meta name="app-version" content="2026.10.04.167">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1457,7 +1457,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.166';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.167';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -4350,18 +4350,31 @@ function foldLog(es){
     else out.push(e); });
   return out;
 }
-/* 166: what you usually log in a section: the foods logged there most often in the last 60 days (at least twice), each at its
-   last amount, most often first. They go above Recent, and follow the section picker. */
+/* 167: saved meals take part in Recent and Usual beside foods. A meal is a row of its own (its items and calories), + logs it
+   as it is saved, and the foods it put in the diary are not listed again one by one. */
+const comboFor=gn=>P().combos.find(c=>normS(c.n)===normS(gn));
+const mealKey=e=>e.meal?'m:'+e.c.id:logKey(e);
+/* What you usually log in a section: up to 4 foods and 2 meals logged there most often in the last 60 days (at least twice), each
+   at its last amount, most often first. They go above Recent, and follow the section picker. */
 function usualFor(mid){
   if(!mid) return [];
-  const from=shift(today(),-60), cnt=new Map(), last=new Map();
+  const from=shift(today(),-60), cnt=new Map(), last=new Map(), grp=new Map();
   Object.keys(P().days).filter(d=>d>=from && d<=today()).forEach(d=>P().days[d].forEach(e=>{
-    if(mealOf(e)!==mid || e.g) return; const k=logKey(e); cnt.set(k,(cnt.get(k)||0)+1); if(!last.has(k) || e.t>last.get(k).t) last.set(k,e); }));
-  return foldLog([...last.values()]).filter(e=>cnt.get(logKey(e))>=2).sort((x,y)=>cnt.get(logKey(y))-cnt.get(logKey(x)) || y.t-x.t).slice(0,5);
+    if(mealOf(e)!==mid) return;
+    if(e.g){ const c=comboFor(e.gn); if(!c) return; const k='m:'+c.id, gs=grp.get(k)||new Set(); gs.add(e.g); grp.set(k,gs); cnt.set(k,gs.size); if(!last.has(k) || e.t>last.get(k).t) last.set(k,{meal:true,c,t:e.t}); return; }
+    const k=logKey(e); cnt.set(k,(cnt.get(k)||0)+1); if(!last.has(k) || e.t>last.get(k).t) last.set(k,e); }));
+  const foods=foldLog([...last.values()].filter(e=>!e.meal)), meals=[...last.values()].filter(e=>e.meal && !(P().rh['m:'+e.c.id]>=e.t));
+  const by=(x,y)=>cnt.get(mealKey(y))-cnt.get(mealKey(x)) || y.t-x.t, top=l=>l.filter(e=>cnt.get(mealKey(e))>=2).sort(by);
+  return [...top(foods).slice(0,4),...top(meals).slice(0,2)].sort(by);       // up to 4 foods and 2 meals, so a meal logged less often than a coffee still shows
 }
 function recentFoods(){
-  const out=[]; Object.keys(P().days).filter(d=>d<=today()).forEach(d=>P().days[d].forEach(e=>out.push(e)));
+  const out=[]; Object.keys(P().days).filter(d=>d<=today()).forEach(d=>P().days[d].forEach(e=>{ if(!(e.g && comboFor(e.gn))) out.push(e); }));   // not the foods a saved meal put there
   return foldLog(out).slice(0,11);
+}
+/* the last 11 things you logged: foods, and saved meals by when you last used them */
+function recentMix(){
+  const meals=P().combos.filter(c=>c.u && !(P().rh['m:'+c.id]>=c.u)).map(c=>({meal:true,c,t:c.u}));
+  return [...recentFoods(),...meals].sort((x,y)=>y.t-x.t).slice(0,11);
 }
 /* Saved meals and foods as one list. Tap opens one; hold opens its editor in place: rename,
    share with another profile, or delete with a second tap. byTime (Add food's SAVED): meals only,
@@ -5005,20 +5018,21 @@ function paintResults(){
    from the last 30 days first, then saved foods, each at the amount you last had it. */
 function paintRecent(q){
   const s=q.trim(), L=$('rcList');
-  const mine=s.length>=2?yourFoods(s):null, usual=!mine && !ADD.into && !ADD.group?usualFor(ADD.meal):[], uk=new Set(usual.map(logKey));
-  const list=mine?[...mine.hist,...mine.saved]:[...usual,...recentFoods().filter(e=>!uk.has(logKey(e)))];
-  const lastRow=(e,i)=>e.m===undefined?foodRow(e,i):noNut(e)?foodListRow(i,e.n,brandOf(e)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(e)?' vf':''))   // as last logged: its amount and calories
+  const mine=s.length>=2?yourFoods(s):null, usual=!mine && !ADD.into && !ADD.group?usualFor(ADD.meal):[], uk=new Set(usual.map(mealKey));
+  const list=mine?[...mine.hist,...mine.saved]:[...usual,...(ADD.group?recentFoods():recentMix()).filter(e=>!uk.has(mealKey(e)))];
+  const lastRow=(e,i)=>e.meal?foodListRow(i,e.c.n,items(e.c.items.length),macroSum(e.c.items).k,true,'mn'):e.m===undefined?foodRow(e,i):noNut(e)?foodListRow(i,e.n,brandOf(e)+'NO NUTRITION INFO',0,true,'nonut'+(isVf(e)?' vf':''))   // as last logged: its amount and calories
     :foodListRow(i,e.n,brandOf(e)+esc(qtyTxt(e)),e.k*e.q,true,isVf(e)?'vf':'');
   const rows=list.map((e,i)=>lastRow(e,i)), mn=mealById(ADD.meal);
   L.innerHTML=list.length?(usual.length?'<div class="lh">Usual for '+esc(mn?mn.n:'now')+'</div>'+rows.slice(0,usual.length).join('')+'<div class="lh">Recent</div>'+rows.slice(usual.length).join('')
       :'<div class="lh">'+(mine?'Your foods':'Recent')+'</div>'+rows.join(''))
     :!s && !historyFoods().length?'<div class="stat">NOTHING LOGGED YET \u2014 SEARCH FOR A FOOD</div>':'';
-  const logged=e=>e.m!==undefined;                   // a diary entry, rather than a saved food
+  const logged=e=>!e.meal && e.m!==undefined;        // a diary entry, rather than a saved food or meal
   const food=e=>logged(e)?(P().foods.find(f=>f.id===e.fid)||{id:'', n:e.n, ...(e.b?{b:e.b}:{}), sv:e.sv, k:e.k, p:e.p, c:e.c, f:e.f, x:e.x, bc:''}):e;
-  bindRows(L,i=>openQty(food(list[i]),logged(list[i])?{q:list[i].q, w:list[i].w}:{}),
-    i=>{ const e=list[i], f=food(e); logged(e)?quickAdd(f,e.q,e.w,P().foods.includes(f)?f.id:''):quickAdd(f,1,'',f.id); },
+  bindRows(L,i=>list[i].meal?openCombo(list[i].c):openQty(food(list[i]),logged(list[i])?{q:list[i].q, w:list[i].w}:{}),
+    i=>{ const e=list[i]; if(e.meal) return quickMeal(e.c); const f=food(e); logged(e)?quickAdd(f,e.q,e.w,P().foods.includes(f)?f.id:''):quickAdd(f,1,'',f.id); },
     i=>{ const e=list[i];                           // swipe a logged food away (Recent or Your foods); saved foods are deleted in Settings
-      if(logged(e)){ P().rh[logKey(e)]=Date.now(); touch(); toast('REMOVED FROM '+(mine?'YOUR FOODS':'RECENT')); }
+      if(e.meal){ P().rh['m:'+e.c.id]=Date.now(); touch(); toast('REMOVED FROM RECENT'); }
+      else if(logged(e)){ P().rh[logKey(e)]=Date.now(); touch(); toast('REMOVED FROM '+(mine?'YOUR FOODS':'RECENT')); }
       else toast('DELETE SAVED FOODS IN SETTINGS \u203a SAVED FOODS & MEALS');
       paintRecent($('osQ').value); });
 }
