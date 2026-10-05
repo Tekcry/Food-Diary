@@ -9,7 +9,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="app-version" content="2026.10.04.163">
+<meta name="app-version" content="2026.10.04.164">
 <meta name="apple-mobile-web-app-title" content="Food Diary">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <style>
@@ -1434,7 +1434,7 @@ try{ (()=>{ const s=JSON.parse(localStorage.getItem('food_log_snap')||'null'), d
    and food/_access.json (who owns each profile and who it's shared with).
    ===================================================================== */
 /* ---------- storage ---------- */
-const KEY='food_log_v1', APP_VERSION='2026.10.04.163';     // stamped by the build: date.build
+const KEY='food_log_v1', APP_VERSION='2026.10.04.164';     // stamped by the build: date.build
 let DB=null, STORE='local';
 /* Debugging: run localStorage.setItem('food_log_debug','1') and reload. Failures that are
    otherwise handled quietly are then logged with their area: [STORE] [SYNC] [LIST] [SCAN] [OFFLINE]. */
@@ -3636,44 +3636,51 @@ function leafSnap(root){
   if(!root) return [];
   return [...root.querySelectorAll('*')].map(e=>{ const leaf=!e.children.length && e.textContent.trim()!=='', cs=getComputedStyle(e), r=e.getBoundingClientRect();
     const o={tag:e.tagName, cls:e.getAttribute('class')||'', leaf, text:e.textContent, r, color:cs.color, bg:cs.backgroundColor};
-    if(leaf){ o.sty={}; STY.forEach(k=>o.sty[k]=cs[k]); }
+    if(leaf){ o.sty={}; STY.forEach(k=>o.sty[k]=cs[k]); o.tr=textRect(e); }
     return o; });
 }
+/* where a leaf element's text really is (its box can be wider, with padding or alignment) */
+function textNode(el){ return el.childNodes.length===1 && el.firstChild.nodeType===3?el.firstChild:null; }
+function textRect(el){ const t=textNode(el); if(!t) return null; const r=document.createRange(); r.selectNodeContents(t); const q=r.getBoundingClientRect(); return {left:q.left,right:q.right,top:q.top,bottom:q.bottom,width:q.width,height:q.height}; }
 /* 163: a changed text or number flips like a split-flap board, a character at a time: the old character's top half
    falls away to show the new top, then the new bottom half falls into place. Only the characters that differ move,
    the text is never blank, and there's no background to it: a ghost of the characters sits over the element while
    the element's own text waits (transparent) until the last has landed. */
 const CVX=document.createElement('canvas').getContext('2d');
 function splitFlap(el,o){
-  const cs=getComputedStyle(el), nt=el.textContent, ot=o.text, num=/^[+\-]?[\d.,\s]+$/.test(nt.trim()) && /^[+\-]?[\d.,\s]+$/.test(ot.trim());
-  const r=el.getBoundingClientRect(), rt=num || (Math.abs(o.r.right-r.right)<2 && Math.abs(o.r.left-r.left)>2);   // numbers, and text that ends where it did, are anchored at their right end
-  const n=Math.max(nt.length,ot.length), a=rt?ot.padStart(n,' '):ot.padEnd(n,' '), b=rt?nt.padStart(n,' '):nt.padEnd(n,' ');
-  const h=Math.round(r.height)||Math.round(parseFloat(cs.lineHeight))||16;
-  CVX.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily; const ls=parseFloat(cs.letterSpacing)||0;
-  const cw=ch=>CVX.measureText(ch).width+ls;
-  const ws=[...b].map((ch,i)=>ch!==' '?cw(ch):cw(a[i])), total=ws.reduce((x,y)=>x+y,0);
-  const g=document.createElement('span'); g.setAttribute('aria-hidden','true'); g.setAttribute('data-sf','1');
+  const tn=textNode(el), nr=textRect(el);
+  if(!tn || !nr || !o.tr){ el.animate([{opacity:0},{opacity:1}],{duration:260,delay:90,easing:'ease-out',fill:'backwards'}); return; }
+  const cs=getComputedStyle(el), nt=el.textContent, ot=o.text, isNum=t=>/^[+\-]?[\d.,\s]+$/.test(t.trim());
+  const rt=(isNum(nt) && isNum(ot)) || (Math.abs(o.tr.right-nr.right)<2 && Math.abs(o.tr.left-nr.left)>2);   // numbers, and text that ends where it did, line up at their right end
+  const n=Math.max(nt.length,ot.length), a=rt?ot.padStart(n,' '):ot.padEnd(n,' '), b=rt?nt.padStart(n,' '):nt.padEnd(n,' '), off=rt?n-nt.length:0;
+  const rg=document.createRange(), real=k=>{ rg.setStart(tn,k); rg.setEnd(tn,k+1); const q=rg.getBoundingClientRect(); return {l:q.left,w:q.width}; };   // the new characters: exactly where the real ones are
+  CVX.font=cs.fontStyle+' '+cs.fontWeight+' '+cs.fontSize+' '+cs.fontFamily; const ls=parseFloat(cs.letterSpacing)||0, cw=ch=>CVX.measureText(ch).width+ls;
+  const X=new Array(n), W=new Array(n);
+  for(let i=0;i<n;i++){ const k=i-off; if(k>=0 && k<nt.length){ const q=real(k); X[i]=q.l; W[i]=q.w; } }
+  if(rt) for(let i=off-1;i>=0;i--){ W[i]=cw(a[i]); X[i]=(i+1<n?X[i+1]:nr.left)-W[i]; }          // old characters beyond the new text
+  else for(let i=nt.length;i<n;i++){ W[i]=cw(a[i]); X[i]=X[i-1]+W[i-1]; }
+  const h=nr.height, g=document.createElement('span'); g.setAttribute('aria-hidden','true'); g.setAttribute('data-sf','1');
   STY.forEach(k=>g.style[k]=cs[k]);
-  const left=rt?r.right-total:r.left;
-  Object.assign(g.style,{position:'fixed',left:left+'px',top:r.top+'px',height:h+'px',display:'flex',whiteSpace:'pre',margin:0,padding:0,pointerEvents:'none',zIndex:60,textAlign:'center'});
-  const half=(ch,top)=>{ const x=document.createElement('span'); x.textContent=ch; x.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;text-align:center;line-height:'+h+'px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-origin:50% 50%;'+
+  Object.assign(g.style,{position:'fixed',left:0,top:0,width:0,height:0,whiteSpace:'pre',margin:0,padding:0,pointerEvents:'none',zIndex:60,textAlign:'left',lineHeight:h+'px',fontKerning:cs.fontKerning});
+  const half=(ch,top)=>{ const x=document.createElement('span'); x.textContent=ch; x.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;text-align:left;line-height:'+h+'px;backface-visibility:hidden;-webkit-backface-visibility:hidden;transform-origin:50% 50%;'+
     (top===null?'':'clip-path:inset('+(top?'0 0 50% 0':'50% 0 0 0')+');'); return x; };
   let last=0;
-  [...b].forEach((ch,i)=>{
-    const cell=document.createElement('span'); cell.style.cssText='position:relative;display:block;flex:none;width:'+ws[i]+'px;height:'+h+'px;perspective:'+(h*5)+'px;-webkit-perspective:'+(h*5)+'px';
-    if(ch===a[i]){ cell.appendChild(half(ch,null)); }
+  for(let i=0;i<n;i++){
+    if(a[i]===' ' && b[i]===' ') continue;
+    const cell=document.createElement('span'); cell.style.cssText='position:absolute;left:'+X[i]+'px;top:'+nr.top+'px;width:'+W[i]+'px;height:'+h+'px;perspective:'+(h*5)+'px;-webkit-perspective:'+(h*5)+'px';
+    if(a[i]===b[i]) cell.appendChild(half(b[i],null));
     else{
-      const st=half(ch,true), sb=half(a[i],false), f1=half(a[i],true), f2=half(ch,false), dl=(rt?(n-1-i):i)*26;
+      const st=half(b[i],true), sb=half(a[i],false), f1=half(a[i],true), f2=half(b[i],false), dl=(rt?(n-1-i):i)*26;
       cell.append(st,sb,f1,f2);
       f1.animate([{transform:'rotateX(0deg)'},{transform:'rotateX(-90deg)'}],{duration:150,delay:dl,easing:'ease-in',fill:'both'});
       f2.animate([{transform:'rotateX(90deg)'},{transform:'rotateX(0deg)'}],{duration:170,delay:dl+150,easing:'cubic-bezier(.2,.9,.3,1.1)',fill:'both'});
       last=Math.max(last,dl+320);
     }
     g.appendChild(cell);
-  });
+  }
   const col=el.style.color, sh=el.style.textShadow; el.style.color='transparent'; el.style.textShadow='none';
   document.body.appendChild(g);
-  setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; },last+60);
+  setTimeout(()=>{ g.remove(); el.style.color=col; el.style.textShadow=sh; },last+60);     // the ghost goes and the real text shows in the same moment, in the same place
 }
 function morphLeaves(old,root){
   if(!root) return; const now=[...root.querySelectorAll('*')];
@@ -3690,6 +3697,8 @@ function daySnap(){
   const cards=new Map();
   main.querySelectorAll(':scope>.meal').forEach(c=>{ const r=c.getBoundingClientRect(), body=c.querySelector('.mbody'), br=body.getBoundingClientRect(), ex=c.querySelector('.logrow,.swipe');
     cards.set(c.dataset.m,{top:r.top, h:r.height, left:br.left-r.left, bodyTop:br.top-r.top, w:br.width, rows:[...c.querySelectorAll('.fiw')].map(x=>x.cloneNode(true)),
+      rt:[...c.querySelectorAll('.fiw')].map(x=>({'.fnm':(x.querySelector('.fnm')||{}).textContent, '.fsb':(x.querySelector('.fsb')||{}).textContent})),
+      fk:[...c.querySelectorAll('.fiw')].map(x=>{ const f=x.querySelector('.fk'); if(!f) return null; const cs=getComputedStyle(f), o={text:f.textContent, tr:textRect(f), sty:{}}; STY.forEach(k=>o.sty[k]=cs[k]); return o; }),
       ex:ex?ex.getBoundingClientRect().top-r.top:null, mh:leafSnap(c.querySelector('.mh'))}); });
   return {dfix:leafSnap($('dfix')), cards};
 }
@@ -3709,10 +3718,15 @@ function dayAnim(sn){
          and fade out as the new ones come in. Rows that are new fade in whole, rows that go leave with the card shrinking. */
       if(s.rows.length){ const g=document.createElement('div'); g.className='mbody rghost'; g.setAttribute('aria-hidden','true');
         g.style.cssText='position:absolute;left:'+s.left+'px;top:'+s.bodyTop+'px;width:'+s.w+'px;pointer-events:none;overflow:visible;transition:none';
-        s.rows.forEach((x,i)=>{ x.classList.remove('gone'); x.style.height=''; if(i<rows.length) x.classList.add('tx'); g.appendChild(x); });
+        s.rows.forEach((x,i)=>{ x.classList.remove('gone'); x.style.height=''; if(i<rows.length){ x.classList.add('tx'); const f=x.querySelector('.fk'); if(f && s.fk[i] && rows[i].querySelector('.fk')) f.style.visibility='hidden';
+            ['.fnm','.fsb'].forEach(q=>{ const e=x.querySelector(q), nw=rows[i].querySelector(q); if(e && nw && nw.textContent===s.rt[i][q]) e.style.visibility='hidden'; }); } g.appendChild(x); });   // words that didn't change aren't touched
         c.appendChild(g); g.animate([{opacity:1},{opacity:0}],{duration:220,easing:'ease-in',fill:'forwards'}).onfinish=()=>g.remove(); }
       rows.forEach((x,i)=>{
-        if(i<s.rows.length) x.querySelectorAll('.fnm,.fsb,.fk').forEach(t=>t.animate([{opacity:0},{opacity:1}],{duration:280,delay:110,easing:'ease-out',fill:'backwards'}));
+        if(i<s.rows.length){
+          const f=x.querySelector('.fk'), fo=s.fk[i], flip=f && fo && fo.text!==f.textContent;
+          if(flip) splitFlap(f,fo);                                                       // the calories flip like the rest
+          [...x.querySelectorAll(flip?'.fnm,.fsb':'.fnm,.fsb,.fk')].filter(t=>!(t.matches('.fnm') && t.textContent===s.rt[i]['.fnm']) && !(t.matches('.fsb') && t.textContent===s.rt[i]['.fsb']) && !(t.matches('.fk') && fo && fo.text===t.textContent)).forEach(t=>t.animate([{opacity:0},{opacity:1}],{duration:280,delay:110,easing:'ease-out',fill:'backwards'}));
+        }
         else x.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:280,delay:90,easing:EASE_D,fill:'backwards'});
       });
     }
